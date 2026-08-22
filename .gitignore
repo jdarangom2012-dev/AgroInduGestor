@@ -1,8 +1,26 @@
-.venv/
-node_modules/
-__pycache__/
-*.pyc
-.env
-*.sqlite3
-db.sqlite3
+# Configuración del servidor - NUNCA subir ni sobreescribir
+Web.config
+web.config
+Web.Config
 
+# Archivos de configuración sensibles
+*.config
+appsettings.json
+appsettings.*.json
+
+# Carpetas que no deben subirse
+bin/
+obj/
+.vs/
+packages/
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+*.user
+*.suo
+*.tmp
+Thumbs.db
