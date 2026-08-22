@@ -1,33 +1,7 @@
 # =============================================================
-# sql_writer.py — Inserta en dbo.tblConsumosTostion
-#                 via dbo.sp_InsertarCurvaTueste
+# sql_writer.py — Inserta en dbo.tblConsumosTueste
+#                 via dbo.sp_InsertarConsumosTueste
 # =============================================================
-#
-# Campos de tblConsumosTostion (en orden de la tabla):
-#   Id            int          IDENTITY — lo genera SQL
-#   FechaIngreso  datetime     DEFAULT GETDATE() — lo genera SQL
-#   Tiempo        time(0)      ← no viene del PLC, lo calculamos aquí
-#   IdOrden       int
-#   IdCliente     smallint
-#   PesoCv        float
-#   PesoCt        float
-#   TempDesh      float
-#   TiempoDesh    time(0)
-#   TempRecu      float
-#   TiempoRecu    time(0)
-#   Temp1Crack    float
-#   Tiempo1Crack  time(0)
-#   TempfinCurva  float
-#   TiempofinCurva time(0)
-#   TiempoTueste  time(0)
-#   TiempoEnfriamiento time(0)
-#   Rendimiento   float
-#   ConsumoGas    float
-#   ConsumoKwh    float
-#   FechaHoraIni  int
-#   FechaHoraFin  int
-#   Nombre        varchar(20)
-
 from typing import Optional
 import pyodbc
 from config import SQL_CONN, SP_INSERTAR
@@ -38,7 +12,6 @@ class SQLWriter:
     def __init__(self):
         self.conn: Optional[pyodbc.Connection] = None
 
-    # ── Conexión ─────────────────────────────────────────────
     def conectar(self) -> bool:
         try:
             self.conn = pyodbc.connect(SQL_CONN, autocommit=False)
@@ -62,51 +35,33 @@ class SQLWriter:
             pass
         self.conectar()
 
-    # ── Insertar en tblConsumosTostion ───────────────────────
     def insertar(self, d: dict) -> int:
-        """
-        Ejecuta sp_InsertarCurvaTueste con los datos leídos del PLC.
-        Retorna el Id insertado (SCOPE_IDENTITY).
-        Lanza excepción si falla → el caller lo captura y loguea.
-
-        Parámetros que recibe el SP (coinciden exactamente con
-        los campos de tblConsumosTostion excepto Id y FechaIngreso
-        que son autogenerados):
-
-            @IdOrden, @IdCliente, @PesoCv, @PesoCt,
-            @TempDesh, @TiempoDesh_seg,
-            @TempRecu, @TiempoRecu_seg,
-            @Temp1Crack, @Tiempo1Crack_seg,
-            @TempfinCurva, @TiempofinCurva_seg,
-            @TiempoTueste_seg, @TiempoEnfriamiento_seg,
-            @Rendimiento, @ConsumoGas, @ConsumoKwh,
-            @FechaHoraIni, @FechaHoraFin, @Nombre
-        """
         self._asegurar_conexion()
 
         sql = (
             f"EXEC {SP_INSERTAR} "
-            "@IdOrden=?, @IdCliente=?, @PesoCv=?, @PesoCt=?, "
-            "@TempDesh=?, @TiempoDesh_seg=?, "
-            "@TempRecu=?, @TiempoRecu_seg=?, "
-            "@Temp1Crack=?, @Tiempo1Crack_seg=?, "
-            "@TempfinCurva=?, @TiempofinCurva_seg=?, "
+            "@IdOrden=?, @Bache=?, @IdCliente=?, "
+            "@PesoCv=?, @PesoCt=?, "
+            "@TempDesh=?, @TempRecu=?, @Temp1Crack=?, @TempfinCurva=?, "
+            "@TiempoDesh_seg=?, @TiempoRecu_seg=?, "
+            "@Tiempo1Crack_seg=?, @TiempofinCurva_seg=?, "
             "@TiempoTueste_seg=?, @TiempoEnfriamiento_seg=?, "
             "@Rendimiento=?, @ConsumoGas=?, @ConsumoKwh=?, "
             "@FechaHoraIni=?, @FechaHoraFin=?, @Nombre=?"
         )
 
         params = (
-            d["IdOrden"],              d["IdCliente"],
-            d["PesoCv"],               d["PesoCt"],
-            d["TempDesh"],             d["TiempoDesh_seg"],
-            d["TempRecu"],             d["TiempoRecu_seg"],
-            d["Temp1Crack"],           d["Tiempo1Crack_seg"],
-            d["TempfinCurva"],         d["TiempofinCurva_seg"],
-            d["TiempoTueste_seg"],     d["TiempoEnfriamiento_seg"],
-            d["Rendimiento"],          d["ConsumoGas"],
-            d["ConsumoKwh"],           d["FechaHoraIni"],
-            d["FechaHoraFin"],         d["Nombre"],
+            d["IdOrden"],               d["Bache"],
+            d["IdCliente"],             d["PesoCv"],
+            d["PesoCt"],                d["TempDesh"],
+            d["TempRecu"],              d["Temp1Crack"],
+            d["TempfinCurva"],          d["TiempoDesh_seg"],
+            d["TiempoRecu_seg"],        d["Tiempo1Crack_seg"],
+            d["TiempofinCurva_seg"],    d["TiempoTueste_seg"],
+            d["TiempoEnfriamiento_seg"],d["Rendimiento"],
+            d["ConsumoGas"],            d["ConsumoKwh"],
+            d["FechaHoraIni"],          d["FechaHoraFin"],
+            d["Nombre"],
         )
 
         cur = self.conn.cursor()

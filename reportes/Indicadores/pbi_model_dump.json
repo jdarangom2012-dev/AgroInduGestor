@@ -1,0 +1,1044 @@
+﻿{
+    "databaseName":  "2a31c15e-6d9c-45ae-b553-cad53b823fbe",
+    "tables":  [
+                   {
+                       "name":  "tblConsumosTueste",
+                       "isHidden":  false,
+                       "columns":  [
+                                       {
+                                           "name":  "RowNumber-2662979B-1795-4F74-8F37-6A1BA8059B61",
+                                           "dataType":  "Int64",
+                                           "isHidden":  true
+                                       },
+                                       {
+                                           "name":  "Id",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "FechaIngreso",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Tiempo",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdOrden",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Bache",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdCliente",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "PesoCv",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "PesoCt",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TempDesh",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TiempoDesh",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TempRecu",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TiempoRecu",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Temp1Crack",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Tiempo1Crack",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TempfinCurva",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TiempofinCurva",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TiempoTueste",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TiempoEnfriamiento",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Rendimiento",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "ConsumoGas",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "ConsumoKwh",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "FechaHoraIni",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "FechaHoraFin",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Nombre",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "NumeroOrden",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "HoraFormatoTues",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       }
+                                   ],
+                       "measures":  [
+
+                                    ]
+                   },
+                   {
+                       "name":  "tblEstadoCafe",
+                       "isHidden":  false,
+                       "columns":  [
+                                       {
+                                           "name":  "RowNumber-2662979B-1795-4F74-8F37-6A1BA8059B61",
+                                           "dataType":  "Int64",
+                                           "isHidden":  true
+                                       },
+                                       {
+                                           "name":  "id",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "EstadoCafe",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       }
+                                   ],
+                       "measures":  [
+
+                                    ]
+                   },
+                   {
+                       "name":  "tblEstadoOrdenes",
+                       "isHidden":  false,
+                       "columns":  [
+                                       {
+                                           "name":  "RowNumber-2662979B-1795-4F74-8F37-6A1BA8059B61",
+                                           "dataType":  "Int64",
+                                           "isHidden":  true
+                                       },
+                                       {
+                                           "name":  "Id",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "EstadoOrden",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       }
+                                   ],
+                       "measures":  [
+
+                                    ]
+                   },
+                   {
+                       "name":  "tblTueste",
+                       "isHidden":  false,
+                       "columns":  [
+                                       {
+                                           "name":  "RowNumber-2662979B-1795-4F74-8F37-6A1BA8059B61",
+                                           "dataType":  "Int64",
+                                           "isHidden":  true
+                                       },
+                                       {
+                                           "name":  "Id",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdOrden",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdEstadoTareas",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdNivelTueste",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdInventarioCafe",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "FechaIngreso",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Batche",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "PesoCafeVede",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "PesoCafeTostado",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Rendimiento",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "PesoCafeVedeTotal",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "PesoCafeTostadoTotal",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Notas",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "NotasOp",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "FechaHoraInicio",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "ConsumoGas",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "ConsumoKWH",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TempDeshidratacion",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TiempoDeshidratacion",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TempRecuperacion",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TiempRecuperacion",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Temp1Crack",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Tiempo1Crack",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TempFinCurva",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TiempoFinCurva",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "FechaHoraFin",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TempoTueste",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TiempoEnfriamiento",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "created_at",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "updated_at",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       }
+                                   ],
+                       "measures":  [
+
+                                    ]
+                   },
+                   {
+                       "name":  "Calendario",
+                       "isHidden":  false,
+                       "columns":  [
+                                       {
+                                           "name":  "RowNumber-2662979B-1795-4F74-8F37-6A1BA8059B61",
+                                           "dataType":  "Int64",
+                                           "isHidden":  true
+                                       },
+                                       {
+                                           "name":  "Date",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Año",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Mes Num",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Mes",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Mes Corto",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Semana",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Día Semana",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Trimestre",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "AñoMes",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Fecha",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       }
+                                   ],
+                       "measures":  [
+
+                                    ]
+                   },
+                   {
+                       "name":  "Medidas",
+                       "isHidden":  false,
+                       "columns":  [
+                                       {
+                                           "name":  "RowNumber-2662979B-1795-4F74-8F37-6A1BA8059B61",
+                                           "dataType":  "Int64",
+                                           "isHidden":  true
+                                       },
+                                       {
+                                           "name":  "_",
+                                           "dataType":  "String",
+                                           "isHidden":  true
+                                       }
+                                   ],
+                       "measures":  [
+                                        {
+                                            "name":  "Total Tuestes",
+                                            "expression":  "COUNTROWS(tblConsumosTueste)",
+                                            "formatString":  "0",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "Rendimiento Promedio %",
+                                            "expression":  "AVERAGE(tblConsumosTueste[Rendimiento])",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "Peso Verde Total kg",
+                                            "expression":  "\nCALCULATE(\n    SUM(tblConsumosTueste[PesoCv]),\n    tblConsumosTueste[PesoCv] \u003e 0,\n    tblConsumosTueste[PesoCv] \u003c 500\n)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "Peso Tostado Total kg",
+                                            "expression":  "\nCALCULATE(\n    SUM(tblConsumosTueste[PesoCt]),\n    tblConsumosTueste[PesoCt] \u003e 0,\n    tblConsumosTueste[PesoCt] \u003c 500\n)",
+                                            "formatString":  "0.00",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "Consumo Gas Total",
+                                            "expression":  "SUM(tblConsumosTueste[ConsumoGas])",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "Consumo Kwh Total",
+                                            "expression":  "SUM(tblConsumosTueste[ConsumoKwh])",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "Temp Prom Fin Curva",
+                                            "expression":  "AVERAGE(tblConsumosTueste[TempfinCurva])",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "Temp Prom Desh",
+                                            "expression":  "AVERAGE(tblConsumosTueste[TempDesh])",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "Temp Prom Recu",
+                                            "expression":  "AVERAGE(tblConsumosTueste[TempRecu])",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "Temp Prom 1Crack",
+                                            "expression":  "AVERAGE(tblConsumosTueste[Temp1Crack])",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "TempSetPont Prom",
+                                            "expression":  "AVERAGE(tblConsumosCurvas[SpTemperatura])",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "TempReal Prom",
+                                            "expression":  "AVERAGE(tblConsumosCurvas[TempReal])",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "PctGas Prom",
+                                            "expression":  "AVERAGE(tblConsumosCurvas[PctGas])",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "PctAire Prom",
+                                            "expression":  "AVERAGE(tblConsumosCurvas[PctAire])",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_Orden",
+                                            "expression":  "\nFORMAT(SELECTEDVALUE(tblConsumosTueste[NumeroOrden]), \"0\")",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_Cliente",
+                                            "expression":  "\nFIRSTNONBLANK(tblConsumosTueste[Nombre], 1)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_FechaIngreso",
+                                            "expression":  "\nMIN(tblConsumosTueste[FechaIngreso])",
+                                            "formatString":  "General Date",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_PesoCv",
+                                            "expression":  "\nSELECTEDVALUE(tblConsumosTueste[PesoCv], 0)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_HoraIni",
+                                            "expression":  "\nVAR FH = MIN(tblConsumosTueste[FechaHoraIni])\nVAR Texto = FORMAT(FH, \"00000000000000\")\nVAR HH = MID(Texto, 11, 2)\nVAR mi = MID(Texto, 13, 2)\nRETURN IF(ISBLANK(FH) || FH = 0, \"—\", HH \u0026 \":\" \u0026 mi)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_HoraFin",
+                                            "expression":  "\nVAR FH = MAX(tblConsumosTueste[FechaHoraFin])\nVAR Texto = FORMAT(FH, \"00000000000000\")\nVAR HH = MID(Texto, 11, 2)\nVAR mi = MID(Texto, 13, 2)\nRETURN IF(ISBLANK(FH) || FH = 0, \"—\", HH \u0026 \":\" \u0026 mi)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_TempDesh",
+                                            "expression":  "SELECTEDVALUE(tblConsumosTueste[TempDesh], 0)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_TempRecu",
+                                            "expression":  "SELECTEDVALUE(tblConsumosTueste[TempRecu], 0)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_Temp1Crack",
+                                            "expression":  "SELECTEDVALUE(tblConsumosTueste[Temp1Crack], 0)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_TempFinCurva",
+                                            "expression":  "SELECTEDVALUE(tblConsumosTueste[TempfinCurva], 0)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_TiempoDesh",
+                                            "expression":  "SELECTEDVALUE(tblConsumosTueste[TiempoDesh], TIME(0,0,0))",
+                                            "formatString":  "General Date",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_TiempoRecu",
+                                            "expression":  "SELECTEDVALUE(tblConsumosTueste[TiempoRecu], TIME(0,0,0))",
+                                            "formatString":  "General Date",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_Tiempo1Crack",
+                                            "expression":  "SELECTEDVALUE(tblConsumosTueste[Tiempo1Crack], TIME(0,0,0))",
+                                            "formatString":  "General Date",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_TiempoFinCurva",
+                                            "expression":  "SELECTEDVALUE(tblConsumosTueste[TiempofinCurva], TIME(0,0,0))",
+                                            "formatString":  "General Date",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_TiempoTueste",
+                                            "expression":  "SELECTEDVALUE(tblConsumosTueste[TiempoTueste], TIME(0,0,0))",
+                                            "formatString":  "General Date",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_TiempoEnfr",
+                                            "expression":  "SELECTEDVALUE(tblConsumosTueste[TiempoEnfriamiento], TIME(0,0,0))",
+                                            "formatString":  "General Date",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_PesoCt",
+                                            "expression":  "SELECTEDVALUE(tblConsumosTueste[PesoCt], 0)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "M_Rendimiento",
+                                            "expression":  "\nVAR CV = SELECTEDVALUE(tblConsumosTueste[PesoCv])\nVAR CT = SELECTEDVALUE(tblConsumosTueste[PesoCt])\nRETURN\nIF(\n    CV \u003e 0,\n    ROUND((CT / CV) * 100, 2),\n    0\n)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "Linea TempDesh",
+                                            "expression":  "\nCALCULATE(\n    MAX(tblConsumosTueste[TempDesh]),\n    ALLEXCEPT(tblConsumosTueste, tblConsumosTueste[NumeroOrden])\n)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "Linea TempRecu",
+                                            "expression":  "\nCALCULATE(\n    MAX(tblConsumosTueste[TempRecu]),\n    ALLEXCEPT(tblConsumosTueste, tblConsumosTueste[NumeroOrden])\n)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "Linea Temp1Crack",
+                                            "expression":  "\nCALCULATE(\n    MAX(tblConsumosTueste[Temp1Crack]),\n    ALLEXCEPT(tblConsumosTueste, tblConsumosTueste[NumeroOrden])\n)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        },
+                                        {
+                                            "name":  "Linea TempfinCurva",
+                                            "expression":  "\nCALCULATE(\n    MAX(tblConsumosTueste[TempfinCurva]),\n    ALLEXCEPT(tblConsumosTueste, tblConsumosTueste[NumeroOrden])\n)",
+                                            "formatString":  "",
+                                            "isHidden":  false
+                                        }
+                                    ]
+                   },
+                   {
+                       "name":  "tblConsumosCurvas",
+                       "isHidden":  false,
+                       "columns":  [
+                                       {
+                                           "name":  "RowNumber-2662979B-1795-4F74-8F37-6A1BA8059B61",
+                                           "dataType":  "Int64",
+                                           "isHidden":  true
+                                       },
+                                       {
+                                           "name":  "Id",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "FechaHora",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "SpTemperatura",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TempReal",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "PctAire",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "PctGas",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "NumeroOrden",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Batche",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdOrden",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "HoraFormato",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Hora10Seg",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Hora10SegFormato",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       }
+                                   ],
+                       "measures":  [
+
+                                    ]
+                   },
+                   {
+                       "name":  "tblClientes",
+                       "isHidden":  false,
+                       "columns":  [
+                                       {
+                                           "name":  "RowNumber-2662979B-1795-4F74-8F37-6A1BA8059B61",
+                                           "dataType":  "Int64",
+                                           "isHidden":  true
+                                       },
+                                       {
+                                           "name":  "Id",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdtipoCliente",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdTipoIdentificacion",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdEstadoCliente",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "FechaRegistro",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Codigo",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Nombre",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Apellidos",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Telefono",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Direccion",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Email",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "created_at",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "updated_at",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "RepresentanteLegal",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Clientes",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       }
+                                   ],
+                       "measures":  [
+
+                                    ]
+                   },
+                   {
+                       "name":  "tblOrdenes",
+                       "isHidden":  false,
+                       "columns":  [
+                                       {
+                                           "name":  "RowNumber-2662979B-1795-4F74-8F37-6A1BA8059B61",
+                                           "dataType":  "Int64",
+                                           "isHidden":  true
+                                       },
+                                       {
+                                           "name":  "Id",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdClientes",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdInvenCafe",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdEstadoOrden",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdVaridadCafe",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdProcesoInvCafe",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdEmpaque",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdTamanoEmpaque",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "FechaIngreso",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "FechaIncioOrden",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "FechaEntrega",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Orden",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Notas",
+                                           "dataType":  "String",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Trilla",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "SelecCafeVerde",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Tueste",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "SelecCafeTostado",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Molienda",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Empaque",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "ConfTrilla",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "ConfSelVerde",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "ConfTueste",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "ConfSelTostado",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "ConfMolienda",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "ConfEmpaque",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Prioridad",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "created_at",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "updated_at",
+                                           "dataType":  "DateTime",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "EtiquetaInvima",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "Peso",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "PesoBruto",
+                                           "dataType":  "Double",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "SacosEntero",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "TrabajoEmpaque",
+                                           "dataType":  "Boolean",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdEmpleado",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "estado_inven_cafe",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdProcesoInvenCafe",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       },
+                                       {
+                                           "name":  "IdVariedadCafe",
+                                           "dataType":  "Int64",
+                                           "isHidden":  false
+                                       }
+                                   ],
+                       "measures":  [
+
+                                    ]
+                   }
+               ],
+    "relationships":  [
+                          {
+                              "fromTable":  "tblConsumosTueste",
+                              "fromColumn":  "NumeroOrden",
+                              "toTable":  "tblConsumosCurvas",
+                              "toColumn":  "NumeroOrden",
+                              "isActive":  true
+                          },
+                          {
+                              "fromTable":  "Calendario",
+                              "fromColumn":  "Fecha",
+                              "toTable":  "tblConsumosTueste",
+                              "toColumn":  "FechaIngreso",
+                              "isActive":  true
+                          },
+                          {
+                              "fromTable":  "tblClientes",
+                              "fromColumn":  "Id",
+                              "toTable":  "tblOrdenes",
+                              "toColumn":  "IdClientes",
+                              "isActive":  true
+                          }
+                      ]
+}

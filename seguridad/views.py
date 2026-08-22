@@ -11,7 +11,6 @@ from django.views.decorators.http import require_http_methods
 
 from django.core.exceptions import ValidationError
 
-from .decorators import es_peticion_fragmento
 from .forms import ModuloForm, PermisoCampoForm, PermisoForm, RolForm
 from .helpers import es_programador, puede_editar_campo, tiene_modulo, tiene_permiso
 from .models import Modulo, Permiso, PermisoCampo, Rol, RolModulo, RolPermiso
@@ -42,15 +41,6 @@ def _requiere_acceso_seguridad(predicate):
         def wrapped(request, *args, **kwargs):
             if predicate(request.user):
                 return view_func(request, *args, **kwargs)
-
-            if es_peticion_fragmento(request):
-                return render(
-                    request,
-                    'includes/_modal_permiso_denegado.html',
-                    {'message': 'No tienes permiso para acceder a esta sección.'},
-                    status=403,
-                )
-
             return HttpResponseForbidden('No tienes permiso para acceder a esta sección.')
         return wrapped
     return decorator

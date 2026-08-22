@@ -3,24 +3,30 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_http_methods
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.cache import cache
-from django.db import transaction
-from django.db.models import Max, Q
+from django.db.models import Q, Sum
 from django import forms
+from django.utils import timezone
 import re
 from uuid import uuid4
-from django.utils import timezone
-from django.core.exceptions import ValidationError
 
 from .models import DetalleTueste, Tueste
+from clientes.models import Cliente
+from estado_ordenes.models import EstadoOrden
+from ordenes.forms import enforce_parent_order_not_completed
 from ordenes.models import Orden
 from seguridad.decorators import permiso_accion_requerido
 from seguridad.helpers import puede_editar_campo, tiene_permiso_accion
 from seguridad.models import PermisoCampo
-from estado_ordenes.models import EstadoOrden
 from estado_tareas.models import EstadoTarea
 from nivel_tueste.models import NivelTueste
 from inventario_cafe.models import InventarioCafe
-from clientes.models import Cliente
+
+
+COMPLETADA_BATCHES_PENDIENTES_ERROR = 'No es posible completar la Orden de Tueste porque existen batches pendientes de finalizar. Todos los batches deben estar en estado Completada antes de completar la orden.'
+COMPLETADA_PESOS_ERROR = 'No es posible completar la Orden de Tueste porque el Peso Café Verde Total o el Peso Café Tostado Total son menores o iguales a cero.'
+KILOS_VERDES_BATCHES_REQUERIDOS_ERROR = 'Todos los batches deben tener un valor de Kilos Verdes mayor a cero para crear la Orden de Tueste.'
+
+
 def obtener_rol_usuario(user):
     perfil = getattr(user, 'perfilusuario', None) or getattr(user, 'profile', None)
     rol = getattr(perfil, 'rol', None)
@@ -112,10 +118,10 @@ def calcular_rendimiento_tueste(peso_verde_total, peso_tostado_total):
     except (TypeError, ValueError):
         tostado = 0.0
 
-    if verde == 0:
+    if tostado == 0:
         return 0.0
 
-    return round((tostado / verde) * 100, 2)
+    return round((verde / tostado) * 100, 2)
 
 
 def pesos_completan_tueste(peso_verde_total, peso_tostado_total):
@@ -132,43 +138,50 @@ def pesos_completan_tueste(peso_verde_total, peso_tostado_total):
     return verde > 0 and tostado > 0
 
 
-TUESTE_COMPLETADA_PESOS_ERROR = 'No es posible colocar el Tueste en estado Completada porque Peso Café Verde Total o Peso Café Tostado Total son menores o iguales a cero.'
-TUESTE_COMPLETADA_TOSTADO_TOTAL_ERROR = 'No es posible colocar la Orden de Tueste en estado Completada porque el Peso Café Tostado Total es menor o igual a cero.'
-TUESTE_COMPLETADA_BATCHES_ERROR = 'No es posible colocar el Tueste en estado Completada porque existen batches con Kilos Verdes o Kilos Tostado menores o iguales a cero.'
+def obtener_estado_tarea_completada():
+    return EstadoTarea.objects.filter(estado_tareas__iexact='Completada').first()
 
 
-def estado_tarea_es_completada(estado_tareas):
-    return (getattr(estado_tareas, 'estado_tareas', '') or '').strip().lower() == 'completada'
+def recalcular_totales_tueste_desde_batches(tueste):
+    totales = tueste.batches.aggregate(
+        peso_verde_total=Sum('kilos_verde'),
+        peso_tostado_total=Sum('kilos_tostado'),
+    )
+    tueste.peso_cafe_vede_total = float(totales.get('peso_verde_total') or 0)
+    tueste.peso_cafe_tostado_total = float(totales.get('peso_tostado_total') or 0)
+    tueste.rendimiento = calcular_rendimiento_tueste(
+        tueste.peso_cafe_vede_total,
+        tueste.peso_cafe_tostado_total,
+    )
+    tueste.updated_at = timezone.now()
+    tueste.save(update_fields=[
+        'peso_cafe_vede_total',
+        'peso_cafe_tostado_total',
+        'rendimiento',
+        'updated_at',
+    ])
 
 
-def batch_tiene_pesos_invalidos(batch):
-    kilos_verde = getattr(batch, 'kilos_verde', None)
-    kilos_tostado = getattr(batch, 'kilos_tostado', None)
-    return kilos_verde is None or kilos_tostado is None or kilos_verde <= 0 or kilos_tostado <= 0
+def respuesta_guardado_batch(request):
+    if request.GET.get('fragment') == '1' or request.headers.get('X-Fragment'):
+        return listar_ordenes_tueste(request)
+    return redirect('ordenes_tueste_listar')
 
 
-def hay_batches_validos_tostado(batches_qs):
-    return any((getattr(batch, 'kilos_tostado', None) or 0) > 0 for batch in batches_qs)
+def respuesta_guardado_batch_en_modal_padre(request, tueste):
+    detalle_batches = tueste.batches.select_related('estado_orden', 'nivel_tueste').all()
+    form = TuesteForm(instance=tueste)
+    form._request_user = request.user
+    if es_tostador(request.user):
+        aplicar_restricciones_form_tostador(form)
 
-
-def validar_tueste_completado(objeto_tueste, batches_qs=None):
-    if not estado_tarea_es_completada(getattr(objeto_tueste, 'estado_tareas', None)):
-        return
-
-    objeto_tueste.sincronizar_peso_cafe_tostado_total()
-
-    if (objeto_tueste.peso_cafe_tostado_total or 0) <= 0:
-        raise forms.ValidationError(TUESTE_COMPLETADA_TOSTADO_TOTAL_ERROR)
-
-    if not pesos_completan_tueste(objeto_tueste.peso_cafe_vede_total, objeto_tueste.peso_cafe_tostado_total):
-        raise forms.ValidationError(TUESTE_COMPLETADA_PESOS_ERROR)
-
-    batches_qs = list(batches_qs if batches_qs is not None else objeto_tueste.batches.all())
-    if not hay_batches_validos_tostado(batches_qs):
-        raise forms.ValidationError(TUESTE_COMPLETADA_TOSTADO_TOTAL_ERROR)
-
-    if any(batch_tiene_pesos_invalidos(batch) for batch in batches_qs):
-        raise forms.ValidationError(TUESTE_COMPLETADA_BATCHES_ERROR)
+    response = render(request, 'tueste/detail_OrdenesTueste.html', {
+        'form': form,
+        'tueste': tueste,
+        'detalle_batches': detalle_batches,
+    })
+    response['X-Modal-Update-Parent'] = '1'
+    return response
 
 
 def tiene_campos_editables(user, objeto) -> bool:
@@ -234,14 +247,14 @@ class TuesteForm(forms.ModelForm):
             'peso_cafe_tostado': forms.NumberInput(attrs={'class':'w-full input', 'step':'0.01'}),
             'rendimiento': forms.NumberInput(attrs={'class':'w-full input', 'step':'0.01', 'readonly':'readonly'}),
             'peso_cafe_vede_total': forms.NumberInput(attrs={'class':'w-full input', 'step':'0.01'}),
-            'peso_cafe_tostado_total': forms.NumberInput(attrs={'class':'w-full input', 'step':'0.01', 'readonly':'readonly'}),
+            'peso_cafe_tostado_total': forms.NumberInput(attrs={'class':'w-full input', 'step':'0.01'}),
             'notas': forms.TextInput(attrs={'class':'w-full input'}),
             'notas_op': forms.TextInput(attrs={'class':'w-full input'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        base_qs = Orden.objects.filter(tueste_flag=True).order_by('-id')
+        base_qs = Orden.objects.all().order_by('-id')
         estado_pendiente = EstadoTarea.objects.filter(estado_tareas__iexact='Pendiente').order_by('id').first()
         self.fields['cliente'].queryset = Cliente.objects.all().order_by('nombre', 'apellidos', 'id')
         if self.is_bound:
@@ -249,8 +262,9 @@ class TuesteForm(forms.ModelForm):
         else:
             self.fields['orden'].queryset = base_qs.select_related('cliente')[:200]
         self.fields['orden'].empty_label = 'Seleccione una orden'
-        self.fields['cliente'].empty_label = 'Seleccione un cliente'
         self.fields['inventario_cafe_ref'].empty_label = 'Seleccione un café'
+        self.fields['cliente'].empty_label = 'Seleccione un cliente'
+
         cliente = None
         orden_id = self.data.get('orden') if self.is_bound else None
         if orden_id:
@@ -260,114 +274,96 @@ class TuesteForm(forms.ModelForm):
                 cliente = None
         elif getattr(self.instance, 'orden', None) is not None:
             cliente = getattr(self.instance.orden, 'cliente', None)
+
         if cliente is not None:
             self.fields['cliente'].initial = cliente.pk
             self.initial['cliente'] = cliente.pk
+
         if estado_pendiente is not None and not getattr(self.instance, 'pk', None) and not self.is_bound:
             self.fields['estado_tareas'].initial = estado_pendiente.pk
             self.initial['estado_tareas'] = estado_pendiente.pk
-
-    def clean_orden(self):
-        orden = self.cleaned_data.get('orden')
-        if orden and not getattr(orden, 'tueste_flag', False):
-            raise forms.ValidationError('Solo se permiten órdenes de producción con tueste habilitado.')
-        return orden
-
-    def clean(self):
-        return super().clean()
 
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.batche = 0
         instance.peso_cafe_vede = 0
         instance.peso_cafe_tostado = 0
-        instance.sincronizar_peso_cafe_tostado_total()
 
         if commit:
             instance.save()
 
         return instance
 
+    def clean(self):
+        cleaned_data = super().clean()
+        if not enforce_parent_order_not_completed(self):
+            return cleaned_data
 
-class DetalleTuesteForm(forms.ModelForm):
-    nivel_tueste = forms.ModelChoiceField(
-        queryset=NivelTueste.objects.all().order_by('nivel_tueste'),
-        required=False,
-        widget=forms.Select(attrs={'class':'w-full select'})
-    )
-    estado_orden = forms.ModelChoiceField(
-        queryset=EstadoOrden.objects.all().order_by('estado_orden', 'id'),
-        required=False,
-        widget=forms.Select(attrs={'class':'w-full select'})
-    )
+        if not getattr(self.instance, 'pk', None):
+            nivel_tueste = cleaned_data.get('nivel_tueste')
+            peso_verde_total = cleaned_data.get('peso_cafe_vede_total')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.is_bound or getattr(self.instance, 'pk', None):
-            return
+            if not nivel_tueste:
+                self.add_error('nivel_tueste', 'Debe seleccionar un Nivel de Tueste.')
 
-        estado_pendiente = EstadoOrden.objects.filter(estado_orden__iexact='Pendiente').order_by('id').first()
-        if estado_pendiente is not None:
-            self.initial.setdefault('estado_orden', estado_pendiente.pk)
+            try:
+                peso_valor = float(peso_verde_total)
+            except (TypeError, ValueError):
+                peso_valor = 0.0
+
+            if peso_verde_total is None or peso_valor <= 0:
+                self.add_error('peso_cafe_vede_total', 'El Peso Café Verde Total debe ser mayor que cero.')
+
+            if self.errors:
+                return cleaned_data
+
+        if getattr(self.instance, 'pk', None) and self.instance.batches.filter(
+            Q(kilos_verde__isnull=True) | Q(kilos_verde__lte=0)
+        ).exists():
+            raise forms.ValidationError(KILOS_VERDES_BATCHES_REQUERIDOS_ERROR)
+
+        estado_tareas = cleaned_data.get('estado_tareas')
+        estado_nombre = (getattr(estado_tareas, 'estado_tareas', '') or '').strip().lower()
+        if estado_nombre != 'completada':
+            return cleaned_data
+
+        peso_verde_total = cleaned_data.get('peso_cafe_vede_total')
+        peso_tostado_total = cleaned_data.get('peso_cafe_tostado_total')
+        if not pesos_completan_tueste(peso_verde_total, peso_tostado_total):
+            raise forms.ValidationError(COMPLETADA_PESOS_ERROR)
+
+        if getattr(self.instance, 'pk', None) and self.instance.batches.exclude(estado_orden__estado_orden__iexact='Completada').exists():
+            raise forms.ValidationError(COMPLETADA_BATCHES_PENDIENTES_ERROR)
+
+        return cleaned_data
+
+
+class BatchTuesteForm(forms.ModelForm):
+    estado_orden = forms.ModelChoiceField(queryset=EstadoOrden.objects.all().order_by('estado_orden'), required=False, widget=forms.Select(attrs={'class':'w-full select'}))
+    nivel_tueste = forms.ModelChoiceField(queryset=NivelTueste.objects.all().order_by('nivel_tueste'), required=False, widget=forms.Select(attrs={'class':'w-full select'}))
 
     class Meta:
         model = DetalleTueste
         fields = ['estado_orden', 'nivel_tueste', 'kilos_verde', 'kilos_tostado', 'observaciones']
         widgets = {
-            'kilos_verde': forms.NumberInput(attrs={'class':'w-full input', 'step':'0.01', 'min':'0'}),
-            'kilos_tostado': forms.NumberInput(attrs={'class':'w-full input', 'step':'0.01', 'min':'0'}),
+            'kilos_verde': forms.NumberInput(attrs={'class':'w-full input', 'step':'0.01'}),
+            'kilos_tostado': forms.NumberInput(attrs={'class':'w-full input', 'step':'0.01'}),
             'observaciones': forms.TextInput(attrs={'class':'w-full input', 'maxlength':'500'}),
         }
 
-    def clean_kilos_verde(self):
-        kilos_verde = self.cleaned_data.get('kilos_verde')
-        if kilos_verde is not None and kilos_verde < 0:
-            raise forms.ValidationError('Los kilos verdes deben ser mayores o iguales a 0.')
-        return kilos_verde
-
-    def clean_kilos_tostado(self):
-        kilos_tostado = self.cleaned_data.get('kilos_tostado')
-        if kilos_tostado is not None and kilos_tostado < 0:
-            raise forms.ValidationError('Los kilos tostado deben ser mayores o iguales a 0.')
-        return kilos_tostado
-
-    def clean(self):
-        cleaned_data = super().clean()
-        self.instance.estado_orden = cleaned_data.get('estado_orden')
-        self.instance.kilos_verde = cleaned_data.get('kilos_verde')
-        self.instance.kilos_tostado = cleaned_data.get('kilos_tostado')
-
-        try:
-            self.instance.validar_estado_orden_con_pesos()
-        except ValidationError as exc:
-            self.add_error(None, exc.message)
-
-        return cleaned_data
-
-
-def obtener_batches_tueste(tueste):
-    return tueste.batches.select_related('nivel_tueste', 'estado_orden').all()
-
-
-def validar_batch_estado_orden(form, detalle):
-    detalle.estado_orden = form.cleaned_data.get('estado_orden')
-    detalle.kilos_verde = form.cleaned_data.get('kilos_verde')
-    detalle.kilos_tostado = form.cleaned_data.get('kilos_tostado')
-    detalle.validar_estado_orden_con_pesos()
-
 
 def _build_orden_tueste_defaults(orden):
-    inventario_cafe = getattr(orden, 'id_inven_cafe', None)
-    estado_pendiente = EstadoTarea.objects.filter(estado_tareas__iexact='Pendiente').order_by('id').first()
     cliente = getattr(orden, 'cliente', None)
+    inventario = getattr(orden, 'id_inven_cafe', None)
+    estado_pendiente = EstadoTarea.objects.filter(estado_tareas__iexact='Pendiente').order_by('id').first()
 
     return {
         'cliente_id': getattr(cliente, 'id', None),
         'cliente_label': str(cliente) if cliente is not None else '',
-        'inventario_cafe_ref_id': getattr(inventario_cafe, 'id', None),
-        'inventario_cafe_ref_label': str(inventario_cafe) if inventario_cafe is not None else '',
+        'inventario_cafe_ref_id': getattr(inventario, 'id', None),
+        'inventario_cafe_ref_label': str(inventario) if inventario is not None else '',
         'estado_tareas_id': getattr(estado_pendiente, 'id', None),
-        'estado_tareas_label': str(estado_pendiente) if estado_pendiente is not None else '',
+        'estado_tareas_label': getattr(estado_pendiente, 'estado_tareas', '') if estado_pendiente is not None else '',
     }
 
 
@@ -379,35 +375,11 @@ def orden_tueste_defaults(request):
         return JsonResponse(_build_orden_tueste_defaults(Orden()))
 
     try:
-        orden = Orden.objects.select_related('id_inven_cafe', 'cliente').get(pk=orden_id, tueste_flag=True)
+        orden = Orden.objects.select_related('cliente', 'id_inven_cafe').get(pk=orden_id)
     except (TypeError, ValueError, Orden.DoesNotExist):
         return JsonResponse({'detail': 'Orden no encontrada.'}, status=404)
 
     return JsonResponse(_build_orden_tueste_defaults(orden))
-
-
-def siguiente_numero_batch(tueste):
-    ultimo = tueste.batches.aggregate(max_batch=Max('numero_batch')).get('max_batch') or 0
-    return ultimo + 1
-
-
-def construir_contexto_tueste(request, tueste, form=None):
-    form = form or TuesteForm(instance=tueste)
-    form._request_user = request.user
-    user_is_tostador = es_tostador(request.user)
-    if user_is_tostador:
-        aplicar_restricciones_form_tostador(form)
-
-    return {
-        'form': form,
-        'tueste': tueste,
-        'detalle_batches': obtener_batches_tueste(tueste),
-        'user_is_tostador': user_is_tostador,
-    }
-
-
-def render_editar_tueste(request, tueste, form=None):
-    return render(request, 'tueste/detail_OrdenesTueste.html', construir_contexto_tueste(request, tueste, form=form))
 
 
 @permiso_accion_requerido('tueste.view_tueste', 'ver_orden_tueste')
@@ -470,7 +442,7 @@ def listar_ordenes_tueste(request):
 @require_http_methods(["GET","POST"])
 @permiso_accion_requerido('tueste.add_tueste', 'crear_orden_tueste')
 def add_orden_tueste(request):
-    is_fragment = request.GET.get('fragment') == '1' or request.headers.get('X-Fragment')
+    is_fragment = request.headers.get('X-Fragment') or request.GET.get('fragment') == '1'
 
     def new_submit_token():
         return uuid4().hex
@@ -478,8 +450,8 @@ def add_orden_tueste(request):
     def render_form(form):
         return render(request, 'tueste/add_OrdenesTueste.html', {
             'form': form,
-            'submit_token': new_submit_token(),
             'detalle_batches': [],
+            'submit_token': new_submit_token(),
         })
 
     def duplicate_response():
@@ -490,6 +462,8 @@ def add_orden_tueste(request):
     if request.method == 'POST':
         form = TuesteForm(request.POST)
         if form.is_valid():
+            if not enforce_parent_order_not_completed(form):
+                return render_form(form)
             submitted_flag = request.POST.get('_submitted')
             submission_token = request.POST.get('_submission_token', '').strip()
 
@@ -503,18 +477,14 @@ def add_orden_tueste(request):
                 obj.peso_cafe_vede_total,
                 obj.peso_cafe_tostado_total,
             )
+            from django.utils import timezone
             obj.fecha_ingreso = timezone.now()
             obj.created_at = timezone.now()
             obj.updated_at = timezone.now()
-            try:
-                validar_tueste_completado(obj, batches_qs=[])
-            except forms.ValidationError as exc:
-                form.add_error(None, exc.message)
-            else:
-                obj.save()
-                if is_fragment:
-                    return listar_ordenes_tueste(request)
-                return redirect('ordenes_tueste_listar')
+            obj.save()
+            if is_fragment:
+                return listar_ordenes_tueste(request)
+            return redirect('ordenes_tueste_listar')
     else:
         form = TuesteForm()
     if is_fragment:
@@ -527,11 +497,16 @@ def add_orden_tueste(request):
 def edit_orden_tueste(request, pk):
     tueste = get_object_or_404(Tueste, pk=pk)
     user_is_tostador = es_tostador(request.user)
+    detalle_batches = tueste.batches.select_related('estado_orden', 'nivel_tueste').all()
 
     if request.method == 'POST':
         form = TuesteForm(request.POST, instance=tueste)
         form._request_user = request.user
         if form.is_valid():
+            if not enforce_parent_order_not_completed(form):
+                if request.GET.get('fragment') == '1' or request.headers.get('X-Fragment'):
+                    return render(request, 'tueste/detail_OrdenesTueste.html', {'form': form, 'tueste': tueste, 'detalle_batches': detalle_batches})
+                return render(request, 'tueste/listar_OrdenesTueste.html', {})
             obj = form.save(commit=False)
             obj._request_user = request.user
             if user_is_tostador:
@@ -540,16 +515,27 @@ def edit_orden_tueste(request, pk):
                 obj.peso_cafe_vede_total,
                 obj.peso_cafe_tostado_total,
             )
+            if obj.pk and pesos_completan_tueste(
+                obj.peso_cafe_vede_total,
+                obj.peso_cafe_tostado_total,
+            ):
+                if obj.batches.exclude(estado_orden__estado_orden__iexact='Completada').exists():
+                    form.add_error(None, COMPLETADA_BATCHES_PENDIENTES_ERROR)
+                else:
+                    estado_completada = obtener_estado_tarea_completada()
+                    if estado_completada is not None:
+                        obj.estado_tareas = estado_completada
+            if form.errors:
+                if user_is_tostador:
+                    aplicar_restricciones_form_tostador(form)
+                if request.GET.get('fragment') == '1' or request.headers.get('X-Fragment'):
+                    return render(request, 'tueste/detail_OrdenesTueste.html', {'form': form, 'tueste': tueste, 'detalle_batches': detalle_batches})
+                return render(request, 'tueste/listar_OrdenesTueste.html', {})
             obj.updated_at = timezone.now()
-            try:
-                validar_tueste_completado(obj, batches_qs=tueste.batches.all())
-            except forms.ValidationError as exc:
-                form.add_error(None, exc.message)
-            else:
-                obj.save()
-                if request.headers.get('X-Fragment'):
-                    return listar_ordenes_tueste(request)
-                return redirect('ordenes_tueste_listar')
+            obj.save()
+            if request.headers.get('X-Fragment'):
+                return listar_ordenes_tueste(request)
+            return redirect('ordenes_tueste_listar')
     else:
         form = TuesteForm(instance=tueste)
         form._request_user = request.user
@@ -558,8 +544,66 @@ def edit_orden_tueste(request, pk):
         aplicar_restricciones_form_tostador(form)
 
     if request.GET.get('fragment') == '1' or request.headers.get('X-Fragment'):
-        return render_editar_tueste(request, tueste, form=form)
+        return render(request, 'tueste/detail_OrdenesTueste.html', {'form': form, 'tueste': tueste, 'detalle_batches': detalle_batches})
     return render(request, 'tueste/listar_OrdenesTueste.html', {})
+
+
+@require_http_methods(["GET", "POST"])
+@permiso_accion_requerido('tueste.change_tueste', 'editar_orden_tueste')
+def add_batch_tueste(request, pk):
+    tueste = get_object_or_404(Tueste, pk=pk)
+    numero_batch = (tueste.batches.order_by('-numero_batch').values_list('numero_batch', flat=True).first() or 0) + 1
+
+    if request.method == 'POST':
+        form = BatchTuesteForm(request.POST)
+        if form.is_valid():
+            detalle = form.save(commit=False)
+            detalle.tueste = tueste
+            detalle.numero_batch = numero_batch
+            if not detalle.fecha_ingreso:
+                detalle.fecha_ingreso = timezone.now()
+            detalle.save()
+            recalcular_totales_tueste_desde_batches(tueste)
+            tueste.refresh_from_db()
+            if request.GET.get('fragment') == '1' or request.headers.get('X-Fragment'):
+                return respuesta_guardado_batch_en_modal_padre(request, tueste)
+            return respuesta_guardado_batch(request)
+    else:
+        form = BatchTuesteForm()
+
+    return render(request, 'tueste/batch_OrdenesTueste.html', {
+        'form': form,
+        'tueste': tueste,
+        'numero_batch': numero_batch,
+    })
+
+
+@require_http_methods(["GET", "POST"])
+@permiso_accion_requerido('tueste.change_tueste', 'editar_orden_tueste')
+def edit_batch_tueste(request, pk, detalle_pk):
+    tueste = get_object_or_404(Tueste, pk=pk)
+    detalle = get_object_or_404(DetalleTueste, pk=detalle_pk, tueste=tueste)
+
+    if request.method == 'POST':
+        form = BatchTuesteForm(request.POST, instance=detalle)
+        if form.is_valid():
+            detalle = form.save(commit=False)
+            detalle.tueste = tueste
+            detalle.save()
+            recalcular_totales_tueste_desde_batches(tueste)
+            tueste.refresh_from_db()
+            if request.GET.get('fragment') == '1' or request.headers.get('X-Fragment'):
+                return respuesta_guardado_batch_en_modal_padre(request, tueste)
+            return respuesta_guardado_batch(request)
+    else:
+        form = BatchTuesteForm(instance=detalle)
+
+    return render(request, 'tueste/batch_OrdenesTueste.html', {
+        'form': form,
+        'tueste': tueste,
+        'detalle': detalle,
+        'numero_batch': detalle.numero_batch,
+    })
 
 
 @permiso_accion_requerido('tueste.delete_tueste', 'eliminar_orden_tueste')
@@ -573,81 +617,3 @@ def delete_orden_tueste(request, pk):
     if request.GET.get('fragment') == '1' or request.headers.get('X-Fragment'):
         return render(request, 'tueste/confirm_delete_OrdenesTueste.html', {'t': t})
     return render(request, 'tueste/listar_OrdenesTueste.html', {})
-
-
-@require_http_methods(["GET", "POST"])
-@permiso_accion_requerido('tueste.change_tueste', 'editar_orden_tueste')
-def add_batch_tueste(request, pk):
-    tueste = get_object_or_404(Tueste, pk=pk)
-    numero_batch = siguiente_numero_batch(tueste)
-
-    if request.method == 'POST':
-        form = DetalleTuesteForm(request.POST)
-        if form.is_valid():
-            detalle = form.save(commit=False)
-            detalle.tueste = tueste
-            detalle.numero_batch = siguiente_numero_batch(tueste)
-            detalle.fecha_ingreso = timezone.now()
-
-            try:
-                validar_batch_estado_orden(form, detalle)
-            except ValidationError as exc:
-                form.add_error(None, exc.message)
-            else:
-                with transaction.atomic():
-                    detalle.save()
-                    tueste.sincronizar_peso_cafe_tostado_total()
-                    tueste.updated_at = timezone.now()
-                    tueste.save(update_fields=['peso_cafe_tostado_total', 'updated_at'])
-                if request.headers.get('X-Fragment') or request.GET.get('fragment') == '1':
-                    return render_editar_tueste(request, tueste)
-                return redirect('orden_tueste_editar', pk=tueste.pk)
-    else:
-        form = DetalleTuesteForm()
-
-    if request.headers.get('X-Fragment') or request.GET.get('fragment') == '1':
-        return render(request, 'tueste/batch_OrdenesTueste.html', {
-            'form': form,
-            'tueste': tueste,
-            'detalle': None,
-            'numero_batch': numero_batch,
-        })
-    return redirect('orden_tueste_editar', pk=tueste.pk)
-
-
-@require_http_methods(["GET", "POST"])
-@permiso_accion_requerido('tueste.change_tueste', 'editar_orden_tueste')
-def edit_batch_tueste(request, pk, detalle_pk):
-    tueste = get_object_or_404(Tueste, pk=pk)
-    detalle = get_object_or_404(DetalleTueste, pk=detalle_pk, tueste=tueste)
-
-    if request.method == 'POST':
-        form = DetalleTuesteForm(request.POST, instance=detalle)
-        if form.is_valid():
-            detalle_actualizado = form.save(commit=False)
-            if not detalle_actualizado.fecha_ingreso:
-                detalle_actualizado.fecha_ingreso = timezone.now()
-
-            try:
-                validar_batch_estado_orden(form, detalle_actualizado)
-            except ValidationError as exc:
-                form.add_error(None, exc.message)
-            else:
-                detalle_actualizado.save()
-                tueste.sincronizar_peso_cafe_tostado_total()
-                tueste.updated_at = timezone.now()
-                tueste.save(update_fields=['peso_cafe_tostado_total', 'updated_at'])
-                if request.headers.get('X-Fragment') or request.GET.get('fragment') == '1':
-                    return render_editar_tueste(request, tueste)
-                return redirect('orden_tueste_editar', pk=tueste.pk)
-    else:
-        form = DetalleTuesteForm(instance=detalle)
-
-    if request.headers.get('X-Fragment') or request.GET.get('fragment') == '1':
-        return render(request, 'tueste/batch_OrdenesTueste.html', {
-            'form': form,
-            'tueste': tueste,
-            'detalle': detalle,
-            'numero_batch': detalle.numero_batch,
-        })
-    return redirect('orden_tueste_editar', pk=tueste.pk)

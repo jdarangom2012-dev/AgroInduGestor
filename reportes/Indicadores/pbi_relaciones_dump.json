@@ -1,0 +1,336 @@
+﻿{
+    "databaseName":  "2a31c15e-6d9c-45ae-b553-cad53b823fbe",
+    "relaciones":  [
+                       {
+                           "name":  "1598084e-7b6f-a04e-c12a-cd6e0c3beaf8",
+                           "fromTable":  "tblConsumosTueste",
+                           "fromColumn":  "NumeroOrden",
+                           "fromCardinality":  "Many",
+                           "toTable":  "tblConsumosCurvas",
+                           "toColumn":  "NumeroOrden",
+                           "toCardinality":  "Many",
+                           "crossFilteringBehavior":  "OneDirection",
+                           "isActive":  true,
+                           "securityFilteringBehavior":  "OneDirection"
+                       },
+                       {
+                           "name":  "61e94745-fe98-0ed6-9036-6db8eae7ceb9",
+                           "fromTable":  "Calendario",
+                           "fromColumn":  "Fecha",
+                           "fromCardinality":  "One",
+                           "toTable":  "tblConsumosTueste",
+                           "toColumn":  "FechaIngreso",
+                           "toCardinality":  "One",
+                           "crossFilteringBehavior":  "BothDirections",
+                           "isActive":  true,
+                           "securityFilteringBehavior":  "OneDirection"
+                       },
+                       {
+                           "name":  "7ab271da-f943-6465-9cb3-9ce71bb2a0e5",
+                           "fromTable":  "tblClientes",
+                           "fromColumn":  "Id",
+                           "fromCardinality":  "One",
+                           "toTable":  "tblOrdenes",
+                           "toColumn":  "IdClientes",
+                           "toCardinality":  "One",
+                           "crossFilteringBehavior":  "BothDirections",
+                           "isActive":  true,
+                           "securityFilteringBehavior":  "OneDirection"
+                       },
+                       {
+                           "name":  "AutoDetected_2d805c75-afe1-4615-a0d1-1453ac8bc50f",
+                           "fromTable":  "tblTueste",
+                           "fromColumn":  "IdOrden",
+                           "fromCardinality":  "Many",
+                           "toTable":  "tblEmpaques",
+                           "toColumn":  "IdOrden",
+                           "toCardinality":  "One",
+                           "crossFilteringBehavior":  "OneDirection",
+                           "isActive":  true,
+                           "securityFilteringBehavior":  "OneDirection"
+                       },
+                       {
+                           "name":  "AutoDetected_2ef1f386-7a10-4020-9a15-66f863336738",
+                           "fromTable":  "tblOrdenesTrilla",
+                           "fromColumn":  "IdOrden",
+                           "fromCardinality":  "Many",
+                           "toTable":  "tblEmpaques",
+                           "toColumn":  "IdOrden",
+                           "toCardinality":  "One",
+                           "crossFilteringBehavior":  "OneDirection",
+                           "isActive":  true,
+                           "securityFilteringBehavior":  "OneDirection"
+                       },
+                       {
+                           "name":  "AutoDetected_0168250a-abbd-46c2-aa17-aa3304bed6ef",
+                           "fromTable":  "tblSeleccionTueste",
+                           "fromColumn":  "IdOrden",
+                           "fromCardinality":  "One",
+                           "toTable":  "tblEmpaques",
+                           "toColumn":  "IdOrden",
+                           "toCardinality":  "One",
+                           "crossFilteringBehavior":  "BothDirections",
+                           "isActive":  true,
+                           "securityFilteringBehavior":  "OneDirection"
+                       },
+                       {
+                           "name":  "AutoDetected_32739fd3-ea14-4a86-8ed3-7f090105fbeb",
+                           "fromTable":  "tblTueste",
+                           "fromColumn":  "IdEstadoTareas",
+                           "fromCardinality":  "Many",
+                           "toTable":  "tblSeleccionTueste",
+                           "toColumn":  "IdEstadoTareas",
+                           "toCardinality":  "One",
+                           "crossFilteringBehavior":  "OneDirection",
+                           "isActive":  false,
+                           "securityFilteringBehavior":  "OneDirection"
+                       },
+                       {
+                           "name":  "64a3556a-9d85-4936-803c-ae6b53ee2ad5",
+                           "fromTable":  "tblOrdenesTrilla",
+                           "fromColumn":  "IdCliente",
+                           "fromCardinality":  "Many",
+                           "toTable":  "tblClientes",
+                           "toColumn":  "Id",
+                           "toCardinality":  "One",
+                           "crossFilteringBehavior":  "OneDirection",
+                           "isActive":  true,
+                           "securityFilteringBehavior":  "OneDirection"
+                       },
+                       {
+                           "name":  "bbf8db0e-bc03-4173-a3b5-6fc15e928503",
+                           "fromTable":  "tblOrdenesTrilla",
+                           "fromColumn":  "IdOrden",
+                           "fromCardinality":  "Many",
+                           "toTable":  "tblOrdenes",
+                           "toColumn":  "Id",
+                           "toCardinality":  "One",
+                           "crossFilteringBehavior":  "OneDirection",
+                           "isActive":  false,
+                           "securityFilteringBehavior":  "OneDirection"
+                       },
+                       {
+                           "name":  "317a2eb8-5343-4e51-8eba-aea3ff0c2e85",
+                           "fromTable":  "tblSeleccionTueste",
+                           "fromColumn":  "IdOrden",
+                           "fromCardinality":  "One",
+                           "toTable":  "tblOrdenes",
+                           "toColumn":  "Id",
+                           "toCardinality":  "One",
+                           "crossFilteringBehavior":  "BothDirections",
+                           "isActive":  false,
+                           "securityFilteringBehavior":  "OneDirection"
+                       },
+                       {
+                           "name":  "77fd148a-1fd5-40a3-9f2f-2ccfd4a79f9d",
+                           "fromTable":  "tblEmpaques",
+                           "fromColumn":  "IdInvenCafe",
+                           "fromCardinality":  "Many",
+                           "toTable":  "tblEstadoCafe",
+                           "toColumn":  "id",
+                           "toCardinality":  "One",
+                           "crossFilteringBehavior":  "OneDirection",
+                           "isActive":  true,
+                           "securityFilteringBehavior":  "OneDirection"
+                       },
+                       {
+                           "name":  "c0305036-e963-4c59-9717-66dce9df44ef",
+                           "fromTable":  "tblEmpaques",
+                           "fromColumn":  "IdOrden",
+                           "fromCardinality":  "One",
+                           "toTable":  "tblOrdenes",
+                           "toColumn":  "Id",
+                           "toCardinality":  "One",
+                           "crossFilteringBehavior":  "BothDirections",
+                           "isActive":  false,
+                           "securityFilteringBehavior":  "OneDirection"
+                       }
+                   ],
+    "tablasAisladas":  [
+                           "tblEstadoOrdenes",
+                           "Medidas",
+                           "TblOrdenesSeleccionVerde"
+                       ],
+    "columnasIdSinRelacion":  [
+                                  {
+                                      "tabla":  "tblConsumosTueste",
+                                      "columna":  "Id",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblConsumosTueste",
+                                      "columna":  "IdOrden",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblConsumosTueste",
+                                      "columna":  "IdCliente",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblEstadoOrdenes",
+                                      "columna":  "Id",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblTueste",
+                                      "columna":  "Id",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblTueste",
+                                      "columna":  "IdNivelTueste",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblTueste",
+                                      "columna":  "IdInventarioCafe",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblConsumosCurvas",
+                                      "columna":  "Id",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblConsumosCurvas",
+                                      "columna":  "IdOrden",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblClientes",
+                                      "columna":  "IdtipoCliente",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblClientes",
+                                      "columna":  "IdTipoIdentificacion",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblClientes",
+                                      "columna":  "IdEstadoCliente",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblOrdenes",
+                                      "columna":  "IdInvenCafe",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblOrdenes",
+                                      "columna":  "IdEstadoOrden",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblOrdenes",
+                                      "columna":  "IdVaridadCafe",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblOrdenes",
+                                      "columna":  "IdProcesoInvCafe",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblOrdenes",
+                                      "columna":  "IdEmpaque",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblOrdenes",
+                                      "columna":  "IdTamanoEmpaque",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblOrdenes",
+                                      "columna":  "IdEmpleado",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblOrdenes",
+                                      "columna":  "IdProcesoInvenCafe",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblOrdenes",
+                                      "columna":  "IdVariedadCafe",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblOrdenesTrilla",
+                                      "columna":  "Id",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblOrdenesTrilla",
+                                      "columna":  "IdEstadoTareas",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblSeleccionTueste",
+                                      "columna":  "Id",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblEmpaques",
+                                      "columna":  "Id",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblEmpaques",
+                                      "columna":  "IdNivelMolienda",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblEmpaques",
+                                      "columna":  "IdEstadoTareas",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "tblEmpaques",
+                                      "columna":  "IdTamanoEmpaque",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "TblOrdenesSeleccionVerde",
+                                      "columna":  "Id",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "TblOrdenesSeleccionVerde",
+                                      "columna":  "IdOrden",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "TblOrdenesSeleccionVerde",
+                                      "columna":  "IdEstadoTareas",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "TblOrdenesSeleccionVerde",
+                                      "columna":  "IdZarandaGrupo1",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "TblOrdenesSeleccionVerde",
+                                      "columna":  "IdZarandaGrupo2",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "TblOrdenesSeleccionVerde",
+                                      "columna":  "IdZarandaGrupo3",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "TblOrdenesSeleccionVerde",
+                                      "columna":  "IdZarandaGrupo4",
+                                      "tipo":  "Int64"
+                                  },
+                                  {
+                                      "tabla":  "TblOrdenesSeleccionVerde",
+                                      "columna":  "IdZarandaGrupo5",
+                                      "tipo":  "Int64"
+                                  }
+                              ]
+}

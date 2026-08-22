@@ -138,43 +138,5 @@
         <button type="submit" class="btn-base btn-primary">Guardar</button>
       </div>
     </form>
-    <script>
-      function iniciarCalculoRendimiento() {
-        const pesoNeto =
-          document.getElementById("id_peso_cafe_neto") ||
-          document.getElementById("id_peso_cafe_bruto") ||
-          document.querySelector('input[name="peso_cafe_neto"], input[name="peso_cafe_bruto"]');
-        const pesoVerde =
-          document.getElementById("id_peso_cafe_verde") ||
-          document.querySelector('input[name="peso_cafe_verde"]');
-        const rendimiento =
-          document.getElementById("id_rendimiento") ||
-          document.querySelector('input[name="rendimiento"]:not([type="hidden"])');
-
-        if (!pesoNeto || !pesoVerde || !rendimiento) return;
-
-        rendimiento.setAttribute("readonly", true);
-
-        function calcular() {
-          const neto = parseFloat(String(pesoNeto.value || '').replace(',', '.'));
-          const verde = parseFloat(String(pesoVerde.value || '').replace(',', '.'));
-
-          if (!neto || neto === 0 || !verde) {
-            rendimiento.value = "";
-            return;
-          }
-
-          const resultado = (verde / neto) * 100;
-          rendimiento.value = resultado.toFixed(2);
-        }
-
-        pesoNeto.addEventListener("input", calcular);
-        pesoVerde.addEventListener("input", calcular);
-
-        calcular();
-      }
-
-      document.addEventListener("DOMContentLoaded", iniciarCalculoRendimiento);
-    </script>
   </div>
 </div>

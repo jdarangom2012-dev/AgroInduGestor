@@ -6,6 +6,7 @@ from cafe_empaque.models import CafeEmpaque
 from clientes.models import Cliente
 from estado_tareas.models import EstadoTarea
 from nivel_molienda.models import NivelMolienda
+from ordenes.forms import enforce_parent_order_not_completed
 from ordenes.models import Orden
 from tamano_empaque.models import TamanoEmpaque
 
@@ -32,6 +33,8 @@ class OrdenClienteSelect(forms.Select):
         cliente_id = getattr(instance, 'cliente_id', None)
         if cliente_id is not None:
             option['attrs']['data-cliente-id'] = str(cliente_id)
+        trabajo_empaque = bool(getattr(instance, 'trabajo_empaque', False))
+        option['attrs']['data-trabajo-empaque'] = '1' if trabajo_empaque else '0'
         return option
 
 
@@ -53,20 +56,26 @@ class EmpaqueForm(forms.ModelForm):
         disabled=True,
         widget=forms.Select(attrs={'class': 'w-full select'})
     )
+    CANT_ETIQUETAS_REQUERIDA_ERROR = 'Debe ingresar una Cantidad de Etiquetas mayor a cero porque la opción Lleva Etiquetas está seleccionada.'
 
     class Meta:
         model = Empaque
-        fields = ['orden', 'estado_tareas', 'cant_etiquetas', 'emp_clientes', 'notas']
+        fields = ['orden', 'estado_tareas', 'lleva_etiquetas', 'cant_etiquetas', 'emp_clientes', 'total_paquetes', 'notas']
         widgets = {
             'estado_tareas': forms.Select(attrs={'class': 'w-full select'}),
+            'lleva_etiquetas': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 rounded border-brand-dark/30 text-brand-primary focus:ring-brand-primary/70',
+                'onchange': "(function(checkbox){const form=checkbox.form||checkbox.closest('form');if(!form)return;const target=form.querySelector('[name=cant_etiquetas]');if(!target)return;target.disabled=!checkbox.checked;if(!checkbox.checked){target.value='';}})(this)",
+            }),
             'cant_etiquetas': forms.NumberInput(attrs={'class': 'w-full input', 'min': '0', 'step': '1'}),
-            'emp_clientes': forms.NumberInput(attrs={'class': 'w-full input', 'min': '0', 'step': '1'}),
+            'emp_clientes': forms.NumberInput(attrs={'class': 'w-full input', 'min': '0', 'step': '1', 'readonly': 'readonly'}),
+            'total_paquetes': forms.NumberInput(attrs={'class': 'w-full input', 'min': '0', 'step': '1'}),
             'notas': forms.Textarea(attrs={'class': 'w-full textarea', 'rows': '3', 'maxlength': '500'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        base_qs = Orden.objects.all().order_by('-id')
+        base_qs = Orden.objects.filter(empaque_flag=True).order_by('-id')
         estado_pendiente = EstadoTarea.objects.filter(estado_tareas__iexact='Pendiente').order_by('id').first()
         self.fields['cliente'].queryset = Cliente.objects.all().order_by('nombre', 'apellidos', 'id')
 
@@ -96,16 +105,55 @@ class EmpaqueForm(forms.ModelForm):
             self.fields['estado_tareas'].initial = estado_pendiente.pk
             self.initial['estado_tareas'] = estado_pendiente.pk
 
+        lleva_etiquetas = self.data.get('lleva_etiquetas') if self.is_bound else getattr(self.instance, 'lleva_etiquetas', False)
+        if not bool(lleva_etiquetas):
+            self.fields['cant_etiquetas'].widget.attrs['disabled'] = 'disabled'
+        else:
+            self.fields['cant_etiquetas'].widget.attrs.pop('disabled', None)
+
+        valor_cant_empacada = getattr(self.instance, 'cant_empacada', None)
+        if valor_cant_empacada is None:
+            valor_cant_empacada = getattr(self.instance, 'emp_clientes', None)
+        if valor_cant_empacada is not None and not self.is_bound:
+            self.fields['emp_clientes'].initial = valor_cant_empacada
+            self.initial['emp_clientes'] = valor_cant_empacada
+
+        valor_total_paquetes = getattr(self.instance, 'total_paquetes', None)
+        if valor_total_paquetes is not None and not self.is_bound:
+            self.fields['total_paquetes'].initial = valor_total_paquetes
+            self.initial['total_paquetes'] = valor_total_paquetes
+
+        self.fields['emp_clientes'].required = False
+        self.fields['emp_clientes'].widget.attrs['readonly'] = 'readonly'
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        valor_empacada = self.cleaned_data.get('emp_clientes')
+        instance.cant_empacada = valor_empacada
+        instance.emp_clientes = valor_empacada
+        if commit:
+            instance.save()
+        return instance
+
     def clean(self):
         cleaned = super().clean()
+        if not enforce_parent_order_not_completed(self):
+            return cleaned
+        lleva_etiquetas = bool(cleaned.get('lleva_etiquetas'))
+        cant_etiquetas = cleaned.get('cant_etiquetas')
         estado_tareas = cleaned.get('estado_tareas')
-        if not estado_tareas_es_completada(estado_tareas):
+        estado_completada = estado_tareas_es_completada(estado_tareas)
+        requiere_cant_etiquetas = bool(getattr(self.instance, 'pk', None)) and estado_completada and lleva_etiquetas
+
+        if requiere_cant_etiquetas and (cant_etiquetas is None or cant_etiquetas <= 0):
+            self.add_error('cant_etiquetas', self.CANT_ETIQUETAS_REQUERIDA_ERROR)
+
+        if not estado_completada:
             return cleaned
 
-        cantidades_requeridas = (
-            cleaned.get('cant_etiquetas'),
-            cleaned.get('emp_clientes'),
-        )
+        cantidades_requeridas = [cleaned.get('emp_clientes')]
+        if requiere_cant_etiquetas and cant_etiquetas not in (None, '') and cant_etiquetas > 0:
+            cantidades_requeridas.append(cant_etiquetas)
 
         if any(cantidad is None or cantidad <= 0 for cantidad in cantidades_requeridas):
             raise ValidationError(COMPLETADA_PESOS_ERROR)
@@ -114,6 +162,8 @@ class EmpaqueForm(forms.ModelForm):
 
 
 class DetalleEmpaqueForm(forms.ModelForm):
+    require_positive_quantities = False
+
     class Meta:
         model = DetalleEmpaque
         fields = ['empaque_cafe', 'tamano_empaque', 'pedido', 'empacado', 'nivel_molienda', 'suministro', 'notas']
@@ -128,6 +178,7 @@ class DetalleEmpaqueForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.require_positive_quantities = bool(kwargs.pop('require_positive_quantities', False))
         super().__init__(*args, **kwargs)
         self.fields['empaque_cafe'].queryset = CafeEmpaque.objects.all().order_by('empaque_cafe', 'id')
         self.fields['tamano_empaque'].queryset = TamanoEmpaque.objects.all().order_by('tamano_empaque', 'id')
@@ -173,11 +224,12 @@ class DetalleEmpaqueForm(forms.ModelForm):
         if tamano_empaque is None:
             self.add_error('tamano_empaque', 'Seleccione un Tamaño Empaque.')
 
-        if pedido in (None, ''):
-            self.add_error('pedido', 'Ingrese el pedido.')
+        if self.require_positive_quantities:
+            if pedido in (None, '') or pedido <= 0:
+                self.add_error('pedido', 'Debe ingresar el pedido.')
 
-        if empacado in (None, ''):
-            self.add_error('empacado', 'Ingrese lo empacado.')
+            if empacado in (None, '') or empacado <= 0:
+                self.add_error('empacado', 'Debe ingresar lo empacado.')
 
         if nivel_molienda is None:
             self.add_error('nivel_molienda', 'Seleccione la molienda.')
@@ -186,6 +238,11 @@ class DetalleEmpaqueForm(forms.ModelForm):
 
 
 class BaseDetalleEmpaqueFormSet(BaseInlineFormSet):
+    def get_form_kwargs(self, index):
+        kwargs = super().get_form_kwargs(index)
+        kwargs['require_positive_quantities'] = bool(getattr(self.instance, 'pk', None))
+        return kwargs
+
     def _estado_tareas_actual(self):
         if self.is_bound:
             estado_tareas_id = self.data.get('estado_tareas')
@@ -225,6 +282,9 @@ class BaseDetalleEmpaqueFormSet(BaseInlineFormSet):
         permitir_vacio_legacy = bool(getattr(self.instance, 'pk', None)) and self.initial_form_count() == 0
         if filas_activas == 0 and not permitir_vacio_legacy:
             raise ValidationError('Debe registrar al menos una linea de empaque.')
+
+        if not getattr(self.instance, 'pk', None):
+            return
 
         if not estado_tareas_es_completada(self._estado_tareas_actual()):
             return

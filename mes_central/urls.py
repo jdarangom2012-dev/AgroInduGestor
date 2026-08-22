@@ -75,6 +75,7 @@ urlpatterns.append(path('', include('tueste.urls')))  # rutas HTML órdenes de t
 urlpatterns.append(path('', include('seleccion_tueste.urls')))  # rutas HTML órdenes selección tueste (/ordenes-seleccion-tueste/listar/ etc.)
 urlpatterns.append(path('', include('inventario_cafe.urls')))  # rutas HTML inventario café (/inventario-cafe/listar/ etc.)
 urlpatterns.append(path('', include('ordenes_seleccion_tostado.urls')))  # rutas HTML órdenes selección tostado
+urlpatterns.append(path('', include('reportes.urls')))  # rutas HTML reportes (/reportes/facturacion/)
 # urlpatterns.append(path('', include('molienda.urls')))  # módulo Molienda oculto en la UI
 urlpatterns.append(path('', include('curvas_tueste.urls')))  # rutas HTML curvas tueste (/curvas_tueste/ etc.)
 urlpatterns.append(path('usuarios/', include('usuarios.urls')))  # página Usuarios y Roles

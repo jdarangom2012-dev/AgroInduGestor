@@ -67,7 +67,7 @@
           <div class="md:col-span-2 space-y-3">
             <div class="flex items-center justify-between gap-2">
               <h3 class="text-sm font-semibold">Detalle de Batches</h3>
-              <a href="{% url 'orden_tueste_batch_nuevo' tueste.pk %}" class="btn-base btn-primary" data-modal-navigate>+ Agregar Batch</a>
+              <a href="{% url 'orden_tueste_batch_nuevo' tueste.pk %}" class="btn-base btn-primary" data-modal-navigate data-modal-stack="1">+ Agregar Batch</a>
             </div>
             {% include 'tueste/_tabla_batches_OrdenesTueste.html' %}
           </div>

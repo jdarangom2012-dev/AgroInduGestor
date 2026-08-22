@@ -10,9 +10,10 @@ from django.utils import timezone
 
 from seguridad.helpers import tiene_permiso_accion
 
-from ordenes.models import Orden
 from .models import OrdenSeleccionVerde
 from .forms import OrdenSeleccionVerdeForm
+from ordenes.forms import enforce_parent_order_not_completed
+from ordenes.models import Orden
 
 
 def permiso_o_codigo_required(django_perm: str, codigo: str):
@@ -32,6 +33,32 @@ def permiso_o_codigo_required(django_perm: str, codigo: str):
         return _wrapped
 
     return decorator
+
+
+def _build_orden_seleccion_verde_defaults(orden):
+    cliente = getattr(orden, 'cliente', None)
+    return {
+        'cliente_id': getattr(cliente, 'id', None),
+        'cliente_label': str(cliente) if cliente is not None else '',
+    }
+
+
+@require_http_methods(["GET"])
+@permiso_o_codigo_required(
+    'ordenes_seleccion_verde.add_ordenseleccionverde',
+    'crear_orden_seleccion_verde',
+)
+def orden_seleccion_verde_defaults(request):
+    orden_id = request.GET.get('orden_id')
+    if not orden_id:
+        return JsonResponse(_build_orden_seleccion_verde_defaults(Orden()))
+
+    try:
+        orden = Orden.objects.select_related('cliente').get(pk=orden_id, selec_cafe_verde=True)
+    except (TypeError, ValueError, Orden.DoesNotExist):
+        return JsonResponse({'detail': 'Orden no encontrada.'}, status=404)
+
+    return JsonResponse(_build_orden_seleccion_verde_defaults(orden))
 
 
 @permiso_o_codigo_required(
@@ -84,28 +111,6 @@ def listar_ordenes_seleccion_verde(request):
     return render(request, 'ordenes_seleccion_verde/_modal_listar_OrdenesSelecionVerde.html', ctx)
 
 
-@require_http_methods(["GET"])
-@permiso_o_codigo_required(
-    'ordenes_seleccion_verde.add_ordenseleccionverde',
-    'crear_orden_seleccion_verde',
-)
-def orden_seleccion_verde_defaults(request):
-    orden_id = request.GET.get('orden_id')
-    if not orden_id:
-        return JsonResponse({'cliente_id': None, 'cliente_label': ''})
-
-    try:
-        orden = Orden.objects.select_related('cliente').get(pk=orden_id, selec_cafe_verde=True)
-    except (TypeError, ValueError, Orden.DoesNotExist):
-        return JsonResponse({'detail': 'Orden no encontrada.'}, status=404)
-
-    cliente = getattr(orden, 'cliente', None)
-    return JsonResponse({
-        'cliente_id': getattr(cliente, 'id', None),
-        'cliente_label': str(cliente) if cliente is not None else '',
-    })
-
-
 @require_http_methods(["GET","POST"])
 @permiso_o_codigo_required(
     'ordenes_seleccion_verde.add_ordenseleccionverde',
@@ -115,6 +120,8 @@ def add_orden_seleccion_verde(request):
     if request.method == 'POST':
         form = OrdenSeleccionVerdeForm(request.POST, user=request.user)
         if form.is_valid():
+            if not enforce_parent_order_not_completed(form):
+                return render(request, 'ordenes_seleccion_verde/add_OrdenesSelecionVerde.html', {'form': form})
             obj = form.save(commit=False)
             if not obj.fecha_ingreso:
                 obj.fecha_ingreso = timezone.now()
@@ -141,6 +148,8 @@ def edit_orden_seleccion_verde(request, pk):
     if request.method == 'POST':
         form = OrdenSeleccionVerdeForm(request.POST, instance=obj, user=request.user)
         if form.is_valid():
+            if not enforce_parent_order_not_completed(form):
+                return render(request, 'ordenes_seleccion_verde/detail_OrdenesSelecionVerde.html', {'form': form, 'obj': obj})
             inst = form.save(commit=False)
             inst.updated_at = timezone.now()
             inst.save()

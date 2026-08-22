@@ -2,6 +2,7 @@ from django import forms
 
 from clientes.models import Cliente
 from estado_tareas.models import EstadoTarea
+from ordenes.forms import enforce_parent_order_not_completed
 from ordenes.models import Orden
 from seguridad.helpers import puede_editar_campo, puede_ver_campo
 from zaranda_grupo.models import ZarandaGrupo
@@ -10,6 +11,10 @@ from .models import OrdenSeleccionVerde
 
 
 COMPLETADA_PESOS_ERROR = 'La tarea no se puede poner en estado completada porque uno o más pesos son menores o iguales a cero.'
+SELECCION_TIPO_REQUERIDO_ERROR = 'Debe seleccionar Zaranda o Catadora para guardar la selección verde.'
+PESO_ACEPTADO_REQUERIDO_ERROR = 'Debe ingresar un Peso Aceptado mayor a cero.'
+HUMEDAD_REQUERIDA_ERROR = 'Debe ingresar un valor de Humedad mayor a cero porque la opción Medir Humedad está seleccionada.'
+DENSIDAD_REQUERIDA_ERROR = 'Debe ingresar un valor de Densidad mayor a cero porque la opción Medir Densidad está seleccionada.'
 
 
 class OrdenSeleccionVerdeForm(forms.ModelForm):
@@ -210,6 +215,8 @@ class OrdenSeleccionVerdeForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        if not enforce_parent_order_not_completed(self):
+            return cleaned_data
 
         # Validación defensiva: aunque manipulen el POST, no permitir cambios en campos
         # ocultos o sin permiso de edición.
@@ -240,49 +247,61 @@ class OrdenSeleccionVerdeForm(forms.ModelForm):
         if orden and not getattr(orden, 'selec_cafe_verde', False):
             self.add_error('orden', 'Solo se permiten órdenes de producción con selección verde habilitada.')
 
-        grupos = [
-            ('IdZarandaGrupo1', 'peso_grupo1'),
-            ('IdZarandaGrupo2', 'peso_grupo2'),
-            ('IdZarandaGrupo3', 'peso_grupo3'),
-            ('IdZarandaGrupo4', 'peso_grupo4'),
-            ('IdZarandaGrupo5', 'peso_grupo5'),
-        ]
-
-        todo_valido = True
-
-        for campo_grupo, campo_peso in grupos:
-            grupo = cleaned_data.get(campo_grupo)
-            peso = cleaned_data.get(campo_peso) or 0
-
-            if not grupo:
-                continue
-
-            nombre_grupo = str(grupo or '').strip()
-            if nombre_grupo.upper() != 'N/A' and peso <= 0:
-                todo_valido = False
-                self.add_error(
-                    campo_peso,
-                    'Debe ser mayor a 0 cuando la malla seleccionada no es N/A.'
-                )
+        zaranda = bool(cleaned_data.get('zaranda'))
+        catadora = bool(cleaned_data.get('catadora'))
+        if not zaranda and not catadora:
+            raise forms.ValidationError(SELECCION_TIPO_REQUERIDO_ERROR)
 
         estado_tareas = cleaned_data.get('estado_tareas')
         estado_nombre = (getattr(estado_tareas, 'estado_tareas', '') or '').strip().lower()
+
         if estado_nombre == 'completada':
-            pesos_requeridos = (
-                cleaned_data.get('peso_grupo1'),
-                cleaned_data.get('peso_grupo2'),
-                cleaned_data.get('peso_grupo3'),
-                cleaned_data.get('peso_grupo4'),
-                cleaned_data.get('peso_grupo5'),
-                cleaned_data.get('peso_grupo_ripio'),
-                cleaned_data.get('peso_cat_ripio'),
-                cleaned_data.get('peso_cat_balsos'),
-                cleaned_data.get('peso_cat_grupo1'),
-                cleaned_data.get('peso_cat_grupo2'),
-                cleaned_data.get('peso_aceptado'),
+            peso_aceptado = cleaned_data.get('peso_aceptado')
+            if catadora and (peso_aceptado is None or peso_aceptado <= 0):
+                self.add_error('peso_aceptado', PESO_ACEPTADO_REQUERIDO_ERROR)
+
+            medir_humedad = bool(cleaned_data.get('medir_humedad'))
+            humedad = cleaned_data.get('humedad')
+            if medir_humedad and (humedad is None or humedad <= 0):
+                self.add_error('humedad', HUMEDAD_REQUERIDA_ERROR)
+
+            medir_densidad = bool(cleaned_data.get('medir_densidad'))
+            densidad = cleaned_data.get('densidad')
+            if medir_densidad and (densidad is None or densidad <= 0):
+                self.add_error('densidad', DENSIDAD_REQUERIDA_ERROR)
+
+            grupos = [
+                ('IdZarandaGrupo1', 'peso_grupo1'),
+                ('IdZarandaGrupo2', 'peso_grupo2'),
+                ('IdZarandaGrupo3', 'peso_grupo3'),
+                ('IdZarandaGrupo4', 'peso_grupo4'),
+                ('IdZarandaGrupo5', 'peso_grupo5'),
+            ]
+
+            for campo_grupo, campo_peso in grupos:
+                grupo = cleaned_data.get(campo_grupo)
+                peso = cleaned_data.get(campo_peso) or 0
+
+                if not grupo:
+                    continue
+
+                nombre_grupo = str(grupo or '').strip()
+                if nombre_grupo.upper() != 'N/A' and peso <= 0:
+                    self.add_error(
+                        campo_peso,
+                        'Debe ser mayor a 0 cuando la malla seleccionada no es N/A.'
+                    )
+
+            validaciones_catacion = (
+                ('catacion_ripio', 'peso_cat_ripio', 'Debe ingresar Peso Cat. Ripio porque Catación Ripio está seleccionada.'),
+                ('catacion_balsos', 'peso_cat_balsos', 'Debe ingresar Peso Cat. Balsos porque Catación Balsos está seleccionada.'),
+                ('catacion_grupo1', 'peso_cat_grupo1', 'Debe ingresar Peso Cat. Grupo 1 porque Catación Grupo 1 está seleccionada.'),
+                ('catacion_grupo2', 'peso_cat_grupo2', 'Debe ingresar Peso Cat. Grupo 2 porque Catación Grupo 2 está seleccionada.'),
             )
-            if any(peso is None or peso <= 0 for peso in pesos_requeridos):
-                raise forms.ValidationError(COMPLETADA_PESOS_ERROR)
+
+            for campo_toggle, campo_peso, mensaje in validaciones_catacion:
+                if bool(cleaned_data.get(campo_toggle)) and (cleaned_data.get(campo_peso) is None or cleaned_data.get(campo_peso) <= 0):
+                    self.add_error(campo_peso, mensaje)
 
         # 2) Al final: por si el clean() modificó algo no editable
         _enforce_field_permissions()

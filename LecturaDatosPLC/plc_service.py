@@ -1,14 +1,17 @@
 # =============================================================
-# plc_service.py — Servicio Windows
-# Cada 2 seg lee %M93 → si = 1 → lee PLC → sp_InsertarCurvaTueste
-#                                           → tblConsumosTostion
-#                                           → log completo
+# plc_service.py — Servicio Windows: PLCConsumosTostion
+# Lee %M93 cada 2 seg → si = 1 lee PLC → sp_InsertarCurvaTueste
+#                                        → tblConsumosTostion
+#                                        → log completo
 #
-# INSTALAR servicio (cmd como Administrador):
+# NOTA: Python apaga %M93 solo cuando el INSERT fue exitoso.
+#       Python solo lo lee, no lo resetea.
+#
+# INSTALAR (cmd como Administrador):
 #   python plc_service.py install
 #   python plc_service.py start
 #
-# PROBAR sin instalar (modo consola):
+# PROBAR en consola:
 #   python plc_service.py debug
 #
 # GESTIÓN:
@@ -32,35 +35,45 @@ from sql_writer import SQLWriter
 
 
 # =============================================================
-# CICLO DE NEGOCIO
+# LÓGICA DE NEGOCIO
 # =============================================================
+
+# Rastrear el estado anterior del bit para detectar flanco ascendente
+# (evitar insertar múltiples veces si el bit permanece en 1 varios ciclos)
+_trigger_anterior = False
+
+
 def procesar_ciclo(lector: PLCReader, escritor: SQLWriter, log):
     """
-    1. Lee %M93
-    2. Si = 1 → lee bloque %MW500-537
-    3. Ejecuta sp_InsertarCurvaTueste → tblConsumosTostion
-    4. Escribe log con fecha/hora y registro completo
-    5. Resetea %M93 = 0
+    Detecta el FLANCO ASCENDENTE de %M93 (0→1).
+    Solo inserta UNA VEZ por activación, aunque el bit tarde
+    varios ciclos en bajar (el PLC lo desactiva solo).
     """
+    global _trigger_anterior
 
-    # ── Leer bit disparador ───────────────────────────────────
+    # ── Leer bit %M93 ────────────────────────────────────────
     try:
         trigger = lector.leer_trigger()
     except IOError as e:
         log.warning(f"Sin respuesta al leer %M93: {e}")
+        _trigger_anterior = False
         return
 
     if trigger is None:
         log.warning("Respuesta nula de %M93 — PLC no responde")
+        _trigger_anterior = False
         return
 
-    if not trigger:
-        return   # Normal: el tueste aún no terminó
+    # Detectar flanco 0→1 (evita doble inserción)
+    flanco = trigger and not _trigger_anterior
+    _trigger_anterior = trigger
 
-    # ── %M93 = 1 ─────────────────────────────────────────────
-    log.info("▶ %M93 activado — leyendo registros del PLC")
+    if not flanco:
+        return   # Bit en 0, o ya estaba en 1 desde el ciclo anterior
 
-    # ── Leer datos del PLC ───────────────────────────────────
+    # ── Flanco detectado → leer datos del PLC ────────────────
+    log.info("▶ %M93 activado (PROD_ORDEN_COMPLETADA) — leyendo %MW600-637")
+
     try:
         datos = lector.leer_datos()
     except Exception as e:
@@ -70,33 +83,28 @@ def procesar_ciclo(lector: PLCReader, escritor: SQLWriter, log):
     # ── Insertar en SQL Server ────────────────────────────────
     try:
         id_ins = escritor.insertar(datos)
-
-        # Log completo del registro insertado
-        # Excluimos el campo interno _PerfilTueste del resumen SQL
         datos_log = {k: v for k, v in datos.items() if not k.startswith("_")}
         log_registro_insertado(
             log,
-            tabla=f"dbo.tblConsumosTostion (Id={id_ins})",
+            tabla=f"dbo.tblConsumosTueste (Id={id_ins})",
             datos=datos_log
         )
+        # ── INSERT exitoso → apagar %M93 ─────────────────────
+        try:
+            lector.resetear_trigger()
+            log.info(f"✔ %M93 apagado — INSERT confirmado (Id={id_ins})")
+        except IOError as e:
+            log.warning(f"No se pudo apagar %M93: {e}")
 
     except Exception as e:
         datos_log = {k: v for k, v in datos.items() if not k.startswith("_")}
         log_error_insercion(
             log,
-            tabla="dbo.tblConsumosTostion",
+            tabla="dbo.tblConsumosTueste",
             error=str(e),
             datos=datos_log
         )
-        # No reseteamos %M93 para que el operador pueda reintentar
-        return
-
-    # ── Resetear %M93 ─────────────────────────────────────────
-    try:
-        lector.resetear_trigger()
-        log.info("◀ %M93 reseteado a 0 — esperando próximo tueste")
-    except IOError as e:
-        log.warning(f"No se pudo resetear %M93: {e}")
+        # Si el INSERT falló NO apagamos %M93 — el PLC sabrá que hubo error
 
 
 # =============================================================
@@ -107,8 +115,8 @@ class PLCService(win32serviceutil.ServiceFramework):
     _svc_name_         = "PLCConsumosTostion"
     _svc_display_name_ = "PLC Consumos Tostion — Modicon M221"
     _svc_description_  = (
-        "Lee curvas de tueste del PLC Modicon M221 via Modbus TCP/IP "
-        "y las almacena en dbo.tblConsumosTostion (SQL Server)."
+        "Lee %M93 cada 2 seg. Al detectar flanco ascendente lee %MW600-637 "
+        "y guarda la curva de tueste en dbo.tblConsumosTostion (SQL Server)."
     )
 
     def __init__(self, args):
@@ -132,7 +140,7 @@ class PLCService(win32serviceutil.ServiceFramework):
         self.log.info(
             f"═══ Servicio PLCConsumosTostion iniciado ═══  "
             f"PLC={__import__('config').PLC_HOST} | "
-            f"Poll={POLL_SEG}s | Trigger=%M93"
+            f"Poll %M93 cada {POLL_SEG}s | Registros en %MW600-637"
         )
         self._loop()
 
@@ -140,7 +148,6 @@ class PLCService(win32serviceutil.ServiceFramework):
         lector   = PLCReader()
         escritor = SQLWriter()
 
-        # Conexiones iniciales
         try:
             lector.conectar()
             self.log.info("✔ Conectado al PLC")
@@ -153,7 +160,6 @@ class PLCService(win32serviceutil.ServiceFramework):
         except Exception as e:
             self.log.error(f"Conexión inicial a SQL Server fallida: {e}")
 
-        # Bucle principal — verifica parada cada 0.5 s
         while self._running:
             try:
                 procesar_ciclo(lector, escritor, self.log)
@@ -173,16 +179,18 @@ class PLCService(win32serviceutil.ServiceFramework):
 
 
 # =============================================================
-# MODO DEBUG — corre directo en consola (Ctrl+C para salir)
+# MODO DEBUG
 # =============================================================
 def _modo_debug():
+    import config
     log = crear_logger("PLCDebug")
     log.info(
         f"[DEBUG] Poll %M93 cada {POLL_SEG}s — Ctrl+C para salir\n"
-        f"  PLC     : {__import__('config').PLC_HOST}:{__import__('config').PLC_PORT}\n"
+        f"  PLC     : {config.PLC_HOST}:{config.PLC_PORT}\n"
+        f"  Bloque  : %MW600-637\n"
         f"  Tabla   : dbo.tblConsumosTostion\n"
         f"  SP      : dbo.sp_InsertarCurvaTueste\n"
-        f"  Log     : {__import__('config').LOG_FILE}"
+        f"  Log     : {config.LOG_FILE}"
     )
 
     lector   = PLCReader()

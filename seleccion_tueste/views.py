@@ -9,6 +9,7 @@ from django.utils import timezone
 import re
 
 from .models import SeleccionTueste
+from ordenes.forms import enforce_parent_order_not_completed
 from ordenes.models import Orden
 from seguridad.helpers import puede_editar_campo
 from seguridad.models import PermisoCampo
@@ -94,45 +95,41 @@ class SeleccionTuesteForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        if not enforce_parent_order_not_completed(self):
+            return cleaned_data
+
+        estado_tareas = cleaned_data.get('estado_tareas')
+        estado_nombre = (getattr(estado_tareas, 'estado_tareas', '') or '').strip().lower()
+        es_completada = estado_nombre == 'completada'
 
         cat_quaker = bool(cleaned_data.get('cat_quaker'))
         peso_quaker = cleaned_data.get('peso_quaker')
         cat_grupo1 = bool(cleaned_data.get('cat_grupo1'))
+        peso_grupo1 = cleaned_data.get('peso_grupo1')
         cat_grupo2 = bool(cleaned_data.get('cat_grupo2'))
+        peso_grupo2 = cleaned_data.get('peso_grupo2')
         cat_grupo3 = bool(cleaned_data.get('cat_grupo3'))
+        peso_grupo3 = cleaned_data.get('peso_grupo3')
         desc_grupo1 = (cleaned_data.get('desc_grupo1') or '').strip()
         desc_grupo2 = (cleaned_data.get('desc_grupo2') or '').strip()
         desc_grupo3 = (cleaned_data.get('desc_grupo3') or '').strip()
-
-        if cat_quaker and (peso_quaker is None or peso_quaker < 0):
-            self.add_error('peso_quaker', 'Debe ingresar un peso mayor o igual a 0 cuando Cat. Quaker está marcado')
-
-        if cat_grupo1 and not desc_grupo1:
-            self.add_error('desc_grupo1', 'La descripción del Grupo 1 es obligatoria.')
-
-        if cat_grupo2 and not desc_grupo2:
-            self.add_error('desc_grupo2', 'La descripción del Grupo 2 es obligatoria.')
-
-        if cat_grupo3 and not desc_grupo3:
-            self.add_error('desc_grupo3', 'La descripción del Grupo 3 es obligatoria.')
 
         cleaned_data['desc_grupo1'] = desc_grupo1 or None
         cleaned_data['desc_grupo2'] = desc_grupo2 or None
         cleaned_data['desc_grupo3'] = desc_grupo3 or None
 
-        estado_tareas = cleaned_data.get('estado_tareas')
-        estado_nombre = (getattr(estado_tareas, 'estado_tareas', '') or '').strip().lower()
-        if estado_nombre == 'completada':
-            pesos_requeridos = (
-                cleaned_data.get('peso_quaker'),
-                cleaned_data.get('peso_grupo1'),
-                cleaned_data.get('peso_grupo2'),
-                cleaned_data.get('peso_grupo3'),
-            )
-            if any(peso is None or peso <= 0 for peso in pesos_requeridos):
-                raise forms.ValidationError(
-                    'La tarea no se puede poner en estado completada porque uno o más pesos son menores o iguales a cero.'
-                )
+        if es_completada:
+            if cat_quaker and (peso_quaker is None or peso_quaker <= 0):
+                self.add_error('peso_quaker', 'Debe ingresar un Peso Quaker mayor a cero para completar la tarea.')
+
+            if cat_grupo1 and (not desc_grupo1 or peso_grupo1 is None or peso_grupo1 <= 0):
+                self.add_error('desc_grupo1', 'Debe ingresar la descripción y un Peso del Grupo 1 mayor a cero.')
+
+            if cat_grupo2 and (not desc_grupo2 or peso_grupo2 is None or peso_grupo2 <= 0):
+                self.add_error('desc_grupo2', 'Debe ingresar la descripción y un Peso del Grupo 2 mayor a cero.')
+
+            if cat_grupo3 and (not desc_grupo3 or peso_grupo3 is None or peso_grupo3 <= 0):
+                self.add_error('desc_grupo3', 'Debe ingresar la descripción y un Peso del Grupo 3 mayor a cero.')
 
         return cleaned_data
 
@@ -249,7 +246,7 @@ def listar_ordenes_seleccion_tueste(request):
         SeleccionTueste.objects
         .select_related('orden__cliente', 'estado_tareas')
         .only(
-            'id', 'orden', 'estado_tareas',
+            'id', 'orden', 'orden__orden', 'orden__cliente', 'estado_tareas',
             'cat_limpieza', 'cat_quaker', 'peso_quaker',
             'cat_grupo1', 'desc_grupo1', 'peso_grupo1',
             'cat_grupo2', 'desc_grupo2', 'peso_grupo2',
@@ -265,17 +262,11 @@ def listar_ordenes_seleccion_tueste(request):
         )
         m = re.search(r"(?:^|\b)orden\s*(\d+)\b", s, flags=re.IGNORECASE)
         if m:
-            try:
-                filters |= Q(orden__id=int(m.group(1)))
-            except ValueError:
-                pass
+            filters |= Q(orden__orden__icontains=m.group(1))
         else:
             m2 = re.search(r"\b(\d+)\b", s)
             if m2:
-                try:
-                    filters |= Q(orden__id=int(m2.group(1)))
-                except ValueError:
-                    pass
+                filters |= Q(orden__orden__icontains=m2.group(1))
         qs = qs.filter(filters)
 
     qs = qs.order_by('-fecha_ingreso','-id')
@@ -307,6 +298,8 @@ def add_orden_seleccion_tueste(request):
     if request.method == 'POST':
         form = SeleccionTuesteForm(request.POST)
         if form.is_valid():
+            if not enforce_parent_order_not_completed(form):
+                return render(request, 'seleccion_tueste/add_OrdenesSeleccionTueste.html', {'form': form})
             obj = form.save(commit=False)
             if not obj.fecha_ingreso:
                 obj.fecha_ingreso = timezone.now()
@@ -335,6 +328,8 @@ def edit_orden_seleccion_tueste(request, pk):
         if user_is_tostador:
             aplicar_restricciones_form_tostador(form)
         if form.is_valid():
+            if not enforce_parent_order_not_completed(form):
+                return render_editar_seleccion_tueste(request, obj, form=form)
             inst = form.save(commit=False)
             inst._request_user = request.user
             if user_is_tostador:

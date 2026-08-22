@@ -260,6 +260,260 @@ class OrdenTests(TestCase):
 
         self.assertTrue(form.is_valid(), form.errors.as_json())
 
+    def test_form_rechaza_completada_si_hay_confirmaciones_pendientes(self):
+        from ordenes.forms import OrdenForm
+
+        estado_completada = EstadoOrden.objects.create(estado_orden='Completada')
+
+        form = OrdenForm(data={
+            'cliente': self.cliente.id,
+            'orden': 'ORDCOMP01',
+            'estado_orden': estado_completada.id,
+            'fecha_inicio_orden': '2026-05-17',
+            'trilla': 'on',
+            'conf_trilla': '',
+            'peso_bruto': '10',
+            'peso': '10',
+            'prioridad': 1,
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('No es posible completar la Orden de Producción', str(form.non_field_errors()))
+
+    def test_form_bloquea_completada_si_confirmaciones_ok_pero_faltan_ordenes_hijas(self):
+        from ordenes.forms import OrdenForm
+        from django.utils import timezone
+
+        estado_completada = EstadoOrden.objects.create(estado_orden='Completada')
+        orden = Orden.objects.create(
+            cliente=self.cliente,
+            orden='ORDCOMP02',
+            estado_orden=self.estado_orden,
+            fecha_inicio_orden=timezone.now(),
+            peso_bruto=10,
+            peso=10,
+            created_at=timezone.now(),
+        )
+
+        form = OrdenForm(data={
+            'cliente': self.cliente.id,
+            'orden': 'ORDCOMP02',
+            'estado_orden': estado_completada.id,
+            'fecha_inicio_orden': '2026-05-17',
+            'trilla': 'on',
+            'conf_trilla': 'on',
+            'selec_cafe_verde': 'on',
+            'conf_sel_verde': 'on',
+            'tueste_flag': 'on',
+            'conf_tueste': 'on',
+            'selec_cafe_tostado': 'on',
+            'conf_sel_tostado': 'on',
+            'empaque_flag': 'on',
+            'conf_empaque': 'on',
+            'peso_bruto': '10',
+            'peso': '10',
+            'prioridad': 1,
+        }, instance=orden)
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('procesos requeridos sin una orden registrada', str(form.non_field_errors()))
+
+    def _completion_data(self, orden, estado_completada, **overrides):
+        data = {
+            'cliente': self.cliente.id,
+            'orden': orden.orden,
+            'estado_orden': estado_completada.id,
+            'fecha_inicio_orden': '2026-05-17',
+            'peso_bruto': '10',
+            'peso': '10',
+            'prioridad': 1,
+        }
+        data.update(self._detalle_management_data(total_forms=1))
+        data.update(overrides)
+        return data
+
+    def _create_child_process(self, model, orden, estado_tarea, **extra_fields):
+        from django.utils import timezone
+
+        defaults = {
+            'orden': orden,
+            'estado_tareas': estado_tarea,
+            'created_at': timezone.now(),
+        }
+        defaults.update(extra_fields)
+        return model.objects.create(**defaults)
+
+    def test_form_permite_completada_si_procesos_requeridos_estan_completados(self):
+        from django.utils import timezone
+        from estado_ordenes.models import EstadoOrden
+        from estado_tareas.models import EstadoTarea
+        from ordenes.forms import OrdenForm
+        from ordenes_trilla.models import OrdenTrilla
+        from tueste.models import Tueste
+        from seleccion_tueste.models import SeleccionTueste
+        from ordenes_seleccion_verde.models import OrdenSeleccionVerde
+        from empaques.models import Empaque
+
+        estado_completada_orden = EstadoOrden.objects.create(estado_orden='Completada')
+        estado_completada_tarea = EstadoTarea.objects.create(estado_tareas='Completada')
+        orden = Orden.objects.create(
+            cliente=self.cliente,
+            orden='ORDPROCOK',
+            estado_orden=self.estado_orden,
+            fecha_inicio_orden=timezone.now(),
+            peso_bruto=10,
+            peso=10,
+            created_at=timezone.now(),
+        )
+
+        for model in (OrdenTrilla, Tueste, SeleccionTueste, OrdenSeleccionVerde, Empaque):
+            self._create_child_process(model, orden, estado_completada_tarea)
+
+        form = OrdenForm(
+            data=self._completion_data(
+                orden,
+                estado_completada_orden,
+                trilla='on',
+                conf_trilla='on',
+                selec_cafe_verde='on',
+                conf_sel_verde='on',
+                tueste_flag='on',
+                conf_tueste='on',
+                selec_cafe_tostado='on',
+                conf_sel_tostado='on',
+                empaque_flag='on',
+                conf_empaque='on',
+            ),
+            instance=orden,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors.as_json())
+
+    def test_form_bloquea_completada_si_trilla_esta_pendiente(self):
+        from django.utils import timezone
+        from estado_ordenes.models import EstadoOrden
+        from estado_tareas.models import EstadoTarea
+        from ordenes.forms import OrdenForm
+        from ordenes_trilla.models import OrdenTrilla
+
+        estado_completada_orden = EstadoOrden.objects.create(estado_orden='Completada')
+        estado_pendiente_tarea = EstadoTarea.objects.create(estado_tareas='Pendiente')
+        orden = Orden.objects.create(
+            cliente=self.cliente,
+            orden='ORDTRILLAPEND',
+            estado_orden=self.estado_orden,
+            fecha_inicio_orden=timezone.now(),
+            peso_bruto=10,
+            peso=10,
+            created_at=timezone.now(),
+        )
+        self._create_child_process(OrdenTrilla, orden, estado_pendiente_tarea)
+
+        form = OrdenForm(
+            data=self._completion_data(orden, estado_completada_orden, trilla='on', conf_trilla='on'),
+            instance=orden,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('procesos pendientes: Trilla', str(form.non_field_errors()))
+
+    def test_form_bloquea_completada_si_proceso_requerido_no_tiene_registro(self):
+        from django.utils import timezone
+        from estado_ordenes.models import EstadoOrden
+        from ordenes.forms import OrdenForm
+
+        estado_completada_orden = EstadoOrden.objects.create(estado_orden='Completada')
+        orden = Orden.objects.create(
+            cliente=self.cliente,
+            orden='ORDSINTRILLA',
+            estado_orden=self.estado_orden,
+            fecha_inicio_orden=timezone.now(),
+            peso_bruto=10,
+            peso=10,
+            created_at=timezone.now(),
+        )
+
+        form = OrdenForm(
+            data=self._completion_data(orden, estado_completada_orden, trilla='on', conf_trilla='on'),
+            instance=orden,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('procesos requeridos sin una orden registrada: Trilla', str(form.non_field_errors()))
+
+    def test_form_bloquea_completada_si_uno_de_varios_tuestes_esta_pendiente(self):
+        from django.utils import timezone
+        from estado_ordenes.models import EstadoOrden
+        from estado_tareas.models import EstadoTarea
+        from ordenes.forms import OrdenForm
+        from tueste.models import Tueste
+
+        estado_completada_orden = EstadoOrden.objects.create(estado_orden='Completada')
+        estado_completada_tarea = EstadoTarea.objects.create(estado_tareas='Completada')
+        estado_pendiente_tarea = EstadoTarea.objects.create(estado_tareas='Pendiente')
+        orden = Orden.objects.create(
+            cliente=self.cliente,
+            orden='ORDMULTITUESTE',
+            estado_orden=self.estado_orden,
+            fecha_inicio_orden=timezone.now(),
+            peso_bruto=10,
+            peso=10,
+            created_at=timezone.now(),
+        )
+        self._create_child_process(Tueste, orden, estado_completada_tarea)
+        self._create_child_process(Tueste, orden, estado_pendiente_tarea)
+
+        form = OrdenForm(
+            data=self._completion_data(orden, estado_completada_orden, tueste_flag='on', conf_tueste='on'),
+            instance=orden,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('procesos pendientes: Tueste', str(form.non_field_errors()))
+
+    def test_form_bloquea_completada_e_informa_varios_procesos_pendientes(self):
+        from django.utils import timezone
+        from estado_ordenes.models import EstadoOrden
+        from estado_tareas.models import EstadoTarea
+        from ordenes.forms import OrdenForm
+        from tueste.models import Tueste
+        from seleccion_tueste.models import SeleccionTueste
+        from empaques.models import Empaque
+
+        estado_completada_orden = EstadoOrden.objects.create(estado_orden='Completada')
+        estado_pendiente_tarea = EstadoTarea.objects.create(estado_tareas='Pendiente')
+        orden = Orden.objects.create(
+            cliente=self.cliente,
+            orden='ORDVARIOSPEND',
+            estado_orden=self.estado_orden,
+            fecha_inicio_orden=timezone.now(),
+            peso_bruto=10,
+            peso=10,
+            created_at=timezone.now(),
+        )
+        for model in (Tueste, SeleccionTueste, Empaque):
+            self._create_child_process(model, orden, estado_pendiente_tarea)
+
+        form = OrdenForm(
+            data=self._completion_data(
+                orden,
+                estado_completada_orden,
+                tueste_flag='on',
+                conf_tueste='on',
+                selec_cafe_tostado='on',
+                conf_sel_tostado='on',
+                empaque_flag='on',
+                conf_empaque='on',
+            ),
+            instance=orden,
+        )
+
+        self.assertFalse(form.is_valid())
+        error_text = str(form.non_field_errors())
+        self.assertIn('Tueste', error_text)
+        self.assertIn('Selección Tueste', error_text)
+        self.assertIn('Empaque', error_text)
+
     def test_formset_requiere_al_menos_un_detalle_cuando_trajo_empaque_esta_activo(self):
         from ordenes.forms import build_detalle_empaque_formset
 

@@ -9,3 +9,4 @@ gunicorn
 uvicorn[standard]
 python-json-logger
 redis
+reportlab

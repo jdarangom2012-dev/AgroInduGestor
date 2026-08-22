@@ -12,7 +12,13 @@ from django.db import IntegrityError, DatabaseError, transaction
 from django.utils import timezone
 from seguridad.decorators import permiso_accion_requerido
 from .models import Orden
-from .forms import OrdenForm, build_detalle_empaque_formset, detalle_empaque_table_exists
+from .forms import (
+    OrdenForm,
+    build_completion_validation_message,
+    build_detalle_empaque_formset,
+    detalle_empaque_table_exists,
+    get_pending_completion_confirmations,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -50,6 +56,18 @@ def _error_real_response(message: str, error: Exception, status_code: int = 500)
         status=status_code,
         content_type='text/plain; charset=utf-8',
     )
+
+
+def _validar_estado_completada_en_vista(form):
+    if not form.is_valid():
+        return False
+
+    pending_confirmations = get_pending_completion_confirmations(form.cleaned_data, form.data)
+    if pending_confirmations:
+        form.add_error(None, build_completion_validation_message(pending_confirmations))
+        return False
+
+    return True
 
 
 def _render_add_orden_form(request, form, detalle_formset):
@@ -225,6 +243,8 @@ def add_orden(request):
 
         detalle_formset_valid = (not detalle_formset.is_bound) or detalle_formset.is_valid()
         if form.is_valid() and detalle_formset_valid:
+            if not _validar_estado_completada_en_vista(form):
+                return _render_add_orden_form(request, form, detalle_formset)
             obj = form.save(commit=False)
             if obj.estado_orden_id is None:
                 obj.estado_orden = _obtener_estado_orden_pendiente()
@@ -326,6 +346,8 @@ def edit_orden(request, pk):
         detalle_formset = build_detalle_empaque_formset(data=request.POST, instance=obj)
         detalle_formset_valid = (not detalle_formset.is_bound) or detalle_formset.is_valid()
         if form.is_valid() and detalle_formset_valid:
+            if not _validar_estado_completada_en_vista(form):
+                return render(request, 'ordenes/detail_OrdenesProduccion.html', {'form': form, 'obj': obj, 'detalle_formset': detalle_formset})
             inst = form.save(commit=False)
             inst.updated_at = timezone.now()
             try:

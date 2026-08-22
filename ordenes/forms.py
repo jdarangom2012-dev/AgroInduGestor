@@ -5,8 +5,177 @@ from django.forms import BaseFormSet, BaseInlineFormSet, formset_factory, inline
 
 
 COMPLETADA_PESOS_ERROR = "La tarea no se puede poner en estado completada porque uno o más pesos son menores o iguales a cero."
+COMPLETADA_CONFIRMACION_MESSAGE = "No es posible completar la Orden de Producción. Existen procesos de transformación pendientes por confirmar."
+COMPLETADA_PROCESOS_PENDIENTES_MESSAGE = "No se puede completar la Orden de Producción porque existen procesos pendientes"
+COMPLETADA_PROCESOS_SIN_REGISTRO_MESSAGE = "No se puede completar la Orden de Producción. Existen procesos requeridos sin una orden registrada"
+COMPLETADA_CONFIRMATION_RULES = (
+    ("trilla", "conf_trilla", "Confir. Trilla"),
+    ("selec_cafe_verde", "conf_sel_verde", "Confir. Sel Verde"),
+    ("tueste_flag", "conf_tueste", "Confir. Tostado"),
+    ("selec_cafe_tostado", "conf_sel_tostado", "Confir. SelecTostado"),
+    ("empaque_flag", "conf_empaque", "Confir. Empaque"),
+)
+COMPLETADA_OPERATIONAL_PROCESS_RULES = (
+    ("trilla", "Trilla", "ordenes_trilla", "OrdenTrilla"),
+    ("selec_cafe_verde", "Selección Verde", "ordenes_seleccion_verde", "OrdenSeleccionVerde"),
+    ("tueste_flag", "Tueste", "tueste", "Tueste"),
+    ("selec_cafe_tostado", "Selección Tueste", "seleccion_tueste", "SeleccionTueste"),
+    ("empaque_flag", "Empaque", "empaques", "Empaque"),
+)
 
 from .models import DetalleEmpaqueOrden, Orden
+
+PARENT_ORDER_COMPLETED_MESSAGE = "No es posible crear o editar esta tarea porque la Orden de Producción vinculada ya se encuentra en estado Completada."
+
+
+def _normalize_boolean_like(value):
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        return normalized in {"true", "1", "on", "yes", "si", "sí"}
+    return bool(value)
+
+
+def get_pending_completion_confirmations(cleaned_data, raw_data=None):
+    pending = []
+    if cleaned_data is None:
+        return pending
+
+    for process_field, confirm_field, label in COMPLETADA_CONFIRMATION_RULES:
+        process_enabled = _normalize_boolean_like(cleaned_data.get(process_field))
+        confirm_enabled = _normalize_boolean_like(cleaned_data.get(confirm_field))
+
+        if not process_enabled:
+            continue
+        if confirm_enabled:
+            continue
+
+        raw_value = None
+        if raw_data is not None:
+            raw_value = raw_data.get(process_field)
+        if raw_value is not None and not process_enabled:
+            process_enabled = _normalize_boolean_like(raw_value)
+
+        raw_confirm_value = None
+        if raw_data is not None:
+            raw_confirm_value = raw_data.get(confirm_field)
+        if raw_confirm_value is not None and not confirm_enabled:
+            confirm_enabled = _normalize_boolean_like(raw_confirm_value)
+
+        if process_enabled and not confirm_enabled:
+            pending.append(label)
+
+    return pending
+
+
+def build_completion_validation_message(pending_labels):
+    if not pending_labels:
+        return COMPLETADA_CONFIRMACION_MESSAGE
+    labels = ", ".join(pending_labels)
+    return f"{COMPLETADA_CONFIRMACION_MESSAGE} Faltan: {labels}."
+
+
+def _join_process_labels(labels):
+    labels = [str(label) for label in labels if str(label).strip()]
+    if len(labels) <= 1:
+        return "".join(labels)
+    return f"{', '.join(labels[:-1])} y {labels[-1]}"
+
+
+def build_operational_processes_validation_message(pending_labels, missing_labels):
+    messages = []
+
+    if pending_labels:
+        messages.append(
+            f"{COMPLETADA_PROCESOS_PENDIENTES_MESSAGE}: {_join_process_labels(pending_labels)}."
+        )
+
+    if missing_labels:
+        messages.append(
+            f"{COMPLETADA_PROCESOS_SIN_REGISTRO_MESSAGE}: {_join_process_labels(missing_labels)}."
+        )
+
+    return " ".join(messages)
+
+
+def get_incomplete_operational_processes(cleaned_data, order_id, raw_data=None):
+    if cleaned_data is None:
+        return [], []
+
+    from django.apps import apps
+
+    pending = []
+    missing = []
+
+    for process_field, label, app_label, model_name in COMPLETADA_OPERATIONAL_PROCESS_RULES:
+        process_enabled = _normalize_boolean_like(cleaned_data.get(process_field))
+
+        if raw_data is not None and not process_enabled:
+            raw_value = raw_data.get(process_field)
+            if raw_value is not None:
+                process_enabled = _normalize_boolean_like(raw_value)
+
+        if not process_enabled:
+            continue
+
+        if not order_id:
+            missing.append(label)
+            continue
+
+        model = apps.get_model(app_label, model_name)
+        qs = model.objects.filter(orden_id=order_id)
+
+        if not qs.exists():
+            missing.append(label)
+            continue
+
+        if qs.exclude(estado_tareas__estado_tareas__iexact="Completada").exists():
+            pending.append(label)
+
+    return pending, missing
+
+
+def _normalize_order_state_name(value):
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip().lower()
+    return (getattr(value, "estado_orden", "") or "").strip().lower()
+
+
+def is_parent_order_completed(orden):
+    if orden is None:
+        return False
+    return _normalize_order_state_name(getattr(orden, "estado_orden", None)) == "completada"
+
+
+def enforce_parent_order_not_completed(form, field_name="orden"):
+    order = None
+    if getattr(form, "is_bound", False):
+        order = form.cleaned_data.get(field_name)
+    if order is None:
+        order = getattr(getattr(form, "instance", None), field_name, None)
+    if order is not None and is_parent_order_completed(order):
+        form.add_error(field_name, PARENT_ORDER_COMPLETED_MESSAGE)
+        return False
+    return True
+
+
+class ParentOrderChoiceField(forms.ModelChoiceField):
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
+        if value in (None, ""):
+            return option
+        try:
+            instance = self.queryset.get(pk=value)
+        except Exception:
+            instance = None
+        if instance is not None:
+            option["attrs"]["data-parent-order-completed"] = "1" if is_parent_order_completed(instance) else "0"
+        return option
 
 
 def _append_widget_classes(field, extra_classes):
@@ -304,6 +473,21 @@ class OrdenForm(forms.ModelForm):
             pesos_requeridos = (peso_bruto, peso)
             if any(valor is None or valor <= 0 for valor in pesos_requeridos):
                 raise ValidationError(COMPLETADA_PESOS_ERROR)
+
+            pending_confirmations = get_pending_completion_confirmations(cleaned, self.data)
+            if pending_confirmations:
+                self.add_error(None, build_completion_validation_message(pending_confirmations))
+
+            pending_processes, missing_processes = get_incomplete_operational_processes(
+                cleaned,
+                getattr(self.instance, "pk", None),
+                self.data,
+            )
+            if pending_processes or missing_processes:
+                self.add_error(
+                    None,
+                    build_operational_processes_validation_message(pending_processes, missing_processes),
+                )
 
         trabajo_empaque = bool(cleaned.get("trabajo_empaque"))
         empaque_flag = field_enabled("empaque_flag")

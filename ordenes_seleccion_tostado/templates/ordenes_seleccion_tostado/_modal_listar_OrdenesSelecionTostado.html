@@ -48,7 +48,7 @@
             {% for s in items %}
               <tr class="row group">
                 <td class="td mono">{{ s.id }}</td>
-                <td class="td">{% if s.orden %}{{ s.orden.orden|default:s.orden }}{% else %}—{% endif %}</td>
+                <td class="td">{% if s.orden %}Orden {{ s.orden.id }}{% else %}—{% endif %}</td>
                 <td class="td">{{ s.orden.cliente.nombre|default:'—' }}</td>
                 <td class="td">{{ s.cafe.codigo|default:'—' }}</td>
                 <td class="td">{{ s.estado_tareas|default:'—' }}</td>

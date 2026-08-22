@@ -1,50 +1,110 @@
-<div class="fixed inset-0 z-50 flex items-start justify-center bg-black/45 p-6 overflow-y-auto" data-modal-root>
-  <div class="palette-surface w-full max-w-2xl rounded-xl shadow-xl border border-brand-dark/30 fade-in relative">
-    <div class="modal-head flex items-center justify-between px-6 py-4 rounded-t-xl">
+<div class="fixed inset-0 z-50 flex items-start justify-center bg-black/45 p-6 overflow-y-auto" data-modal-root data-empaque-form-modal>
+  <div class="palette-surface w-full max-w-2xl rounded-xl shadow-xl border border-brand-dark/30 fade-in relative empaque-modal-panel">
+    <div class="modal-head flex items-center justify-between px-6 py-4 rounded-t-xl empaque-modal-header">
       <h2 class="text-lg font-semibold">➕ Nuevo Empaque</h2>
       <button type="button" class="close transition text-sm" data-close-modal aria-label="Cerrar">✕</button>
     </div>
-    <form method="post" class="p-6 space-y-4" action="{% url 'empaque_nuevo' %}" data-modal-form>
+    <form method="post" class="empaque-modal-form" action="{% url 'empaque_nuevo' %}" data-modal-form>
       {% csrf_token %}
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="label">Orden</label>
-          {{ form.orden }}
-          {{ form.orden.errors }}
+      <div class="empaque-modal-body p-6 space-y-4" data-empaque-modal-body>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="label">Orden</label>
+            {{ form.orden }}
+            {{ form.orden.errors }}
+          </div>
+          <div>
+            <label class="label">Cliente</label>
+            {{ form.cliente }}
+            {{ form.cliente.errors }}
+          </div>
+          <div>
+            <label class="label">Estado Tareas</label>
+            {{ form.estado_tareas }}
+            {{ form.estado_tareas.errors }}
+          </div>
+          <div class="md:col-span-2 {% if orden_trabajo_empaque %}{% else %}hidden{% endif %}" data-orden-empaque-section>
+            <div class="relative inline-flex items-center group mb-4">
+              <button
+                type="button"
+                class="text-sm text-brand-primary underline decoration-dotted underline-offset-2 cursor-help"
+                aria-haspopup="true"
+              >
+                Empaque Recibido
+              </button>
+              <div class="hidden group-hover:block group-focus-within:block absolute left-0 top-full mt-2 z-20 w-max max-w-[32rem] rounded-lg border border-brand-dark/20 bg-white p-3 shadow-lg">
+                <div class="space-y-2">
+                  <h3 class="text-sm font-semibold text-brand-dark">Empaque Recibido</h3>
+                  {% if empaque_recibido_rows %}
+                    <div class="overflow-x-auto">
+                      <table class="min-w-full text-xs">
+                        <thead class="bg-gray-50/80">
+                          <tr>
+                            <th class="px-2 py-1 text-left font-semibold whitespace-nowrap">Empaque Café</th>
+                            <th class="px-2 py-1 text-left font-semibold whitespace-nowrap">Tamaño Empaque</th>
+                            <th class="px-2 py-1 text-right font-semibold whitespace-nowrap">Cantidad</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for detalle in empaque_recibido_rows %}
+                            <tr class="border-t border-brand-dark/10">
+                              <td class="px-2 py-1 whitespace-nowrap">{{ detalle.empaque_cafe|default:'—' }}</td>
+                              <td class="px-2 py-1 whitespace-nowrap">{{ detalle.tamano_empaque|default:'—' }}</td>
+                              <td class="px-2 py-1 text-right whitespace-nowrap">{{ detalle.cantidad|default_if_none:'—' }}</td>
+                            </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  {% else %}
+                    <p class="text-xs text-gray-500">No hay empaque recibido registrado.</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% include 'empaques/_detalle_empaque_grid.html' %}
+          </div>
+          <div class="md:col-span-2">
+            <div class="mb-2">
+              <label class="label inline-flex items-center gap-2">
+                {{ form.lleva_etiquetas }}
+                <span>Lleva Etiquetas</span>
+              </label>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="label">Cant. Etiquetas</label>
+                <div class="w-full max-w-[16rem]">
+                  {{ form.cant_etiquetas }}
+                  {{ form.cant_etiquetas.errors }}
+                </div>
+              </div>
+              <div>
+                <label class="label">Cantidad Bolsas Empacadas</label>
+                <div class="w-full max-w-[16rem]">
+                  {{ form.emp_clientes }}
+                  {{ form.emp_clientes.errors }}
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 max-w-[16rem]">
+              <label class="label">Total Paquetes</label>
+              {{ form.total_paquetes }}
+              {{ form.total_paquetes.errors }}
+            </div>
+            {{ form.lleva_etiquetas.errors }}
+          </div>
+          <div class="md:col-span-2">
+            <label class="label">Notas generales</label>
+            {{ form.notas }}
+            {{ form.notas.errors }}
+          </div>
         </div>
-        <div>
-          <label class="label">Cliente</label>
-          {{ form.cliente }}
-          {{ form.cliente.errors }}
-        </div>
-        <div>
-          <label class="label">Estado Tareas</label>
-          {{ form.estado_tareas }}
-          {{ form.estado_tareas.errors }}
-        </div>
-        <div class="md:col-span-2">
-          {% include 'empaques/_detalle_empaque_grid.html' %}
-        </div>
-        <div>
-          <label class="label">Cant. Etiquetas</label>
-          {{ form.cant_etiquetas }}
-          {{ form.cant_etiquetas.errors }}
-        </div>
-        <div>
-          <label class="label">Emp. Clientes</label>
-          {{ form.emp_clientes }}
-          {{ form.emp_clientes.errors }}
-        </div>
-        <div class="md:col-span-2">
-          <label class="label">Notas generales</label>
-          {{ form.notas }}
-          {{ form.notas.errors }}
-        </div>
+        {% if form.non_field_errors %}
+          <p class="error">{{ form.non_field_errors|striptags }}</p>
+        {% endif %}
       </div>
-      {% if form.non_field_errors %}
-        <p class="error">{{ form.non_field_errors|striptags }}</p>
-      {% endif %}
-      <div class="flex items-center justify-end gap-2 pt-2">
+      <div class="empaque-modal-footer flex items-center justify-end gap-2 px-6 py-4 border-t border-brand-dark/20">
         <button type="button" data-close-modal class="btn-base">Cancelar</button>
         <button type="submit" class="btn-base btn-primary">Guardar</button>
       </div>

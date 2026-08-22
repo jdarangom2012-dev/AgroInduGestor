@@ -1,16 +1,23 @@
+import logging
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_http_methods
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.db import transaction
+from django.db import connection
 from seguridad.decorators import permiso_accion_requerido
 from seguridad.helpers import normalizar
 
+from ordenes.forms import enforce_parent_order_not_completed
+from ordenes.models import Orden
 from .forms import EmpaqueForm, build_detalle_empaque_formset
 from .models import Empaque
 
+logger = logging.getLogger(__name__)
 
-EMPAQUE_CAMPOS_OPERATIVOS = {'cant_etiquetas', 'emp_clientes'}
+
+EMPAQUE_CAMPOS_OPERATIVOS = {'lleva_etiquetas', 'cant_etiquetas', 'emp_clientes'}
 EMPAQUE_ROLES_RESTRINGIDOS = {'tostador', 'empacador'}
 EMPAQUE_ROLES_ACCESO_TOTAL = {'administrador', 'admin', 'coordinador'}
 def obtener_roles_usuario(user):
@@ -79,6 +86,26 @@ def valor_entero_seguro(valor):
         return 0
 
 
+def calcular_total_empacado_desde_post(data):
+    total_forms = valor_entero_seguro(data.get('detalle_empaque-TOTAL_FORMS'))
+    total_empacado = 0
+
+    for index in range(total_forms):
+        if str(data.get(f'detalle_empaque-{index}-DELETE', '')).lower() in {'on', 'true', '1'}:
+            continue
+        total_empacado += valor_entero_seguro(data.get(f'detalle_empaque-{index}-empacado'))
+
+    return total_empacado
+
+
+def construir_post_empaque(request):
+    form_data = request.POST.copy()
+    total_empacado = calcular_total_empacado_desde_post(form_data)
+    form_data['emp_clientes'] = str(total_empacado)
+    form_data['cant_empacada'] = str(total_empacado)
+    return form_data
+
+
 def sincronizar_resumen_empaque(instance):
     detalles = list(
         instance.detalles.select_related('tamano_empaque', 'nivel_molienda').order_by('id')
@@ -95,9 +122,35 @@ def sincronizar_resumen_empaque(instance):
     instance.nivel_molienda = primer_detalle.nivel_molienda
     instance.cant_empaque = total_pedido
     instance.cant_empacada = total_empacado
+    instance.emp_clientes = total_empacado
     instance.total_empaques = total_pedido
-    instance.total_paquetes = total_empacado
     instance.save()
+
+
+def detalle_empaque_orden_table_exists():
+    try:
+        return 'tblDetalleEmpaqueOrden' in connection.introspection.table_names()
+    except Exception:
+        return False
+
+
+def obtener_empaque_recibido_rows(orden):
+    if orden is None:
+        return []
+
+    if detalle_empaque_orden_table_exists():
+        return list(
+            orden.detalles_empaque.select_related('empaque_cafe', 'tamano_empaque').order_by('id')
+        )
+
+    if orden.empaque_cafe_id or orden.tamano_empaque_id:
+        return [{
+            'empaque_cafe': orden.empaque_cafe,
+            'tamano_empaque': orden.tamano_empaque,
+            'cantidad': None,
+        }]
+
+    return []
 
 
 @permiso_accion_requerido(codigo='ver_empaque')
@@ -140,11 +193,36 @@ def listar_empaque(request):
 @require_http_methods(["GET", "POST"])
 @permiso_accion_requerido('empaques.add_empaque', 'crear_empaque')
 def add_empaque(request):
+    orden_trabajo_empaque = False
+    selected_order_id = None
+    selected_order = None
+    empaque_recibido_rows = []
     if request.method == 'POST':
-        form = EmpaqueForm(request.POST)
-        detalle_formset = build_detalle_empaque_formset(data=request.POST, instance=form.instance)
+        form_data = construir_post_empaque(request)
+        form = EmpaqueForm(form_data)
+        detalle_formset = build_detalle_empaque_formset(data=form_data, instance=form.instance)
+        selected_order_id = form_data.get('orden')
+        try:
+            selected_order = Orden.objects.get(pk=selected_order_id)
+            orden_trabajo_empaque = bool(selected_order.trabajo_empaque)
+        except (TypeError, ValueError, Orden.DoesNotExist):
+            selected_order = None
+            orden_trabajo_empaque = False
+        empaque_recibido_rows = obtener_empaque_recibido_rows(selected_order)
+        print('Valor Trajo Empaque:', orden_trabajo_empaque, 'Id Orden:', selected_order_id)
+        logger.debug('Add Empaque - Valor Trajo Empaque: %s Id Orden: %s', orden_trabajo_empaque, selected_order_id)
         detalle_formset_valid = detalle_formset.is_valid()
         if form.is_valid() and detalle_formset_valid:
+            if not enforce_parent_order_not_completed(form):
+                context = {
+                    'form': form,
+                    'detalle_formset': detalle_formset,
+                    'orden_trabajo_empaque': orden_trabajo_empaque,
+                    'empaque_recibido_rows': empaque_recibido_rows,
+                }
+                if request.headers.get('X-Fragment') or request.GET.get('fragment') == '1':
+                    return render(request, 'empaques/add_Empaque.html', context)
+                return render(request, 'empaques/listar_Empaque.html', {})
             try:
                 with transaction.atomic():
                     obj = form.save(commit=False)
@@ -161,8 +239,14 @@ def add_empaque(request):
     else:
         form = EmpaqueForm()
         detalle_formset = build_detalle_empaque_formset(instance=form.instance)
+    context = {
+        'form': form,
+        'detalle_formset': detalle_formset,
+        'orden_trabajo_empaque': orden_trabajo_empaque,
+        'empaque_recibido_rows': empaque_recibido_rows,
+    }
     if request.headers.get('X-Fragment') or request.GET.get('fragment') == '1':
-        return render(request, 'empaques/add_Empaque.html', {'form': form, 'detalle_formset': detalle_formset})
+        return render(request, 'empaques/add_Empaque.html', context)
     return render(request, 'empaques/listar_Empaque.html', {})
 
 
@@ -171,14 +255,35 @@ def add_empaque(request):
 def edit_empaque(request, pk):
     obj = get_object_or_404(Empaque, pk=pk)
     user_has_empaque_restrictions = usuario_con_restriccion_empaque(request.user)
+    empaque_recibido_rows = obtener_empaque_recibido_rows(getattr(obj, 'orden', None))
+    orden_trabajo_empaque = bool(getattr(obj.orden, 'trabajo_empaque', False))
+    print('Valor Trajo Empaque:', orden_trabajo_empaque, 'Id Orden:', getattr(obj.orden, 'id', None))
+    logger.debug('Valor Trajo Empaque: %s Id Orden: %s', orden_trabajo_empaque, getattr(obj.orden, 'id', None))
     if request.method == 'POST':
-        form = EmpaqueForm(request.POST, instance=obj)
+        form_data = construir_post_empaque(request)
+        form = EmpaqueForm(form_data, instance=obj)
         form._request_user = request.user
-        detalle_formset = build_detalle_empaque_formset(data=request.POST, instance=obj)
+        detalle_formset = build_detalle_empaque_formset(data=form_data, instance=obj)
         if user_has_empaque_restrictions:
             aplicar_restricciones_form_empaque(form)
         detalle_formset_valid = detalle_formset.is_valid()
         if form.is_valid() and detalle_formset_valid:
+            if not enforce_parent_order_not_completed(form):
+                if request.GET.get('fragment') == '1' or request.headers.get('X-Fragment'):
+                    return render(
+                        request,
+                        'empaques/detail_Empaque.html',
+                        {
+                            'form': form,
+                            'obj': obj,
+                            'detalle_formset': detalle_formset,
+                            'empaque_recibido_rows': empaque_recibido_rows,
+                            'user_has_empaque_restrictions': user_has_empaque_restrictions,
+                            'empaque_campos_operativos': sorted(EMPAQUE_CAMPOS_OPERATIVOS),
+                            'orden_trabajo_empaque': orden_trabajo_empaque,
+                        },
+                    )
+                return render(request, 'empaques/listar_Empaque.html', {})
             try:
                 with transaction.atomic():
                     inst = form.save(commit=False)
@@ -207,8 +312,10 @@ def edit_empaque(request, pk):
                 'form': form,
                 'obj': obj,
                 'detalle_formset': detalle_formset,
+                'empaque_recibido_rows': empaque_recibido_rows,
                 'user_has_empaque_restrictions': user_has_empaque_restrictions,
                 'empaque_campos_operativos': sorted(EMPAQUE_CAMPOS_OPERATIVOS),
+                'orden_trabajo_empaque': orden_trabajo_empaque,
             },
         )
     return render(request, 'empaques/listar_Empaque.html', {})

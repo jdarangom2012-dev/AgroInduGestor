@@ -85,3 +85,47 @@
     </form>
   </div>
 </div>
+<script>
+  (function () {
+    const form = document.querySelector('form[data-modal-form]');
+    if (!form) {
+      return;
+    }
+
+    const errorContainerClass = 'tueste-validation-errors';
+
+    function getErrorContainer() {
+      let container = form.querySelector(`.${errorContainerClass}`);
+      if (!container) {
+        container = document.createElement('div');
+        container.className = 'tueste-validation-errors mb-2 text-sm px-3 py-2 rounded border bg-red-50 border-red-300 text-red-700';
+        form.insertBefore(container, form.firstElementChild);
+      }
+      return container;
+    }
+
+    form.addEventListener('submit', function (event) {
+      const nivel = form.querySelector('#id_nivel_tueste');
+      const verde = form.querySelector('#id_peso_cafe_vede_total');
+      const messages = [];
+
+      if (!nivel || !nivel.value || nivel.value.trim() === '') {
+        messages.push('Debe seleccionar un Nivel de Tueste.');
+      }
+
+      const peso = verde ? parseFloat(String(verde.value || '').replace(',', '.')) : NaN;
+      if (!verde || Number.isNaN(peso) || peso <= 0) {
+        messages.push('El Peso Café Verde Total debe ser mayor que cero.');
+      }
+
+      if (messages.length) {
+        event.preventDefault();
+        const container = getErrorContainer();
+        container.innerHTML = messages.map(function (message) {
+          return '<p>' + message + '</p>';
+        }).join('');
+        container.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    });
+  })();
+</script>

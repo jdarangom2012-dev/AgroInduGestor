@@ -5,7 +5,6 @@
 {% tiene_modulo request.user "Órdenes Tueste" as CAN_MOD_ORDEN_TUESTE %}
 {% tiene_permiso request.user "ver_orden_seleccion_tueste" as CAN_VER_SEL_TUESTE %}
 {% tiene_permiso request.user "ver_orden_seleccion_verde" as CAN_VER_SEL_VERDE %}
-{% tiene_permiso request.user "ver_orden_seleccion_tostado" as CAN_VER_SEL_TOSTADO %}
 {% tiene_permiso request.user "ver_ordenes_seleccion_verde" as CAN_VER_ORDENES_SEL_VERDE %}
 {% tiene_modulo request.user "Órdenes Selección Tueste" as CAN_MOD_SEL_TUESTE %}
 
@@ -21,7 +20,6 @@
 {% tiene_permiso request.user "ver_estados" as CAN_VER_ESTADOS %}
 {% tiene_permiso request.user "ver_origenes" as CAN_VER_ORIGENES %}
 {% tiene_permiso request.user "ver_proceso_inventario_cafe" as CAN_VER_PROCESO_INV_CAFE %}
-{% tiene_permiso request.user "ver_variendad_inven_cafe" as CAN_VER_VARIENDAD_INVEN_CAFE %}
 {% tiene_permiso request.user "ver_empaque_cafe" as CAN_VER_EMPAQUE_CAFE %}
 {% tiene_permiso request.user "ver_estado_orden" as CAN_VER_ESTADO_ORDEN %}
 {% tiene_permiso request.user "ver_estado_tareas" as CAN_VER_ESTADO_TAREAS %}
@@ -52,11 +50,11 @@
     <!-- Item simple -->
   <!-- Enlace Dashboard eliminado -->
 
-    <!-- Grupo: Órdenes (abierto por defecto) -->
-    {% if CAN_VER_ORDEN_PRODUCCION or CAN_VER_ORDEN_TRILLA or CAN_MOD_ORDEN_TUESTE or CAN_MOD_SEL_TUESTE or CAN_VER_SEL_VERDE or CAN_VER_SEL_TOSTADO or CAN_VER_ORDENES_SEL_VERDE or CAN_VER_EMPAQUE %}
+    <!-- Grupo: Producción (abierto por defecto) -->
+    {% if CAN_VER_ORDEN_PRODUCCION or CAN_VER_ORDEN_TRILLA or CAN_MOD_ORDEN_TUESTE or CAN_MOD_SEL_TUESTE or CAN_VER_SEL_VERDE or CAN_VER_EMPAQUE %}
     <div class="sidebar-group" data-open="true">
       <button type="button" class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700 transition group parent-btn" aria-expanded="true">
-        <span class="w-4 text-[11px]">🏭</span>
+        <span class="w-4 text-[11px]">📦</span>
         <span class="flex-1 text-left">Producción</span>
         <span class="caret transition-transform duration-200 rotate-90 text-[10px]">▶</span>
       </button>
@@ -73,7 +71,6 @@
     </a>
   </li>
   {% endif %}
-  {% if CAN_VER_SEL_TOSTADO %}<li><a href="{% url 'ordenes_seleccion_tostado_listar' %}" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">☕</span><span class="flex-1">Órdenes Selección Tostado</span></a></li>{% endif %}
   {% if CAN_VER_EMPAQUE %}<li><a href="/empaque/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🏷️</span><span class="flex-1">Órdenes de Empaque</span></a></li>{% endif %}
       </ul>
     </div>
@@ -111,7 +108,7 @@
     </div>
     {% endif %}
 
-    {% if CAN_VER_CLIENTES or CAN_VER_EMPLEADOS or CAN_VER_MATERIALES or CAN_VER_ESTADOS or CAN_VER_ORIGENES or CAN_VER_PROCESO_INV_CAFE or CAN_VER_VARIENDAD_INVEN_CAFE or CAN_VER_EMPAQUE_CAFE or CAN_VER_ESTADO_ORDEN or CAN_VER_ESTADO_TAREAS or CAN_VER_ZARANDA_GRUPO or CAN_VER_NIVEL_MOLIENDA or CAN_VER_TAMANO_EMPAQUE %}
+    {% if CAN_VER_CLIENTES or CAN_VER_EMPLEADOS or CAN_VER_MATERIALES or CAN_VER_ESTADOS or CAN_VER_ORIGENES or CAN_VER_PROCESO_INV_CAFE or CAN_VER_EMPAQUE_CAFE or CAN_VER_ESTADO_ORDEN or CAN_VER_ESTADO_TAREAS or CAN_VER_ZARANDA_GRUPO or CAN_VER_NIVEL_MOLIENDA or CAN_VER_TAMANO_EMPAQUE %}
     <div class="sidebar-group" data-open="false">
       <button type="button" class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700 transition group parent-btn" aria-expanded="false">
         <span class="w-4 text-[11px]">🗂️</span>
@@ -124,8 +121,7 @@
   {% if CAN_VER_MATERIALES %}<li><a href="/materiales/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🧱</span><span class="flex-1">Materiales</span></a></li>{% endif %}
   {% if CAN_VER_ESTADOS %}<li><a href="/estado-cafe/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🏷️</span><span class="flex-1">Estados</span></a></li>{% endif %}
   {% if CAN_VER_ORIGENES %}<li><a href="/origen-cafe/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🌍</span><span class="flex-1">Orígenes</span></a></li>{% endif %}
-  {% if CAN_VER_PROCESO_INV_CAFE %}<li><a href="/proceso-inven-cafe/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🧪</span><span class="flex-1">Proceso Cafe</span></a></li>{% endif %}
-  {% if CAN_VER_VARIENDAD_INVEN_CAFE %}<li><a href="{% url 'variedad_inven_cafe_listar' %}" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🌱</span><span class="flex-1">Variedad Cafe</span></a></li>{% endif %}
+  {% if CAN_VER_PROCESO_INV_CAFE %}<li><a href="/proceso-inven-cafe/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🧪</span><span class="flex-1">Proceso Inventario Café</span></a></li>{% endif %}
   {% if CAN_VER_EMPAQUE_CAFE %}<li><a href="/empaque-cafe/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">📦</span><span class="flex-1">Empaque Café</span></a></li>{% endif %}
   {% if CAN_VER_ESTADO_ORDEN %}<li><a href="/estado-orden/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">📑</span><span class="flex-1">Estado Orden</span></a></li>{% endif %}
   {% if CAN_VER_ESTADO_TAREAS %}<li><a href="/estado-tareas/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">✅</span><span class="flex-1">Estado Tareas</span></a></li>{% endif %}
@@ -136,12 +132,18 @@
     </div>
     {% endif %}
 
-    <!-- Item simple Reportes -->
+    <!-- Grupo: Reportes -->
     {% if CAN_VER_REPORTES %}
-    <a href="/reportes/" class="group flex items-center gap-2 px-2 py-1.5 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700 transition">
-      <span class="w-4 text-[11px]">📈</span>
-      <span class="flex-1">Reportes</span>
-    </a>
+    <div class="sidebar-group" data-open="false">
+      <button type="button" class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700 transition group parent-btn" aria-expanded="false">
+        <span class="w-4 text-[11px]">📈</span>
+        <span class="flex-1 text-left">Reportes</span>
+        <span class="caret transition-transform duration-200 text-[10px]">▶</span>
+      </button>
+      <ul class="mt-1 space-y-1 children hidden">
+        <li><a href="{% url 'reportes_facturacion' %}" class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🧾</span><span class="flex-1">Facturación</span></a></li>
+      </ul>
+    </div>
     {% endif %}
 
   <!-- Grupo: Administración (solo staff) -->

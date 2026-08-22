@@ -9,13 +9,27 @@ from django.conf import settings
 import re
 from .models import OrdenTrilla
 from ordenes.models import Orden
+from ordenes.forms import enforce_parent_order_not_completed
 from estado_tareas.models import EstadoTarea
 from clientes.models import Cliente
 from seguridad.helpers import puede_editar_campo
 from seguridad.models import PermisoCampo
 
+COMPLETADA_PESOS_ERROR = 'No es posible completar la Orden de Trilla. Los campos Peso Café Neto y Peso Café Verde deben ser mayores a cero.'
 
-COMPLETADA_PESOS_ERROR = 'La tarea no se puede poner en estado completada porque uno o más pesos son menores o iguales a cero.'
+
+def estado_tareas_es_completada(estado_tareas):
+    estado_nombre = (getattr(estado_tareas, 'estado_tareas', '') or '').strip().lower()
+    return estado_nombre == 'completada'
+
+
+def pesos_completan_trilla(peso_cafe_neto, peso_cafe_verde):
+    return (
+        peso_cafe_neto is not None
+        and peso_cafe_verde is not None
+        and peso_cafe_neto > 0
+        and peso_cafe_verde > 0
+    )
 
 
 class OrdenChoiceField(forms.ModelChoiceField):
@@ -23,7 +37,33 @@ class OrdenChoiceField(forms.ModelChoiceField):
         return str(obj)
 
 
+def _calcular_rendimiento(peso_cafe_neto, peso_cafe_verde):
+    try:
+        neto = float(peso_cafe_neto)
+    except (TypeError, ValueError):
+        neto = 0.0
+
+    try:
+        verde = float(peso_cafe_verde)
+    except (TypeError, ValueError):
+        verde = 0.0
+
+    if not verde or verde == 0:
+        return 0.0
+
+    return round((neto / verde) * 100.0, 2)
+
+
 class OrdenTrillaForm(forms.ModelForm):
+    # Campos adicionales (no guardados por el ModelForm) para mostrar y enviar al backend
+    fecha_ingreso = forms.DateField(
+        required=False,
+        input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(
+            format='%Y-%m-%d',
+            attrs={'type': 'date', 'class': 'input-form w-full input', 'data-datepicker': '1'},
+        ),
+    )
     orden = OrdenChoiceField(queryset=Orden.objects.none(), required=False, widget=forms.Select(attrs={'class':'w-full select'}))
     estado_tareas = forms.ModelChoiceField(queryset=EstadoTarea.objects.all().order_by('estado_tareas'), required=False, widget=forms.Select(attrs={'class':'w-full select'}))
 
@@ -35,26 +75,30 @@ class OrdenTrillaForm(forms.ModelForm):
             'cliente': forms.Select(attrs={'class': 'w-full select'}),
             'peso_cafe_bruto': forms.NumberInput(attrs={'class':'w-full input', 'step':'0.01'}),
             'peso_cafe_verde': forms.NumberInput(attrs={'class':'w-full input', 'step':'0.01'}),
-            'rendimiento': forms.NumberInput(attrs={'class':'w-full input', 'step':'0.01'}),
-            'notas': forms.Textarea(attrs={'class':'w-full textarea', 'rows':'3', 'maxlength':'500'}),
+            'rendimiento': forms.NumberInput(attrs={'class':'w-full input', 'step':'0.01', 'readonly': 'readonly'}),
+            'notas': forms.Textarea(attrs={'class':'w-full input', 'rows':'3', 'maxlength':'500'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        base_qs = Orden.objects.filter(trilla=True).order_by('-id')
-        estado_pendiente = EstadoTarea.objects.filter(estado_tareas__iexact='Pendiente').order_by('id').first()
+        # Órdenes: cuando está ligado (POST), permitir cualquier orden para evitar errores de validación
+        base_qs = Orden.objects.all().order_by('-id')
         if self.is_bound:
-            # En POST, validar solo contra órdenes habilitadas para trilla.
+            # Evita "Escoja una opción válida" aunque la orden no esté en el top N
             self.fields['orden'].queryset = base_qs
         else:
             # En carga inicial, limitar para rendimiento
             self.fields['orden'].queryset = base_qs.select_related('cliente')[:200]
         self.fields['orden'].empty_label = 'Seleccione una orden'
-        if estado_pendiente is not None and not getattr(self.instance, 'pk', None) and not self.is_bound:
-            self.fields['estado_tareas'].initial = estado_pendiente.pk
-            self.initial['estado_tareas'] = estado_pendiente.pk
+        # Inicializar valores para campos adicionales cuando hay una instancia
         inst = kwargs.get('instance', None)
         if inst:
+            try:
+                if hasattr(inst, 'fecha_ingreso') and inst.fecha_ingreso:
+                    # asignar fecha (solo fecha, sin hora)
+                    self.fields['fecha_ingreso'].initial = inst.fecha_ingreso.date()
+            except Exception:
+                pass
             try:
                 # Inicial: si la trilla ya tiene cliente directo úsalo; si no, intenta desde la orden.
                 if getattr(inst, 'cliente_id', None):
@@ -64,62 +108,33 @@ class OrdenTrillaForm(forms.ModelForm):
             except Exception:
                 pass
 
-    def clean_orden(self):
-        orden = self.cleaned_data.get('orden')
-        if orden and not getattr(orden, 'trilla', False):
-            raise forms.ValidationError('Solo se permiten órdenes de producción con trilla habilitada.')
-        return orden
-
     def clean(self):
         cleaned_data = super().clean()
-        estado_tareas = cleaned_data.get('estado_tareas')
-        estado_nombre = (getattr(estado_tareas, 'estado_tareas', '') or '').strip().lower()
-
-        if estado_nombre != 'completada':
+        if not enforce_parent_order_not_completed(self):
             return cleaned_data
+        peso_cafe_verde = cleaned_data.get('peso_cafe_verde')
+        peso_cafe_neto = cleaned_data.get('peso_cafe_bruto')
+        estado_tareas = cleaned_data.get('estado_tareas')
 
-        pesos_requeridos = (
-            cleaned_data.get('peso_cafe_bruto'),
-            cleaned_data.get('peso_cafe_verde'),
-        )
+        if estado_tareas_es_completada(estado_tareas):
+            if not pesos_completan_trilla(peso_cafe_neto, peso_cafe_verde):
+                raise forms.ValidationError(COMPLETADA_PESOS_ERROR)
 
-        if any(peso is None or peso <= 0 for peso in pesos_requeridos):
-            raise forms.ValidationError(COMPLETADA_PESOS_ERROR)
-
+        rendimiento = _calcular_rendimiento(peso_cafe_neto, peso_cafe_verde)
+        cleaned_data['rendimiento'] = rendimiento
         return cleaned_data
-
-
-def _resolver_estado_tareas_desde_orden(orden):
-    estado_orden = getattr(orden, 'estado_orden', None)
-    estado_nombre = str(getattr(estado_orden, 'estado_orden', '') or '').strip()
-    if not estado_nombre:
-        return None
-
-    estado_directo = EstadoTarea.objects.filter(estado_tareas__iexact=estado_nombre).order_by('id').first()
-    if estado_directo is not None:
-        return estado_directo
-
-    estado_normalizado = estado_nombre.lower()
-    if 'complet' in estado_normalizado or 'finaliz' in estado_normalizado:
-        return EstadoTarea.objects.filter(estado_tareas__iexact='Completada').order_by('id').first()
-    if 'espera' in estado_normalizado or 'pend' in estado_normalizado:
-        return EstadoTarea.objects.filter(estado_tareas__iexact='Pendiente').order_by('id').first()
-    if any(token in estado_normalizado for token in ('proceso', 'activ', 'ejec', 'pausa')):
-        return EstadoTarea.objects.filter(estado_tareas__iexact='Ejecución').order_by('id').first()
-
-    return None
 
 
 def _build_orden_trilla_defaults(orden):
     cliente = getattr(orden, 'cliente', None)
-    estado_tarea = _resolver_estado_tareas_desde_orden(orden)
+    estado_pendiente = EstadoTarea.objects.filter(estado_tareas__iexact='Pendiente').order_by('id').first()
 
     return {
         'cliente_id': getattr(cliente, 'id', None),
         'cliente_label': str(cliente) if cliente is not None else '',
-        'peso_cafe_bruto': orden.peso,
-        'estado_tareas_id': getattr(estado_tarea, 'id', None),
-        'estado_tareas_label': str(estado_tarea) if estado_tarea is not None else '',
+        'peso_cafe_bruto': getattr(orden, 'peso', None),
+        'estado_tareas_id': getattr(estado_pendiente, 'id', None),
+        'estado_tareas_label': getattr(estado_pendiente, 'estado_tareas', '') if estado_pendiente is not None else '',
     }
 
 
@@ -128,17 +143,10 @@ def _build_orden_trilla_defaults(orden):
 def orden_trilla_defaults(request):
     orden_id = request.GET.get('orden_id')
     if not orden_id:
-        estado_pendiente = EstadoTarea.objects.filter(estado_tareas__iexact='Pendiente').order_by('id').first()
-        return JsonResponse({
-            'cliente_id': None,
-            'cliente_label': '',
-            'peso_cafe_bruto': None,
-            'estado_tareas_id': getattr(estado_pendiente, 'id', None),
-            'estado_tareas_label': str(estado_pendiente) if estado_pendiente is not None else '',
-        })
+        return JsonResponse(_build_orden_trilla_defaults(Orden()))
 
     try:
-        orden = Orden.objects.select_related('cliente', 'estado_orden').get(pk=orden_id, trilla=True)
+        orden = Orden.objects.select_related('cliente').get(pk=orden_id)
     except (TypeError, ValueError, Orden.DoesNotExist):
         return JsonResponse({'detail': 'Orden no encontrada.'}, status=404)
 
@@ -235,6 +243,9 @@ def add_orden_trilla(request):
                     orden.cliente_id = obj.cliente_id
                     orden.save(update_fields=['cliente'])
             from django.utils import timezone
+            # Fecha de ingreso automática
+            obj.rendimiento = _calcular_rendimiento(obj.peso_cafe_bruto, obj.peso_cafe_verde)
+            obj.fecha_ingreso = timezone.now()
             obj.created_at = timezone.now()
             obj.updated_at = timezone.now()
             obj.save()
@@ -268,6 +279,7 @@ def edit_orden_trilla(request, pk):
 
     modelo_perm = 'OrdenTrilla'
     campos_perm = [
+        'fecha_ingreso',
         'cliente',
         'orden',
         'estado_tareas',
@@ -297,6 +309,8 @@ def edit_orden_trilla(request, pk):
             print("POST DATA:", request.POST)
         form = OrdenTrillaForm(request.POST, instance=trilla)
         if form.is_valid():
+            if not enforce_parent_order_not_completed(form):
+                return render(request, 'ordenes_trilla/detail_OrdenesTrilla.html', {'form': form, 'trilla': trilla, 'cliente_display': cliente_display, 'can_edit': can_edit})
             obj = form.save(commit=False)
 
             # Seguridad backend: si no hay permiso, mantener el valor original
@@ -331,17 +345,9 @@ def edit_orden_trilla(request, pk):
                     orden.save(update_fields=['cliente'])
 
             from django.utils import timezone
+            obj.rendimiento = _calcular_rendimiento(obj.peso_cafe_bruto, obj.peso_cafe_verde)
             obj.updated_at = timezone.now()
-            obj.save(update_fields=[
-                'cliente',
-                'orden',
-                'estado_tareas',
-                'peso_cafe_bruto',
-                'peso_cafe_verde',
-                'rendimiento',
-                'notas',
-                'updated_at',
-            ])
+            obj.save()
             if request.headers.get('X-Fragment'):
                 return listar_ordenes_trilla(request)
             return redirect('ordenes_trilla_listar')

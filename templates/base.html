@@ -52,7 +52,9 @@
                                 const url = modalNavLink.getAttribute('href');
                                 if(url) {
                                     ev.preventDefault();
-                                    await loadFragment(url);
+                                    await loadFragment(url, {
+                                        stack: modalNavLink.getAttribute('data-modal-stack') === '1'
+                                    });
                                 }
                             }
                 }, true);
@@ -68,6 +70,22 @@
                             // intercept submit
                                         root.querySelectorAll('form[data-modal-form]').forEach(form=>{
                                 form.addEventListener('submit', async e=>{
+                                    const pendingCompletionLabels = getPendingCompletionLabels(form);
+                                    if (pendingCompletionLabels.length) {
+                                        e.preventDefault();
+                                        e.stopImmediatePropagation();
+                                        showCompletionValidationMessage(form, pendingCompletionLabels);
+                                        return;
+                                    }
+                                    const parentOrderCompleted = getParentOrderCompletedState(form);
+                                    if (parentOrderCompleted) {
+                                        e.preventDefault();
+                                        e.stopImmediatePropagation();
+                                        showParentOrderCompletedMessage(form);
+                                        return;
+                                    }
+                                    clearCompletionValidationMessage(form);
+                                    clearParentOrderCompletedMessage(form);
                                     e.preventDefault();
                                 e.stopPropagation();
                                     if (form.dataset.submitting === '1') {
@@ -92,10 +110,26 @@
                                         const html = await res.text();
                                         // si la respuesta contiene listado reemplazar modal completo por nuevo listado
                                         if(html.includes('data-modal-root')){
-                                            document.querySelectorAll('[data-modal-root]').forEach(m=>m.remove());
-                                            const t = document.createElement('div'); t.innerHTML = html.trim();
-                                            document.body.appendChild(t.firstElementChild); // asumimos listado
-                                            bindModal(document.querySelector('[data-modal-root]'));
+                                            const t = document.createElement('div');
+                                            t.innerHTML = html.trim();
+                                            const nextModal = t.firstElementChild;
+                                            const replaceParent = res.headers.get('X-Modal-Update-Parent') === '1';
+                                            if (replaceParent) {
+                                                const parentModal = root.previousElementSibling && root.previousElementSibling.matches('[data-modal-root]')
+                                                    ? root.previousElementSibling
+                                                    : null;
+                                                if (parentModal && nextModal) {
+                                                    parentModal.replaceWith(nextModal);
+                                                    bindModal(nextModal);
+                                                    close();
+                                                } else if (nextModal) {
+                                                    root.replaceWith(nextModal);
+                                                    bindModal(nextModal);
+                                                }
+                                            } else if (nextModal) {
+                                                root.replaceWith(nextModal);
+                                                bindModal(nextModal);
+                                            }
                                         } else {
                                             // fallback
                                             location.reload();
@@ -111,6 +145,114 @@
                                 });
                             });
                     function close(){ root.remove(); }
+
+                    function showCompletionValidationMessage(form, labels){
+                        const message = `No es posible completar la Orden de Producción. Existen procesos de transformación pendientes por confirmar. Faltan: ${labels.join(', ')}.`;
+                        let alertBox = form.querySelector('[data-completion-validation-message]');
+                        if (!alertBox) {
+                            alertBox = document.createElement('div');
+                            alertBox.setAttribute('data-completion-validation-message', '1');
+                            alertBox.className = 'mb-2 text-sm px-3 py-2 rounded border bg-red-50 border-red-300 text-red-700';
+                            if (form.firstChild) {
+                                form.insertBefore(alertBox, form.firstChild);
+                            } else {
+                                form.appendChild(alertBox);
+                            }
+                        }
+                        alertBox.textContent = message;
+                        alertBox.style.display = 'block';
+                    }
+
+                    function clearCompletionValidationMessage(form){
+                        const alertBox = form.querySelector('[data-completion-validation-message]');
+                        if (alertBox) {
+                            alertBox.textContent = '';
+                            alertBox.style.display = 'none';
+                        }
+                    }
+
+                    function showParentOrderCompletedMessage(form){
+                        const message = 'No es posible crear o editar esta tarea porque la Orden de Producción vinculada ya se encuentra en estado Completada.';
+                        let alertBox = form.querySelector('[data-parent-order-completed-message]');
+                        if (!alertBox) {
+                            alertBox = document.createElement('div');
+                            alertBox.setAttribute('data-parent-order-completed-message', '1');
+                            alertBox.className = 'mb-2 text-sm px-3 py-2 rounded border bg-red-50 border-red-300 text-red-700';
+                            if (form.firstChild) {
+                                form.insertBefore(alertBox, form.firstChild);
+                            } else {
+                                form.appendChild(alertBox);
+                            }
+                        }
+                        alertBox.textContent = message;
+                        alertBox.style.display = 'block';
+                    }
+
+                    function clearParentOrderCompletedMessage(form){
+                        const alertBox = form.querySelector('[data-parent-order-completed-message]');
+                        if (alertBox) {
+                            alertBox.textContent = '';
+                            alertBox.style.display = 'none';
+                        }
+                    }
+
+                    function getParentOrderCompletedState(form){
+                        const orderSelect = form.querySelector('select[name="orden"]');
+                        if (orderSelect) {
+                            const selectedOption = orderSelect.options[orderSelect.selectedIndex];
+                            if (selectedOption && selectedOption.getAttribute('data-parent-order-completed') === '1') {
+                                return true;
+                            }
+                        }
+                        const orderHidden = form.querySelector('input[name="orden"]');
+                        if (orderHidden) {
+                            const value = (orderHidden.value || '').toString().trim();
+                            if (value) {
+                                return false;
+                            }
+                        }
+                        return false;
+                    }
+
+                    function getPendingCompletionLabels(form){
+                        const estadoSelect = form.querySelector('select[name="estado_orden"]');
+                        const estadoValue = estadoSelect ? estadoSelect.value : '';
+                        const estadoLabel = estadoSelect ? (estadoSelect.options[estadoSelect.selectedIndex]?.text || '') : '';
+                        const isCompleted = /completada/i.test(estadoValue) || /completada/i.test(estadoLabel);
+                        if (!isCompleted) {
+                            return [];
+                        }
+
+                        const rules = [
+                            { processName: 'trilla', confirmName: 'conf_trilla', label: 'Confir. Trilla' },
+                            { processName: 'selec_cafe_verde', confirmName: 'conf_sel_verde', label: 'Confir. Sel Verde' },
+                            { processName: 'tueste_flag', confirmName: 'conf_tueste', label: 'Confir. Tostado' },
+                            { processName: 'selec_cafe_tostado', confirmName: 'conf_sel_tostado', label: 'Confir. SelecTostado' },
+                            { processName: 'empaque_flag', confirmName: 'conf_empaque', label: 'Confir. Empaque' },
+                        ];
+
+                        const isChecked = (input) => {
+                            if (!input) return false;
+                            if (input.tagName === 'SELECT') {
+                                const value = (input.value || '').toString().trim().toLowerCase();
+                                return ['true', '1', 'on', 'yes', 'si', 'sí'].includes(value);
+                            }
+                            if (input.type === 'checkbox') {
+                                return input.checked;
+                            }
+                            const value = (input.value || '').toString().trim().toLowerCase();
+                            return ['true', '1', 'on', 'yes', 'si', 'sí'].includes(value);
+                        };
+
+                        return rules.reduce((acc, rule) => {
+                            const processInput = form.querySelector(`[name="${rule.processName}"]`);
+                            const confirmInput = form.querySelector(`[name="${rule.confirmName}"]`);
+                            if (isChecked(processInput) && !isChecked(confirmInput)) {
+                                acc.push(rule.label);
+                            }
+                            return acc;
+                        }, []);
+                    }
 
                                 // Datepicker (Flatpickr + fallback) inicializado de forma genérica
                                 (function initDatePickers(){
@@ -240,7 +382,7 @@
                     const existing = document.querySelector('[data-modal-root]');
                     if(existing) bindModal(existing);
                 });
-                                async function loadFragment(url){
+                                async function loadFragment(url, options = {}){
                             try {
                             const full = url + (url.includes('?')?'&':'?') + 'fragment=1';
                             const spinner = document.querySelector('[data-modal-root] [data-loading]');
@@ -248,9 +390,13 @@
                             const res = await fetch(full, {headers:{'X-Fragment':'1'}});
                                 if(!res.ok) throw new Error('Error '+res.status);
                                 const html = await res.text();
-                                document.querySelectorAll('[data-modal-root]').forEach(m=>m.remove());
-                                const temp = document.createElement('div'); temp.innerHTML = html.trim();
-                                        const modal = temp.firstElementChild; document.body.appendChild(modal); bindModal(modal);
+                                                const temp = document.createElement('div'); temp.innerHTML = html.trim();
+                                                        const modal = temp.firstElementChild;
+                                                        if(!modal) return;
+                                                        if (!options.stack) {
+                                                            document.querySelectorAll('[data-modal-root]').forEach(m=>m.remove());
+                                                        }
+                                                        document.body.appendChild(modal); bindModal(modal);
                                         // Reintentar inicialización de datepickers por si el modal llegó sin ellos
                                         try { if(typeof window.MicroDatepicker!== 'undefined') {
                                             modal.querySelectorAll('input[name="fecha_orden"], input[name="fecha_inicio_orden"], input[name="fecha_entrega"]').forEach(el=>{

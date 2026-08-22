@@ -1,14 +1,48 @@
 from datetime import timedelta
+from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Count, Sum, Avg, Q
+from django.http import Http404, HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import render
 
 from ordenes.models import Orden
 from inventario_cafe.models import InventarioCafe
 from tueste.models import Tueste
 from django.db.models.functions import TruncDate
+
+from .pdf import render_facturacion_pdf
+from .services.facturacion import get_available_orders, get_facturacion_report, get_facturacion_report_by_id
+
+
+@login_required
+def facturacion_view(request):
+    selected_order = request.GET.get("orden", "")
+    report = get_facturacion_report(selected_order)
+    return render(
+        request,
+        "reportes/facturacion.html",
+        {
+            "orders": get_available_orders(),
+            "report": report,
+            "selected_order": selected_order,
+        },
+    )
+
+
+@login_required
+def facturacion_pdf_view(request, orden_id):
+    report = get_facturacion_report_by_id(orden_id)
+    if report["not_found"] or not report["orden"]:
+        raise Http404("Orden de Producción no encontrada")
+
+    pdf_bytes = render_facturacion_pdf(report)
+    orden_numero = report["orden"].orden or orden_id
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="Facturacion_Orden_{orden_numero}.pdf"'
+    return response
 
 
 class BaseReportView(APIView):

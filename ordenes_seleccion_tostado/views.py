@@ -8,13 +8,10 @@ from django import forms
 from django.utils import timezone
 
 from .models import OrdenSeleccionTostado
+from ordenes.forms import enforce_parent_order_not_completed
 from ordenes.models import Orden
 from estado_ordenes.models import EstadoOrden
 from inventario_cafe.models import InventarioCafe
-from clientes.models import Cliente
-
-
-COMPLETADA_PESOS_ERROR = 'La tarea no se puede poner en estado completada porque uno o más pesos son menores o iguales a cero.'
 
 
 class OrdenChoiceField(forms.ModelChoiceField):
@@ -28,24 +25,10 @@ class InventarioChoiceField(forms.ModelChoiceField):
         return obj.codigo or f"INV-{obj.id:06d}"
 
 
-def obtener_estado_pendiente_seleccion_tostado():
-    estado_pendiente = EstadoOrden.objects.filter(estado_orden__iexact='Pendiente').order_by('id').first()
-    if estado_pendiente is not None:
-        return estado_pendiente
-    estado_pendiente, _ = EstadoOrden.objects.get_or_create(estado_orden='Pendiente')
-    return estado_pendiente
-
-
 class OrdenSeleccionTostadoForm(forms.ModelForm):
     orden = OrdenChoiceField(
-        queryset=Orden.objects.none(),
+        queryset=Orden.objects.all().order_by('-id'),
         required=False,
-        widget=forms.Select(attrs={'class': 'w-full select'})
-    )
-    cliente = forms.ModelChoiceField(
-        queryset=Cliente.objects.none(),
-        required=False,
-        disabled=True,
         widget=forms.Select(attrs={'class': 'w-full select'})
     )
     inventario_cafe_ref = InventarioChoiceField(
@@ -85,76 +68,25 @@ class OrdenSeleccionTostadoForm(forms.ModelForm):
             'cat_grupo3': forms.CheckboxInput(attrs={'class': 'toggle'}),
             'desc_grupo3': forms.TextInput(attrs={'class': 'w-full input'}),
             'peso_grupo3': forms.NumberInput(attrs={'class': 'w-full input', 'step': '0.01'}),
-            'notas': forms.Textarea(attrs={'class': 'w-full textarea', 'rows': '3', 'maxlength': '500'}),
+            'notas': forms.Textarea(attrs={'class': 'w-full input', 'rows': '3', 'maxlength': '500'}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        base_qs = Orden.objects.filter(selec_cafe_tostado=True).order_by('-id')
-        estado_pendiente = obtener_estado_pendiente_seleccion_tostado()
-        self.fields['cliente'].queryset = Cliente.objects.all().order_by('nombre', 'apellidos', 'id')
-        if self.is_bound:
-            self.fields['orden'].queryset = base_qs
-        else:
-            self.fields['orden'].queryset = base_qs.select_related('cliente')[:200]
-        self.fields['orden'].empty_label = 'Seleccione una orden'
-        self.fields['cliente'].empty_label = 'Seleccione un cliente'
-        self.fields['inventario_cafe_ref'].empty_label = 'Seleccione un inventario café'
-        cliente = None
-        orden_id = self.data.get('orden') if self.is_bound else None
-        if orden_id:
-            try:
-                cliente = base_qs.select_related('cliente').get(pk=orden_id).cliente
-            except (TypeError, ValueError, Orden.DoesNotExist):
-                cliente = None
-        elif getattr(self.instance, 'orden', None) is not None:
-            cliente = getattr(self.instance.orden, 'cliente', None)
-        if cliente is not None:
-            self.fields['cliente'].initial = cliente.pk
-            self.initial['cliente'] = cliente.pk
-        if estado_pendiente is not None and not getattr(self.instance, 'pk', None) and not self.is_bound:
-            self.fields['estado_tareas'].initial = estado_pendiente.pk
-            self.initial['estado_tareas'] = estado_pendiente.pk
-
-    def clean_orden(self):
-        orden = self.cleaned_data.get('orden')
-        if orden and not getattr(orden, 'selec_cafe_tostado', False):
-            raise forms.ValidationError('Solo se permiten órdenes de producción con selección de tostado habilitada.')
-        return orden
 
     def clean(self):
         cleaned_data = super().clean()
-        estado_tareas = cleaned_data.get('estado_tareas')
-        estado_nombre = (getattr(estado_tareas, 'estado_orden', '') or '').strip().lower()
-
-        if estado_nombre != 'completada':
+        if not enforce_parent_order_not_completed(self):
             return cleaned_data
-
-        pesos_requeridos = (
-            cleaned_data.get('peso_quaker'),
-            cleaned_data.get('peso_grupo1'),
-            cleaned_data.get('peso_grupo2'),
-            cleaned_data.get('peso_grupo3'),
-        )
-
-        if any(peso is None or peso <= 0 for peso in pesos_requeridos):
-            raise forms.ValidationError(COMPLETADA_PESOS_ERROR)
-
         return cleaned_data
 
 
 def _build_orden_seleccion_tostado_defaults(orden):
-    inventario_cafe = getattr(orden, 'id_inven_cafe', None)
-    estado_pendiente = obtener_estado_pendiente_seleccion_tostado()
     cliente = getattr(orden, 'cliente', None)
+    inventario = getattr(orden, 'id_inven_cafe', None)
 
     return {
         'cliente_id': getattr(cliente, 'id', None),
         'cliente_label': str(cliente) if cliente is not None else '',
-        'inventario_cafe_ref_id': getattr(inventario_cafe, 'id', None),
-        'inventario_cafe_ref_label': str(inventario_cafe) if inventario_cafe is not None else '',
-        'estado_tareas_id': getattr(estado_pendiente, 'id', None),
-        'estado_tareas_label': str(estado_pendiente) if estado_pendiente is not None else '',
+        'inventario_cafe_ref_id': getattr(inventario, 'id', None),
+        'inventario_cafe_ref_label': str(inventario) if inventario is not None else '',
     }
 
 
@@ -166,7 +98,7 @@ def orden_seleccion_tostado_defaults(request):
         return JsonResponse(_build_orden_seleccion_tostado_defaults(Orden()))
 
     try:
-        orden = Orden.objects.select_related('id_inven_cafe', 'cliente').get(pk=orden_id, selec_cafe_tostado=True)
+        orden = Orden.objects.select_related('cliente', 'id_inven_cafe').get(pk=orden_id, selec_cafe_tostado=True)
     except (TypeError, ValueError, Orden.DoesNotExist):
         return JsonResponse({'detail': 'Orden no encontrada.'}, status=404)
 
@@ -219,6 +151,8 @@ def add_orden_seleccion_tostado(request):
     if request.method == 'POST':
         form = OrdenSeleccionTostadoForm(request.POST)
         if form.is_valid():
+            if not enforce_parent_order_not_completed(form):
+                return render(request, 'ordenes_seleccion_tostado/add_OrdenesSelecionTostado.html', {'form': form})
             obj = form.save(commit=False)
             if not obj.fecha_ingreso:
                 obj.fecha_ingreso = timezone.now()
@@ -242,6 +176,8 @@ def edit_orden_seleccion_tostado(request, pk):
     if request.method == 'POST':
         form = OrdenSeleccionTostadoForm(request.POST, instance=obj)
         if form.is_valid():
+            if not enforce_parent_order_not_completed(form):
+                return render(request, 'ordenes_seleccion_tostado/detail_OrdenesSelecionTostado.html', {'form': form, 'obj': obj})
             inst = form.save(commit=False)
             inst.updated_at = timezone.now()
             inst.save()

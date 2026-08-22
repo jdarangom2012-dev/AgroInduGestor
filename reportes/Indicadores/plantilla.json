@@ -1,0 +1,168 @@
+{
+  "name": "La Central Tostadora V2",
+  "dataColors": [
+    "#E8B923",
+    "#DD3F2E",
+    "#4A90D9",
+    "#F2F2F2",
+    "#C49A1A",
+    "#A8301F",
+    "#F0D080",
+    "#E87A6A"
+  ],
+  "background": "#161616",
+  "foreground": "#F2F2F2",
+  "tableAccent": "#E8B923",
+  "visualStyles": {
+    "card": {
+      "*": {
+        "calloutValue": [{
+          "color": { "solid": { "color": "#E8B923" } },
+          "fontSize": 22,
+          "bold": true
+        }],
+        "categoryLabel": [{
+          "color": { "solid": { "color": "#F2F2F2" } },
+          "fontSize": 10
+        }],
+        "background": [{
+          "show": false
+        }],
+        "border": [{
+          "show": false
+        }]
+      }
+    },
+    "slicer": {
+      "*": {
+        "header": [{
+          "fontColor": { "solid": { "color": "#E8B923" } },
+          "background": { "solid": { "color": "#1E1E1E" } },
+          "bold": true,
+          "textSize": 11
+        }],
+        "data": [{
+          "fontColor": { "solid": { "color": "#F2F2F2" } },
+          "background": { "solid": { "color": "#1E1E1E" } },
+          "textSize": 11
+        }],
+        "background": [{
+          "show": true,
+          "color": { "solid": { "color": "#1E1E1E" } }
+        }],
+        "border": [{
+          "show": true,
+          "color": { "solid": { "color": "#E8B923" } }
+        }]
+      }
+    },
+    "lineChart": {
+      "*": {
+        "background": [{
+          "show": true,
+          "color": { "solid": { "color": "#1E1E1E" } }
+        }],
+        "categoryAxis": [{
+          "labelColor": { "solid": { "color": "#F2F2F2" } },
+          "gridlineColor": { "solid": { "color": "#2A2A2A" } }
+        }],
+        "valueAxis": [{
+          "labelColor": { "solid": { "color": "#F2F2F2" } },
+          "gridlineColor": { "solid": { "color": "#2A2A2A" } }
+        }],
+        "legend": [{
+          "labelColor": { "solid": { "color": "#F2F2F2" } }
+        }],
+        "border": [{
+          "show": false
+        }]
+      }
+    },
+    "columnChart": {
+      "*": {
+        "background": [{
+          "show": true,
+          "color": { "solid": { "color": "#1E1E1E" } }
+        }],
+        "categoryAxis": [{
+          "labelColor": { "solid": { "color": "#F2F2F2" } },
+          "gridlineColor": { "solid": { "color": "#2A2A2A" } }
+        }],
+        "valueAxis": [{
+          "labelColor": { "solid": { "color": "#F2F2F2" } },
+          "gridlineColor": { "solid": { "color": "#2A2A2A" } }
+        }],
+        "legend": [{
+          "labelColor": { "solid": { "color": "#F2F2F2" } }
+        }],
+        "border": [{
+          "show": false
+        }]
+      }
+    },
+    "barChart": {
+      "*": {
+        "background": [{
+          "show": true,
+          "color": { "solid": { "color": "#1E1E1E" } }
+        }],
+        "categoryAxis": [{
+          "labelColor": { "solid": { "color": "#F2F2F2" } },
+          "gridlineColor": { "solid": { "color": "#2A2A2A" } }
+        }],
+        "valueAxis": [{
+          "labelColor": { "solid": { "color": "#F2F2F2" } },
+          "gridlineColor": { "solid": { "color": "#2A2A2A" } }
+        }],
+        "legend": [{
+          "labelColor": { "solid": { "color": "#F2F2F2" } }
+        }],
+        "border": [{
+          "show": false
+        }]
+      }
+    },
+    "tableEx": {
+      "*": {
+        "background": [{
+          "show": true,
+          "color": { "solid": { "color": "#1E1E1E" } }
+        }],
+        "columnHeaders": [{
+          "fontColor": { "solid": { "color": "#161616" } },
+          "backColor": { "solid": { "color": "#E8B923" } },
+          "bold": true,
+          "fontSize": 11
+        }],
+        "values": [{
+          "fontColorPrimary": { "solid": { "color": "#F2F2F2" } },
+          "backColorPrimary": { "solid": { "color": "#1E1E1E" } },
+          "fontColorSecondary": { "solid": { "color": "#F2F2F2" } },
+          "backColorSecondary": { "solid": { "color": "#252525" } }
+        }]
+      }
+    }
+  },
+  "textClasses": {
+    "callout": {
+      "fontSize": 22,
+      "fontFace": "Segoe UI",
+      "color": "#E8B923"
+    },
+    "title": {
+      "fontSize": 13,
+      "fontFace": "Segoe UI",
+      "color": "#E8B923"
+    },
+    "header": {
+      "fontSize": 11,
+      "fontFace": "Segoe UI",
+      "color": "#F2F2F2"
+    },
+    "label": {
+      "fontSize": 10,
+      "fontFace": "Segoe UI",
+      "color": "#F2F2F2"
+    }
+  }
+}

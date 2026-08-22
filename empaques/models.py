@@ -12,6 +12,7 @@ class Empaque(models.Model):
     tamano = models.ForeignKey('tamano_empaque.TamanoEmpaque', models.SET_NULL, db_column='IdTamanoEmpaque', blank=True, null=True)
     cant_empaque = models.IntegerField(db_column='CantEmpaque', blank=True, null=True)
     cant_empacada = models.IntegerField(db_column='CantEmpacada', blank=True, null=True)
+    lleva_etiquetas = models.BooleanField(db_column='LlevaEtiquetas', default=False)
     cant_etiquetas = models.IntegerField(db_column='CantEtiquetas', blank=True, null=True)
     emp_clientes = models.IntegerField(db_column='EmpClientes', blank=True, null=True)
     total_empaques = models.IntegerField(db_column='TotalEmpaques', blank=True, null=True)

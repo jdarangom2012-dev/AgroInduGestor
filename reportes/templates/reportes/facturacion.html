@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+  <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
+    <div class="flex flex-col gap-1 mb-5">
+      <h1 class="text-2xl font-bold tracking-wide">Reporte de Facturación</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-300">Consulta consolidada por Orden de Producción.</p>
+    </div>
+
+    <form method="get" class="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+      <div>
+        <label for="id_orden" class="block text-sm font-semibold mb-1">Número de Orden de Producción</label>
+        <select id="id_orden" name="orden" class="w-full select" required>
+          <option value="">Seleccione una orden</option>
+          {% for order in orders %}
+            <option value="{{ order.orden }}" {% if selected_order == order.orden %}selected{% endif %}>
+              {{ order.orden }}{% if order.cliente %} - {{ order.cliente }}{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn-primary">CONSULTAR</button>
+    </form>
+  </section>
+
+  {% if report.not_found %}
+    <div class="bg-red-50 border border-red-300 text-red-700 rounded-lg p-4 text-sm">
+      No existe una Orden de Producción con número "{{ report.selected_order }}".
+    </div>
+  {% endif %}
+
+  {% if report.orden %}
+    <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+        <h2 class="text-lg font-semibold">Orden</h2>
+        <a href="{% url 'reportes_facturacion_pdf' report.orden.id %}" class="btn-primary text-center">EXPORTAR PDF</a>
+      </div>
+      <dl class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+        <div>
+          <dt class="text-gray-500">Número de Orden</dt>
+          <dd class="font-semibold">{{ report.orden.orden|default:"-" }}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Cliente</dt>
+          <dd class="font-semibold">{{ report.orden.cliente|default:"-" }}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Fecha de Orden</dt>
+          <dd class="font-semibold">{{ report.orden.fecha_inicio_orden|date:"d/m/Y"|default:"-" }}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Estado</dt>
+          <dd class="font-semibold">{{ report.orden.estado_orden|default:"-" }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5">
+        <h2 class="text-lg font-semibold mb-3">Trilla</h2>
+        {% if report.procesos.trilla.aplica %}
+          <dl class="space-y-2 text-sm">
+            <div class="flex justify-between gap-3"><dt>Peso Café Neto Total</dt><dd class="font-semibold">{{ report.procesos.trilla.entrada|floatformat:2 }} kg</dd></div>
+            <div class="flex justify-between gap-3"><dt>Peso Café Verde Total</dt><dd class="font-semibold">{{ report.procesos.trilla.salida|floatformat:2 }} kg</dd></div>
+          </dl>
+        {% else %}
+          <p class="text-sm text-gray-500">Sin registros.</p>
+        {% endif %}
+      </div>
+
+      <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5">
+        <h2 class="text-lg font-semibold mb-3">Selección Verde</h2>
+        {% if report.procesos.seleccion_verde.aplica %}
+          <dl class="space-y-2 text-sm">
+            <div class="flex justify-between gap-3"><dt>Total de Grupo</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.total_de_grupo|floatformat:2 }} kg</dd></div>
+            <div class="flex justify-between gap-3"><dt>Peso Aceptado</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.peso_aceptado|floatformat:2 }} kg</dd></div>
+            <div class="flex justify-between gap-3"><dt>Humedad</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.humedad|floatformat:2 }}</dd></div>
+            <div class="flex justify-between gap-3"><dt>Densidad</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.densidad|floatformat:2 }}</dd></div>
+          </dl>
+        {% else %}
+          <p class="text-sm text-gray-500">Sin registros.</p>
+        {% endif %}
+      </div>
+
+      <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5">
+        <h2 class="text-lg font-semibold mb-3">Tueste</h2>
+        {% if report.procesos.tueste.aplica %}
+          <dl class="space-y-2 text-sm">
+            <div class="flex justify-between gap-3"><dt>Peso Café Verde Total</dt><dd class="font-semibold">{{ report.procesos.tueste.entrada|floatformat:2 }} kg</dd></div>
+            <div class="flex justify-between gap-3"><dt>Peso Café Tostado Total</dt><dd class="font-semibold">{{ report.procesos.tueste.salida|floatformat:2 }} kg</dd></div>
+          </dl>
+        {% else %}
+          <p class="text-sm text-gray-500">Sin registros.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-3">Selección Tueste</h2>
+      {% if report.procesos.seleccion_tostado.aplica %}
+        <dl class="grid grid-cols-1 md:grid-cols-5 gap-4 text-sm">
+          <div><dt class="text-gray-500">Peso Quaker</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.peso_quaker|floatformat:2 }} kg</dd></div>
+          <div><dt class="text-gray-500">Peso Grupo 1</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.peso_grupo1|floatformat:2 }} kg</dd></div>
+          <div><dt class="text-gray-500">Peso Grupo 2</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.peso_grupo2|floatformat:2 }} kg</dd></div>
+          <div><dt class="text-gray-500">Peso Grupo 3</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.peso_grupo3|floatformat:2 }} kg</dd></div>
+          <div><dt class="text-gray-500">Total registrado</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.total_registrado|floatformat:2 }} kg</dd></div>
+        </dl>
+      {% else %}
+        <p class="text-sm text-gray-500">Sin registros.</p>
+      {% endif %}
+    </section>
+
+    <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6 space-y-6">
+      <div>
+        <h2 class="text-lg font-semibold mb-3">Bolsas Empacadas</h2>
+        {% if report.procesos.empaque.aplica %}
+          {% if report.procesos.empaque.bolsas_empacadas %}
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-sm">
+                <thead>
+                  <tr class="text-left border-b border-gray-200 dark:border-gray-800">
+                    <th class="py-2 pr-3">Empaque Café</th>
+                    <th class="py-2 pr-3">Tamaño Empaque</th>
+                    <th class="py-2 pr-3">Suministro</th>
+                    <th class="py-2 text-right">Cantidad Bolsas Empacadas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in report.procesos.empaque.bolsas_empacadas %}
+                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                      <td class="py-2 pr-3">{{ row.empaque_cafe__empaque_cafe|default:"Sin tipo" }}</td>
+                      <td class="py-2 pr-3">{{ row.tamano_empaque__tamano_empaque|default:"Sin tamaño" }}</td>
+                      <td class="py-2 pr-3">{% if row.suministro %}☑ Sí{% else %}☐ No{% endif %}</td>
+                      <td class="py-2 text-right font-semibold">{{ row.cantidad|default:0 }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-sm text-gray-500">Sin registros.</p>
+          {% endif %}
+        {% else %}
+          <p class="text-sm text-gray-500">Sin registros.</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <h2 class="text-lg font-semibold mb-3">Totales de Empaque</h2>
+        {% if report.procesos.empaque.aplica %}
+          <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt class="text-gray-500">Cantidad Bolsas Empacadas</dt>
+              <dd class="font-semibold">{{ report.procesos.empaque.cantidad_bolsas_empacadas|floatformat:0 }}</dd>
+            </div>
+            <div>
+              <dt class="text-gray-500">Total Paquetes</dt>
+              <dd class="font-semibold">{{ report.procesos.empaque.total_paquetes|floatformat:0 }}</dd>
+            </div>
+          </dl>
+        {% else %}
+          <p class="text-sm text-gray-500">Sin registros.</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <h2 class="text-lg font-semibold mb-3">Empaques Suministrados Por El Cliente</h2>
+        {% if report.procesos.empaque.suministro_cliente %}
+          {% if report.procesos.empaque.empaques_suministrados %}
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-sm">
+                <thead>
+                  <tr class="text-left border-b border-gray-200 dark:border-gray-800">
+                    <th class="py-2 pr-3">Empaque Café</th>
+                    <th class="py-2 pr-3">Tamaño Empaque</th>
+                    <th class="py-2 text-right">Cantidad</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in report.procesos.empaque.empaques_suministrados %}
+                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                      <td class="py-2 pr-3">{{ row.empaque_cafe__empaque_cafe|default:"Sin tipo" }}</td>
+                      <td class="py-2 pr-3">{{ row.tamano_empaque__tamano_empaque|default:"Sin tamaño" }}</td>
+                      <td class="py-2 text-right font-semibold">{{ row.cantidad|default:0 }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-sm text-gray-500">No hay detalle de empaque suministrado registrado.</p>
+          {% endif %}
+        {% else %}
+          <p class="text-sm text-gray-500">No se registraron empaques suministrados por el cliente.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-3">Etiquetas</h2>
+      <dl class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div>
+          <dt class="text-gray-500">Etiquetas Cliente</dt>
+          <dd class="font-semibold">{{ report.etiquetas.cliente|floatformat:0 }}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Etiquetas INVIMA</dt>
+          <dd class="font-semibold">{{ report.etiquetas.invima|floatformat:0 }}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Total Etiquetas</dt>
+          <dd class="font-semibold">{{ report.etiquetas.total|floatformat:0 }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-3">Observaciones</h2>
+      {% if report.observaciones %}
+        <ul class="space-y-2 text-sm">
+          {% for item in report.observaciones %}
+            <li><span class="font-semibold">{{ item.origen }}:</span> {{ item.texto }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-gray-500">Sin observaciones.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

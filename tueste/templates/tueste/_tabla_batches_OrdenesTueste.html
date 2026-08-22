@@ -23,7 +23,7 @@
         <td class="td">{{ detalle.kilos_tostado|default:'—' }}</td>
         <td class="td">{{ detalle.observaciones|default:'—' }}</td>
         <td class="td action">
-          <a href="{% url 'orden_tueste_batch_editar' tueste.pk detalle.pk %}" class="link link-edit" data-modal-navigate>
+          <a href="{% url 'orden_tueste_batch_editar' tueste.pk detalle.pk %}" class="link link-edit" data-modal-navigate data-modal-stack="1">
             {% if detalle.tiene_datos %}Editar{% else %}Ingresar datos{% endif %}
           </a>
         </td>

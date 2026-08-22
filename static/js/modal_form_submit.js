@@ -7,27 +7,43 @@ function getRendimientoFields(scope) {
     return null;
   }
 
-  const pesoTostado =
-    scope.querySelector('#id_peso_cafe_tostado_total') ||
-    scope.querySelector('input[name="peso_cafe_tostado_total"]') ||
+  const trillaNeto =
     scope.querySelector('#id_peso_cafe_neto') ||
     scope.querySelector('#id_peso_cafe_bruto') ||
     scope.querySelector('input[name="peso_cafe_neto"], input[name="peso_cafe_bruto"]');
-  const pesoVerde =
-    scope.querySelector('#id_peso_cafe_vede_total') ||
-    scope.querySelector('#id_peso_cafe_verde_total') ||
-    scope.querySelector('input[name="peso_cafe_vede_total"], input[name="peso_cafe_verde_total"]') ||
+  const trillaVerde =
     scope.querySelector('#id_peso_cafe_verde') ||
     scope.querySelector('input[name="peso_cafe_verde"]');
+
+  const tuesteTostado =
+    scope.querySelector('#id_peso_cafe_tostado_total') ||
+    scope.querySelector('input[name="peso_cafe_tostado_total"]');
+  const tuesteVerde =
+    scope.querySelector('#id_peso_cafe_vede_total') ||
+    scope.querySelector('#id_peso_cafe_verde_total') ||
+    scope.querySelector('input[name="peso_cafe_vede_total"], input[name="peso_cafe_verde_total"]');
+
   const rendimiento =
     scope.querySelector('#id_rendimiento') ||
     scope.querySelector('input[name="rendimiento"]:not([type="hidden"])');
 
-  if (!pesoTostado || !pesoVerde || !rendimiento) {
+  if (trillaNeto && trillaVerde && rendimiento) {
+    return { pesoNeto: trillaNeto, pesoVerde: trillaVerde, rendimiento, tipo: 'trilla' };
+  }
+
+  if (tuesteTostado && tuesteVerde && rendimiento) {
+    return { pesoTostado: tuesteTostado, pesoVerde: tuesteVerde, rendimiento, tipo: 'tueste' };
+  }
+
+  if (!tuesteTostado && !trillaNeto) {
     return null;
   }
 
-  return { pesoTostado, pesoVerde, rendimiento };
+  if (!tuesteVerde && !trillaVerde) {
+    return null;
+  }
+
+  return { pesoTostado: tuesteTostado || trillaNeto, pesoVerde: tuesteVerde || trillaVerde, rendimiento, tipo: 'generic' };
 }
 
 
@@ -37,19 +53,29 @@ function calcularRendimiento(scope) {
     return;
   }
 
-  const { pesoTostado, pesoVerde, rendimiento } = fields;
+  const { pesoVerde, rendimiento, tipo } = fields;
   rendimiento.readOnly = true;
   rendimiento.setAttribute('readonly', 'readonly');
 
-  const tostado = parseFloat(String(pesoTostado.value || '').replace(',', '.'));
   const verde = parseFloat(String(pesoVerde.value || '').replace(',', '.'));
-
   if (!verde || verde === 0) {
     rendimiento.value = '0.00';
     return;
   }
 
-  const resultado = ((tostado || 0) / verde) * 100;
+  let resultado = 0;
+  if (tipo === 'trilla') {
+    const neto = parseFloat(String(fields.pesoNeto.value || '').replace(',', '.'));
+    if (!neto || neto === 0) {
+      rendimiento.value = '0.00';
+      return;
+    }
+    resultado = (neto / verde) * 100;
+  } else {
+    const tostado = parseFloat(String(fields.pesoTostado.value || '').replace(',', '.'));
+    resultado = ((tostado || 0) / verde) * 100;
+  }
+
   rendimiento.value = resultado.toFixed(2);
 }
 
@@ -60,8 +86,13 @@ function bindRendimientoCalc(scope) {
     return;
   }
 
-  const { pesoTostado, pesoVerde, rendimiento } = fields;
-  const bindKey = [pesoTostado.id || pesoTostado.name, pesoVerde.id || pesoVerde.name].join('|');
+  const { pesoTostado, pesoNeto, pesoVerde, rendimiento } = fields;
+  const origen = pesoTostado || pesoNeto;
+  if (!origen || !pesoVerde) {
+    return;
+  }
+
+  const bindKey = [(origen.id || origen.name), (pesoVerde.id || pesoVerde.name)].join('|');
 
   if (rendimiento.dataset.rendimientoCalcInit === bindKey) {
     calcularRendimiento(scope);
@@ -72,9 +103,9 @@ function bindRendimientoCalc(scope) {
     calcularRendimiento(scope);
   };
 
-  pesoTostado.addEventListener('input', handler);
+  origen.addEventListener('input', handler);
   pesoVerde.addEventListener('input', handler);
-  pesoTostado.addEventListener('change', handler);
+  origen.addEventListener('change', handler);
   pesoVerde.addEventListener('change', handler);
   rendimiento.dataset.rendimientoCalcInit = bindKey;
 
@@ -806,6 +837,37 @@ function initOrdenEmpaqueToggle(container) {
 window.initOrdenEmpaqueToggle = initOrdenEmpaqueToggle;
 
 
+function initEmpaqueOrderToggle(container) {
+  const scopes = [];
+  if (container && container.nodeType === 1 && container.matches && container.matches('[data-modal-root]')) {
+    scopes.push(container);
+  } else if (container && container.querySelectorAll) {
+    scopes.push(...container.querySelectorAll('[data-modal-root]'));
+  }
+  if (!scopes.length) scopes.push(container && container.querySelector ? container : document);
+
+  for (const scope of scopes) {
+    if (!scope || !scope.querySelector) continue;
+
+    const orderSelect = scope.querySelector('select[name="orden"], select#id_orden');
+    const orderSections = Array.from(scope.querySelectorAll('[data-orden-empaque-section]'));
+    if (!orderSelect || !orderSections.length) continue;
+
+    function syncSection() {
+      const option = orderSelect.options[orderSelect.selectedIndex];
+      const value = option ? option.getAttribute('data-trabajo-empaque') : null;
+      const shouldShow = value === '1';
+      orderSections.forEach((section) => section.classList.toggle('hidden', !shouldShow));
+    }
+
+    orderSelect.addEventListener('change', syncSection);
+    syncSection();
+  }
+}
+
+window.initEmpaqueOrderToggle = initEmpaqueOrderToggle;
+
+
 function initEmpaqueDetalleGrid(container) {
   const scopes = [];
   if (container && container.nodeType === 1 && container.matches && container.matches('[data-modal-root]')) {
@@ -838,6 +900,20 @@ function initEmpaqueDetalleGrid(container) {
       });
     }
 
+    function syncEmpacadoTotal() {
+      const totalField = scope.querySelector('#id_emp_clientes');
+      if (!totalField) return;
+
+      const total = visibleRows().reduce(function (sum, row) {
+        const field = row.querySelector('input[name$="-empacado"]');
+        if (!field || field.disabled) return sum;
+        const value = parseInt(field.value || '0', 10);
+        return sum + (Number.isNaN(value) ? 0 : value);
+      }, 0);
+
+      totalField.value = String(total);
+    }
+
     function refreshIndexes() {
       visibleRows().forEach(function (row, index) {
         const indexCell = row.querySelector('[data-empaque-detalle-index]');
@@ -851,6 +927,7 @@ function initEmpaqueDetalleGrid(container) {
       body.insertAdjacentHTML('beforeend', html);
       totalForms.value = String(nextIndex + 1);
       refreshIndexes();
+      syncEmpacadoTotal();
     }
 
     function removeRow(row) {
@@ -869,6 +946,7 @@ function initEmpaqueDetalleGrid(container) {
         appendRow();
       } else {
         refreshIndexes();
+        syncEmpacadoTotal();
       }
     }
 
@@ -884,10 +962,23 @@ function initEmpaqueDetalleGrid(container) {
       removeRow(row);
     });
 
+    body.addEventListener('input', function (event) {
+      const target = event.target;
+      if (!target || !target.matches || !target.matches('input[name$="-empacado"]')) return;
+      syncEmpacadoTotal();
+    });
+
+    body.addEventListener('change', function (event) {
+      const target = event.target;
+      if (!target || !target.matches || !target.matches('input[name$="-empacado"]')) return;
+      syncEmpacadoTotal();
+    });
+
     if (!visibleRows().length) {
       appendRow();
     } else {
       refreshIndexes();
+      syncEmpacadoTotal();
     }
 
     grid.dataset.empaqueDetalleInit = '1';
@@ -895,6 +986,39 @@ function initEmpaqueDetalleGrid(container) {
 }
 
 window.initEmpaqueDetalleGrid = initEmpaqueDetalleGrid;
+
+
+function syncEmpaqueEmpacadoTotal(scope) {
+  if (!scope || !scope.querySelector) return;
+
+  const grid = scope.querySelector('[data-empaque-detalle-grid]');
+  const totalField = scope.querySelector('#id_emp_clientes');
+  if (!grid || !totalField) return;
+
+  const rows = Array.from(grid.querySelectorAll('[data-empaque-detalle-row]')).filter(function (row) {
+    return !row.classList.contains('hidden');
+  });
+
+  const total = rows.reduce(function (sum, row) {
+    const field = row.querySelector('input[name$="-empacado"]');
+    if (!field || field.disabled) return sum;
+    const value = parseInt(field.value || '0', 10);
+    return sum + (Number.isNaN(value) ? 0 : value);
+  }, 0);
+
+  totalField.value = String(total);
+}
+
+
+function syncEmpaqueEmpacadoTotalFromEventTarget(target) {
+  if (!target || !target.closest) return;
+  const modal = target.closest('[data-modal-root]');
+  if (!modal) return;
+  syncEmpaqueEmpacadoTotal(modal);
+}
+
+
+window.syncEmpaqueEmpacadoTotal = syncEmpaqueEmpacadoTotal;
 
 
 // Recalcular en tiempo real (delegado) cuando cambien los pesos dentro de un modal
@@ -911,6 +1035,34 @@ document.addEventListener(
       )
     ) {
       initRendimientoCalc(modal);
+    }
+
+    if (t.matches('input[name$="-empacado"]')) {
+      syncEmpaqueEmpacadoTotal(modal);
+    }
+  },
+  true
+);
+
+document.addEventListener(
+  'change',
+  function (e) {
+    const t = e.target;
+    if (!t || !t.matches) return;
+    if (t.matches('input[name$="-empacado"]')) {
+      syncEmpaqueEmpacadoTotalFromEventTarget(t);
+    }
+  },
+  true
+);
+
+document.addEventListener(
+  'blur',
+  function (e) {
+    const t = e.target;
+    if (!t || !t.matches) return;
+    if (t.matches('input[name$="-empacado"]')) {
+      syncEmpaqueEmpacadoTotalFromEventTarget(t);
     }
   },
   true
@@ -960,6 +1112,7 @@ const _rendMo = new MutationObserver(function (mutations) {
           initSeleccionVerdeCatadora(modal);
           initSeleccionTuesteValidations(modal);
           initOrdenEmpaqueToggle(modal);
+          initEmpaqueOrderToggle(modal);
           initEmpaqueDetalleGrid(modal);
         }
       }
@@ -987,7 +1140,9 @@ document.addEventListener('DOMContentLoaded', function () {
   initSeleccionVerdeCatadora(document);
   initSeleccionTuesteValidations(document);
   initOrdenEmpaqueToggle(document);
+  initEmpaqueOrderToggle(document);
   initEmpaqueDetalleGrid(document);
+  syncEmpaqueEmpacadoTotal(document);
 });
 
 // Compatibilidad con HTMX (contenido dinámico)
@@ -1006,7 +1161,9 @@ document.addEventListener('DOMContentLoaded', function () {
       initSeleccionVerdeCatadora(evt && evt.target ? evt.target : document);
       initSeleccionTuesteValidations(target);
       initOrdenEmpaqueToggle(target);
+      initEmpaqueOrderToggle(target);
       initEmpaqueDetalleGrid(target);
+      syncEmpaqueEmpacadoTotal(target);
     });
   }
 });

@@ -13,24 +13,23 @@ POLL_SEG        = 2          # Cada cuántos segundos se lee %M93
 # %M93 → coil número 93 (base 0).
 # Cuando el PLC lo pone en 1, Python lee todo y ejecuta el SP.
 # Después de guardar, Python resetea el coil a 0.
-COIL_TRIGGER    = 93
+COIL_TRIGGER        = 93   # %M93 — PLC activa cuando orden completa
+                           #         Python lo apaga cuando INSERT es exitoso
 
 # ── SQL Server ───────────────────────────────────────────────
 SQL_CONN = (
     "DRIVER={ODBC Driver 17 for SQL Server};"
-    "SERVER=TU_SERVIDOR;"          # ← Ej: 192.168.0.10 o PC\\SQLEXPRESS
-    "DATABASE=TU_BASE_DATOS;"      # ← nombre de tu base de datos
-    "UID=TU_USUARIO;"
-    "PWD=TU_CONTRASEÑA;"
+    "SERVER=WIN-BJ6FABBG7OK\TLCMAIN01;"          # ← igual que el primer servicio
+    "DATABASE=dbTostadoraCentral;"
+    "UID=sa;"
+    "PWD=Tostadora2026*;"
     "TrustServerCertificate=yes;"
     "Connection Timeout=10;"
 )
-
 # Un único SP que inserta en dbo.tblConsumosTostion
-SP_INSERTAR = "dbo.sp_InsertarCurvaTueste"
+SP_INSERTAR = "dbo.sp_InsertarConsumosTueste"
 
 # ── Log ──────────────────────────────────────────────────────
-LOG_FILE         = r"C:\inetpub\wwwroot\AgroindugestorQA\Servicio\PLCService\plc_curvas.log"
+LOG_FILE         = r"C:\PLCService\logs\plc_curvas.log"
 LOG_MAX_BYTES    = 5 * 1024 * 1024   # 5 MB por archivo
 LOG_BACKUP_COUNT = 5                  # Mantener 5 rotaciones
-
