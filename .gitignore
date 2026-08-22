@@ -24,3 +24,22 @@ logs/
 *.suo
 *.tmp
 Thumbs.db
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyc
+
+# Base de datos local
+db.sqlite3
+
+# Entorno virtual
+venv/
+env/
+.env
+
+# Archivos compilados
+*.egg-info/
+dist/
+build/
