@@ -306,6 +306,18 @@ class OrdenSeleccionVerdeForm(forms.ModelForm):
         # 2) Al final: por si el clean() modificó algo no editable
         _enforce_field_permissions()
 
+        campos_dependientes = (
+            ('catacion_ripio', 'peso_cat_ripio'),
+            ('catacion_balsos', 'peso_cat_balsos'),
+            ('catacion_grupo1', 'peso_cat_grupo1'),
+            ('catacion_grupo2', 'peso_cat_grupo2'),
+            ('medir_humedad', 'humedad'),
+            ('medir_densidad', 'densidad'),
+        )
+        for campo_toggle, campo_valor in campos_dependientes:
+            if not bool(cleaned_data.get(campo_toggle)):
+                cleaned_data[campo_valor] = None
+
         return cleaned_data
 
     def clean_orden(self):

@@ -565,7 +565,7 @@ function initSeleccionVerdeZaranda(container) {
 window.initSeleccionVerdeZaranda = initSeleccionVerdeZaranda;
 
 
-function initSeleccionVerdeCatadora(container) {
+function initSeleccionVerdeCamposDependientes(container) {
   const scopes = [];
   if (container && container.nodeType === 1 && container.matches && container.matches('[data-modal-root]')) {
     scopes.push(container);
@@ -574,51 +574,45 @@ function initSeleccionVerdeCatadora(container) {
   }
   if (!scopes.length) scopes.push(container && container.querySelector ? container : document);
 
+  const relaciones = [
+    ['#id_catacion_ripio', '#id_peso_cat_ripio'],
+    ['#id_catacion_balsos', '#id_peso_cat_balsos'],
+    ['#id_catacion_grupo1', '#id_peso_cat_grupo1'],
+    ['#id_catacion_grupo2', '#id_peso_cat_grupo2'],
+    ['#id_medir_humedad', '#id_humedad'],
+    ['#id_medir_densidad', '#id_densidad']
+  ];
+
   for (const scope of scopes) {
     if (!scope || !scope.querySelector) continue;
 
-    const catadora = scope.querySelector('#id_catadora');
-    if (!catadora) continue;
+    relaciones.forEach(function(relacion) {
+      const checkbox = scope.querySelector(relacion[0]);
+      const campo = scope.querySelector(relacion[1]);
+      if (!checkbox || !campo) return;
 
-    const campos = [
-      { selector: '#id_catacion_ripio',   type: 'checkbox' },
-      { selector: '#id_peso_cat_ripio',   type: 'input' },
-      { selector: '#id_catacion_balsos',  type: 'checkbox' },
-      { selector: '#id_peso_cat_balsos',  type: 'input' },
-      { selector: '#id_catacion_grupo1',  type: 'checkbox' },
-      { selector: '#id_catacion_grupo2',  type: 'checkbox' },
-      { selector: '#id_peso_cat_grupo1',  type: 'input' },
-      { selector: '#id_peso_cat_grupo2',  type: 'input' }
-    ];
+      const campoBloqueadoPorPermiso = campo.disabled;
+      function sincronizar(limpiarAlDesmarcar) {
+        const habilitado = checkbox.checked && !checkbox.disabled && !campoBloqueadoPorPermiso;
+        campo.disabled = !habilitado;
+        campo.classList.toggle('bg-gray-200', !habilitado);
+        campo.classList.toggle('cursor-not-allowed', !habilitado);
+        if (limpiarAlDesmarcar && !checkbox.checked) campo.value = '';
+      }
 
-    function toggleCatadora() {
-      const enabled = !!catadora.checked;
-      campos.forEach(function(c) {
-        const campo = scope.querySelector(c.selector);
-        if (!campo) return;
+      if (checkbox.dataset.seleccionVerdeDependienteInit !== '1') {
+        checkbox.addEventListener('change', function() {
+          sincronizar(true);
+        });
+        checkbox.dataset.seleccionVerdeDependienteInit = '1';
+      }
 
-        if (enabled) {
-          campo.disabled = false;
-          campo.removeAttribute('readonly');
-          campo.classList.remove('bg-gray-200', 'cursor-not-allowed');
-        } else {
-          campo.disabled = true;
-          campo.setAttribute('readonly', 'readonly');
-          campo.classList.add('bg-gray-200', 'cursor-not-allowed');
-        }
-      });
-    }
-
-    if (catadora.dataset.catadoraToggleInit !== '1') {
-      catadora.addEventListener('change', toggleCatadora);
-      catadora.dataset.catadoraToggleInit = '1';
-    }
-
-    toggleCatadora();
+      sincronizar(false);
+    });
   }
 }
 
-window.initSeleccionVerdeCatadora = initSeleccionVerdeCatadora;
+window.initSeleccionVerdeCamposDependientes = initSeleccionVerdeCamposDependientes;
 
 
 function initSeleccionTuesteValidations(container) {
@@ -1095,7 +1089,7 @@ const _rendMo = new MutationObserver(function (mutations) {
         initOrdenSeleccionTostadoDefaults(node);
         initOrdenSeleccionVerdeDefaults(node);
         initSeleccionVerdeZaranda(node);
-        initSeleccionVerdeCatadora(node);
+        initSeleccionVerdeCamposDependientes(node);
         initSeleccionTuesteValidations(node);
         initOrdenEmpaqueToggle(node);
         initEmpaqueDetalleGrid(node);
@@ -1109,7 +1103,7 @@ const _rendMo = new MutationObserver(function (mutations) {
           initOrdenSeleccionTostadoDefaults(modal);
           initOrdenSeleccionVerdeDefaults(modal);
           initSeleccionVerdeZaranda(modal);
-          initSeleccionVerdeCatadora(modal);
+          initSeleccionVerdeCamposDependientes(modal);
           initSeleccionTuesteValidations(modal);
           initOrdenEmpaqueToggle(modal);
           initEmpaqueOrderToggle(modal);
@@ -1137,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', function () {
   initOrdenSeleccionTostadoDefaults(document);
   initOrdenSeleccionVerdeDefaults(document);
   initSeleccionVerdeZaranda(document);
-  initSeleccionVerdeCatadora(document);
+  initSeleccionVerdeCamposDependientes(document);
   initSeleccionTuesteValidations(document);
   initOrdenEmpaqueToggle(document);
   initEmpaqueOrderToggle(document);
@@ -1158,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', function () {
       initOrdenSeleccionTostadoDefaults(target);
       initOrdenSeleccionVerdeDefaults(target);
       initSeleccionVerdeZaranda(evt && evt.target ? evt.target : document);
-      initSeleccionVerdeCatadora(evt && evt.target ? evt.target : document);
+      initSeleccionVerdeCamposDependientes(evt && evt.target ? evt.target : document);
       initSeleccionTuesteValidations(target);
       initOrdenEmpaqueToggle(target);
       initEmpaqueOrderToggle(target);

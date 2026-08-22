@@ -198,3 +198,85 @@ class OrdenSeleccionVerdeFormTests(TestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn(SELECCION_TIPO_REQUERIDO_ERROR, form.non_field_errors())
+
+    def test_edicion_conserva_valores_dependientes_de_checkboxes_marcados(self):
+        seleccion = OrdenSeleccionVerde.objects.create(
+            orden=self.orden,
+            estado_tareas=self.estado,
+            catadora=True,
+            created_at=timezone.now(),
+            updated_at=timezone.now(),
+        )
+        form = OrdenSeleccionVerdeForm(
+            data={
+                **self._base_data(),
+                'catadora': 'on',
+                'catacion_ripio': 'on',
+                'peso_cat_ripio': '1',
+                'catacion_balsos': 'on',
+                'peso_cat_balsos': '2',
+                'catacion_grupo1': 'on',
+                'peso_cat_grupo1': '3',
+                'catacion_grupo2': 'on',
+                'peso_cat_grupo2': '4',
+                'medir_humedad': 'on',
+                'humedad': '10.5',
+                'medir_densidad': 'on',
+                'densidad': '0.7',
+            },
+            instance=seleccion,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        actualizado = form.save()
+
+        self.assertEqual(actualizado.peso_cat_ripio, 1)
+        self.assertEqual(actualizado.peso_cat_balsos, 2)
+        self.assertEqual(actualizado.peso_cat_grupo1, 3)
+        self.assertEqual(actualizado.peso_cat_grupo2, 4)
+        self.assertEqual(actualizado.humedad, 10.5)
+        self.assertEqual(actualizado.densidad, 0.7)
+
+    def test_edicion_limpia_valores_dependientes_de_checkboxes_desmarcados(self):
+        seleccion = OrdenSeleccionVerde.objects.create(
+            orden=self.orden,
+            estado_tareas=self.estado,
+            catadora=True,
+            catacion_ripio=True,
+            peso_cat_ripio=1,
+            catacion_balsos=True,
+            peso_cat_balsos=2,
+            catacion_grupo1=True,
+            peso_cat_grupo1=3,
+            catacion_grupo2=True,
+            peso_cat_grupo2=4,
+            medir_humedad=True,
+            humedad=10.5,
+            medir_densidad=True,
+            densidad=0.7,
+            created_at=timezone.now(),
+            updated_at=timezone.now(),
+        )
+        form = OrdenSeleccionVerdeForm(
+            data={
+                **self._base_data(),
+                'catadora': 'on',
+            },
+            instance=seleccion,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        actualizado = form.save()
+
+        self.assertFalse(actualizado.catacion_ripio)
+        self.assertFalse(actualizado.catacion_balsos)
+        self.assertFalse(actualizado.catacion_grupo1)
+        self.assertFalse(actualizado.catacion_grupo2)
+        self.assertFalse(actualizado.medir_humedad)
+        self.assertFalse(actualizado.medir_densidad)
+        self.assertIsNone(actualizado.peso_cat_ripio)
+        self.assertIsNone(actualizado.peso_cat_balsos)
+        self.assertIsNone(actualizado.peso_cat_grupo1)
+        self.assertIsNone(actualizado.peso_cat_grupo2)
+        self.assertIsNone(actualizado.humedad)
+        self.assertIsNone(actualizado.densidad)

@@ -73,7 +73,7 @@
         <h2 class="text-lg font-semibold mb-3">Selección Verde</h2>
         {% if report.procesos.seleccion_verde.aplica %}
           <dl class="space-y-2 text-sm">
-            <div class="flex justify-between gap-3"><dt>Total de Grupo</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.total_de_grupo|floatformat:2 }} kg</dd></div>
+            <div class="flex justify-between gap-3"><dt>Total Verde Grupo</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.total_de_grupo|floatformat:2 }} kg</dd></div>
             <div class="flex justify-between gap-3"><dt>Peso Aceptado</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.peso_aceptado|floatformat:2 }} kg</dd></div>
             <div class="flex justify-between gap-3"><dt>Humedad</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.humedad|floatformat:2 }}</dd></div>
             <div class="flex justify-between gap-3"><dt>Densidad</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.densidad|floatformat:2 }}</dd></div>

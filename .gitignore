@@ -42,4 +42,4 @@ env/
 # Archivos compilados
 *.egg-info/
 dist/
-build/
+build/test.sqlite3 

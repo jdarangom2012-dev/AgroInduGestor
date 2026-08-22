@@ -172,53 +172,7 @@
         zaranda.addEventListener("change", toggleCampos);
         toggleCampos();
 
-        // --- Catadora toggle ---
-        const catadora = root.querySelector("#id_catadora");
-        if (catadora) {
-          const camposCatadora = [
-            "#id_catacion_ripio",
-            "#id_peso_cat_ripio",
-            "#id_catacion_balsos",
-            "#id_peso_cat_balsos"
-          ];
-
-          function toggleCatadora() {
-            const enabled = catadora.checked;
-            camposCatadora.forEach(function(selector) {
-              const campo = root.querySelector(selector);
-              if (!campo) return;
-
-              // Para inputs: readonly + bloqueo visual
-              if (campo.type !== "checkbox") {
-                if (enabled) {
-                  campo.removeAttribute("readonly");
-                  campo.style.pointerEvents = "";
-                  campo.classList.remove("bg-gray-200", "cursor-not-allowed");
-                } else {
-                  campo.setAttribute("readonly", "readonly");
-                  campo.style.pointerEvents = "none";
-                  campo.classList.add("bg-gray-200", "cursor-not-allowed");
-                }
-              } else {
-                // Para checkboxes: bloquear el input Y el label padre
-                const parentLabel = campo.closest("label");
-                const targets = parentLabel ? [campo, parentLabel] : [campo];
-                targets.forEach(function(el) {
-                  if (enabled) {
-                    el.style.pointerEvents = "";
-                    el.classList.remove("bg-gray-200", "cursor-not-allowed");
-                  } else {
-                    el.style.pointerEvents = "none";
-                    el.classList.add("bg-gray-200", "cursor-not-allowed");
-                  }
-                });
-              }
-            });
-          }
-
-          catadora.addEventListener("change", toggleCatadora);
-          toggleCatadora();
-        }
+        window.initSeleccionVerdeCamposDependientes && window.initSeleccionVerdeCamposDependientes(root);
       })();
     </script>
   </div>
