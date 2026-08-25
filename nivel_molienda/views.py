@@ -16,7 +16,7 @@ def listar_niveles_molienda(request):
         qs = qs.filter(Q(nivel_molienda__icontains=search))
     qs = qs.order_by('nivel_molienda', 'id')
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         page_obj = paginator.page(page)

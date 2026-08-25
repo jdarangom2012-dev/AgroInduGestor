@@ -25,7 +25,7 @@ def listar_estado_tareas(request):
         qs = qs.filter(Q(estado_tareas__icontains=search))
     qs = qs.order_by('estado_tareas', 'id')
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         page_obj = paginator.page(page)

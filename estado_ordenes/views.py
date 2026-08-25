@@ -16,7 +16,7 @@ def listar_estado_orden(request):
         qs = qs.filter(Q(estado_orden__icontains=search))
     qs = qs.order_by('estado_orden','id')
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         page_obj = paginator.page(page)

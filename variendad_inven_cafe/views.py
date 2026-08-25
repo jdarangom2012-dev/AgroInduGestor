@@ -17,7 +17,7 @@ def listar_variedad_inven_cafe(request):
         qs = qs.filter(Q(variedad_inven_cafe__icontains=search))
     qs = qs.order_by('variedad_inven_cafe', 'id')
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         page_obj = paginator.page(page)

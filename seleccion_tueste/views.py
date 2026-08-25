@@ -6,7 +6,6 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django import forms
 from django.utils import timezone
-import re
 
 from .models import SeleccionTueste
 from ordenes.forms import enforce_parent_order_not_completed
@@ -117,6 +116,18 @@ class SeleccionTuesteForm(forms.ModelForm):
         cleaned_data['desc_grupo1'] = desc_grupo1 or None
         cleaned_data['desc_grupo2'] = desc_grupo2 or None
         cleaned_data['desc_grupo3'] = desc_grupo3 or None
+
+        if not cat_quaker:
+            cleaned_data['peso_quaker'] = None
+        if not cat_grupo1:
+            cleaned_data['desc_grupo1'] = None
+            cleaned_data['peso_grupo1'] = None
+        if not cat_grupo2:
+            cleaned_data['desc_grupo2'] = None
+            cleaned_data['peso_grupo2'] = None
+        if not cat_grupo3:
+            cleaned_data['desc_grupo3'] = None
+            cleaned_data['peso_grupo3'] = None
 
         if es_completada:
             if cat_quaker and (peso_quaker is None or peso_quaker <= 0):
@@ -257,21 +268,20 @@ def listar_ordenes_seleccion_tueste(request):
     if search:
         s = search.strip()
         filters = (
+            Q(orden__orden__icontains=s) |
             Q(orden__cliente__nombre__icontains=s) |
-            Q(orden__cliente__apellidos__icontains=s)
+            Q(orden__cliente__apellidos__icontains=s) |
+            Q(estado_tareas__estado_tareas__icontains=s) |
+            Q(desc_grupo1__icontains=s) |
+            Q(desc_grupo2__icontains=s) |
+            Q(desc_grupo3__icontains=s) |
+            Q(notas__icontains=s)
         )
-        m = re.search(r"(?:^|\b)orden\s*(\d+)\b", s, flags=re.IGNORECASE)
-        if m:
-            filters |= Q(orden__orden__icontains=m.group(1))
-        else:
-            m2 = re.search(r"\b(\d+)\b", s)
-            if m2:
-                filters |= Q(orden__orden__icontains=m2.group(1))
         qs = qs.filter(filters)
 
     qs = qs.order_by('-fecha_ingreso','-id')
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         page_obj = paginator.page(page)

@@ -158,18 +158,18 @@ def listar_empaque(request):
     qs = Empaque.objects.select_related('orden', 'orden__cliente', 'nivel_molienda', 'estado_inven_cafe', 'estado_tareas')
     search = request.GET.get('q', '').strip()
     if search:
-        num = None
-        try:
-            num = int(search)
-        except (TypeError, ValueError):
-            num = None
-        q = Q(estado_tareas__estado_tareas__icontains=search) | Q(notas__icontains=search)
-        if num is not None:
-            q = q | Q(orden__id=num)
+        q = (
+            Q(orden__orden__icontains=search) |
+            Q(orden__cliente__nombre__icontains=search) |
+            Q(orden__cliente__apellidos__icontains=search) |
+            Q(nivel_molienda__nivel_molienda__icontains=search) |
+            Q(estado_tareas__estado_tareas__icontains=search) |
+            Q(notas__icontains=search)
+        )
         qs = qs.filter(q)
     qs = qs.order_by('-id')
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         page_obj = paginator.page(page)

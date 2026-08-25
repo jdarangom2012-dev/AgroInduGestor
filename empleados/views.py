@@ -18,7 +18,7 @@ def listar_empleados(request):
         empleados_list = empleados_list.filter(
             identificacion__icontains=search
         )
-    paginator = Paginator(empleados_list, 7)
+    paginator = Paginator(empleados_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     ctx = {

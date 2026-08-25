@@ -73,26 +73,26 @@ def listar_ordenes_seleccion_verde(request):
 
     qs = (
         OrdenSeleccionVerde.objects
-        .select_related('estado_tareas')
+        .select_related('orden__cliente', 'estado_tareas')
         .only(
-            'id','estado_tareas',
+            'id','orden','orden__orden','orden__cliente','estado_tareas',
             'zaranda','peso_aceptado','humedad','densidad',
         )
         .order_by('-fecha_ingreso','-id')
     )
     search = request.GET.get('q', '').strip()
     if search:
-        if search.isdigit():
-            qs = qs.filter(id=int(search))
-        else:
-            qs = qs.filter(
-                Q(estado_tareas__estado_tareas__icontains=search) |
-                Q(grupo1__icontains=search) | Q(grupo2__icontains=search) |
-                Q(grupo3__icontains=search) | Q(grupo4__icontains=search) |
-                Q(grupo5__icontains=search)
-            )
+        qs = qs.filter(
+            Q(orden__orden__icontains=search) |
+            Q(orden__cliente__nombre__icontains=search) |
+            Q(orden__cliente__apellidos__icontains=search) |
+            Q(estado_tareas__estado_tareas__icontains=search) |
+            Q(grupo1__icontains=search) | Q(grupo2__icontains=search) |
+            Q(grupo3__icontains=search) | Q(grupo4__icontains=search) |
+            Q(grupo5__icontains=search) | Q(notas__icontains=search)
+        )
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         page_obj = paginator.page(page)

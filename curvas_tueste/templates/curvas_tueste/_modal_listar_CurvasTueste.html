@@ -1,98 +1,105 @@
-{% load seguridad_permisos %}
-{% tiene_permiso_accion request.user 'curvas_tueste.add_curvatueste' 'crear_curvas_tueste' as puede_crear %}
-{% tiene_permiso_accion request.user 'curvas_tueste.change_curvatueste' 'editar_curvas_tueste' as puede_editar %}
-{% tiene_permiso_accion request.user 'curvas_tueste.delete_curvatueste' 'eliminar_curvas_tueste' as puede_eliminar %}
 <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/45 p-6 overflow-y-auto" data-modal-root data-role="curvas-tueste-list" data-list-url="/curvas_tueste/">
-  <div class="palette-surface w-full max-w-5xl rounded-xl shadow-xl border border-brand-dark/30 fade-in relative">
+  <div class="palette-surface w-full max-w-6xl rounded-xl shadow-xl border border-brand-dark/30 fade-in relative">
     <div class="modal-head flex items-center justify-between px-6 py-4 rounded-t-xl">
-      <h2 class="text-lg font-semibold">📈 Curvas de Tueste</h2>
+      <div>
+        <h2 class="text-lg font-semibold">📈 Resumen de Curvas de Tueste</h2>
+        <p class="text-[11px] opacity-80 mt-1">Consulta de solo lectura · Datos recibidos desde el PLC</p>
+      </div>
       <button type="button" class="close transition text-sm" data-close-modal aria-label="Cerrar">✕</button>
     </div>
+
     <div class="p-6 space-y-5 relative">
-      <div class="hidden absolute inset-0 bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm flex items-center justify-center text-brand-dark dark:text-gray-200 text-sm" data-loading>
-        <div class="animate-spin h-5 w-5 border-2 border-brand-primary border-t-transparent rounded-full mr-2"></div> Cargando...
-      </div>
-      <form method="get" class="flex flex-col md:flex-row md:items-center gap-2" action="" data-search-form>
-        <div class="flex-1 relative">
-          <input type="text" name="q" data-autosearch value="{{ search }}" autocomplete="off" placeholder="Buscar por id o valores (p.ej. 'Curva 10' o '10')" class="w-full field-input rounded-lg border border-brand-dark/50 bg-brand-light px-3 py-2 text-sm text-brand-dark placeholder-brand-dark/50 focus:outline-none focus:ring-2 focus:ring-brand-primary/70 focus:border-brand-primary pr-24"/>
-          <span data-search-status class="absolute top-1/2 -translate-y-1/2 right-3 text-[10px] font-medium text-brand-dark/60">{{ paginator.count }} resultado{% if paginator.count != 1 %}s{% endif %}</span>
+      <form method="get" action="{% url 'curvas_tueste_listar' %}" class="grid grid-cols-1 md:grid-cols-3 gap-3" data-modal-filter-form>
+        <input type="hidden" name="consultar" value="1" />
+        <div>
+          <label class="label" for="filtro-curva-cliente">Cliente</label>
+          <input id="filtro-curva-cliente" type="text" name="cliente" value="{{ cliente }}" autocomplete="off" placeholder="Nombre del cliente" class="w-full field-input rounded-lg border border-brand-dark/50 bg-brand-light px-3 py-2 text-sm text-brand-dark" />
         </div>
-        <div class="flex gap-2">
-          {% if puede_crear %}
-            <a href="{% url 'curvas_tueste_nuevo' %}" class="btn-base btn-primary" data-modal-navigate>Nuevo</a>
-          {% endif %}
+        <div>
+          <label class="label" for="filtro-curva-orden">Número de orden</label>
+          <input id="filtro-curva-orden" type="number" name="orden" value="{{ numero_orden }}" min="0" placeholder="Ej. 3890" class="w-full field-input rounded-lg border border-brand-dark/50 bg-brand-light px-3 py-2 text-sm text-brand-dark" />
+        </div>
+        <div>
+          <label class="label" for="filtro-curva-bache">Bache</label>
+          <div class="flex gap-2">
+            <input id="filtro-curva-bache" type="number" name="bache" value="{{ bache }}" min="0" placeholder="Ej. 1" class="w-full field-input rounded-lg border border-brand-dark/50 bg-brand-light px-3 py-2 text-sm text-brand-dark" />
+            <button type="submit" class="btn-base btn-primary">Consultar</button>
+            <a href="{% url 'curvas_tueste_listar' %}" class="btn-base btn-dark" data-modal-navigate>Limpiar</a>
+          </div>
         </div>
       </form>
+
+      <div class="rounded-lg border border-brand-dark/20 bg-brand-primary/10 px-4 py-3 text-xs">
+        Cada fila resume todas las lecturas capturadas por el PLC para una combinación de orden y bache. El análisis gráfico detallado continúa disponible en Power BI.
+      </div>
+
+      {% if consultado %}
       <div class="overflow-x-auto rounded-lg border border-brand-dark/30 shadow-inner">
         <table class="mes-table leading-tight w-full">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Temp Set</th>
-              <th>Temp Tost</th>
-              <th>% Aire</th>
-              <th>% Gas</th>
-              <th>Editar</th>
-              <th>Eliminar</th>
+              <th>Cliente</th>
+              <th>Orden</th>
+              <th>Bache</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>Lecturas</th>
+              <th>Temp. set promedio</th>
+              <th>Temp. real máxima</th>
+              <th>Aire promedio</th>
+              <th>Gas promedio</th>
             </tr>
           </thead>
           <tbody>
             {% for c in curvas %}
-            <tr class="row group">
-              <td class="td mono">{{ c.id }}</td>
-              <td class="td text-right">{{ c.temp_set_point|default_if_none:"—" }}</td>
-              <td class="td text-right">{{ c.temp_tost|default_if_none:"—" }}</td>
-              <td class="td text-right">{{ c.porcentaje_aire|default_if_none:"—" }}</td>
-              <td class="td text-right">{{ c.porcentaje_gas|default_if_none:"—" }}</td>
-              <td class="td action">
-                {% if puede_editar %}
-                  <a href="{% url 'curvas_tueste_editar' c.id %}" class="link link-edit" data-modal-navigate>Editar</a>
-                {% else %}
-                  <span class="link text-gray-400 cursor-not-allowed" title="Sin permiso">Editar</span>
-                {% endif %}
-              </td>
-              <td class="td action">
-                {% if puede_eliminar %}
-                  <a href="{% url 'curvas_tueste_eliminar' c.id %}" class="link link-delete" data-modal-navigate>Eliminar</a>
-                {% else %}
-                  <span class="link text-gray-400 cursor-not-allowed" title="Sin permiso">Eliminar</span>
-                {% endif %}
-              </td>
-            </tr>
+              <tr class="row group">
+                <td class="td">{% if c.cliente and c.cliente != '/NA' %}{{ c.cliente }}{% else %}No disponible{% endif %}</td>
+                <td class="td mono">{{ c.numero_orden|default_if_none:'—' }}</td>
+                <td class="td mono">{{ c.bache|default_if_none:'—' }}</td>
+                <td class="td">{{ c.fecha_inicio|date:'d/m/Y H:i:s' }}</td>
+                <td class="td">{{ c.fecha_fin|date:'d/m/Y H:i:s' }}</td>
+                <td class="td text-right">{{ c.lecturas }}</td>
+                <td class="td text-right">{{ c.temp_set_promedio|floatformat:1 }} °C</td>
+                <td class="td text-right">{{ c.temp_real_maxima|floatformat:1 }} °C</td>
+                <td class="td text-right">{{ c.aire_promedio|floatformat:1 }} %</td>
+                <td class="td text-right">{{ c.gas_promedio|floatformat:1 }} %</td>
+              </tr>
             {% empty %}
-            <tr><td colspan="7" class="text-center py-8 text-brand-dark/60 text-sm">No hay curvas.</td></tr>
+              <tr><td colspan="10" class="text-center py-8 text-brand-dark/60 text-sm">No hay curvas que coincidan con los filtros.</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-      {% if is_paginated %}
-      {% url 'curvas_tueste_listar' as base_list_url %}
+
       <nav class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-[11px] mt-4">
         <div>
-          Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ paginator.count }} curvas
+          {% if paginator.count %}Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ paginator.count }} procesos{% else %}Sin resultados{% endif %}
         </div>
-        <ul class="flex flex-wrap items-center gap-1">
-          {% if page_obj.has_previous %}
-            <li><a class="pager" href="{{ base_list_url }}?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}" data-modal-navigate>Anterior</a></li>
-          {% else %}
-            <li><span class="pager disabled">Anterior</span></li>
-          {% endif %}
-          {% for num in paginator.page_range %}
-            {% if num == page_obj.number %}
-              <li><span class="pager active">{{ num }}</span></li>
-            {% else %}
-              <li><a class="pager" href="{{ base_list_url }}?page={{ num }}{% if search %}&q={{ search }}{% endif %}" data-modal-navigate>{{ num }}</a></li>
+        {% if is_paginated %}
+          <ul class="flex flex-wrap items-center gap-1">
+            {% if page_obj.has_previous %}
+              <li><a class="pager" href="?consultar=1&page={{ page_obj.previous_page_number }}&cliente={{ cliente|urlencode }}&orden={{ numero_orden|urlencode }}&bache={{ bache|urlencode }}" data-modal-navigate>Anterior</a></li>
             {% endif %}
-          {% endfor %}
-          {% if page_obj.has_next %}
-            <li><a class="pager" href="{{ base_list_url }}?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}" data-modal-navigate>Siguiente</a></li>
-          {% else %}
-            <li><span class="pager disabled">Siguiente</span></li>
-          {% endif %}
-        </ul>
+            {% for num in page_range %}
+              {% if num == paginator.ELLIPSIS %}
+                <li><span class="pager disabled">…</span></li>
+              {% elif num == page_obj.number %}
+                <li><span class="pager active">{{ num }}</span></li>
+              {% else %}
+                <li><a class="pager" href="?consultar=1&page={{ num }}&cliente={{ cliente|urlencode }}&orden={{ numero_orden|urlencode }}&bache={{ bache|urlencode }}" data-modal-navigate>{{ num }}</a></li>
+              {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+              <li><a class="pager" href="?consultar=1&page={{ page_obj.next_page_number }}&cliente={{ cliente|urlencode }}&orden={{ numero_orden|urlencode }}&bache={{ bache|urlencode }}" data-modal-navigate>Siguiente</a></li>
+            {% endif %}
+          </ul>
+        {% endif %}
       </nav>
+      {% else %}
+        <div class="rounded-lg border border-dashed border-brand-dark/30 px-6 py-10 text-center text-sm text-brand-dark/60">
+          Indique uno o varios filtros y presione <strong>Consultar</strong> para ver el resumen de curvas.
+        </div>
       {% endif %}
     </div>
   </div>
-  
 </div>

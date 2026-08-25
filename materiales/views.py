@@ -18,7 +18,7 @@ def listar_materiales(request):
         )
     qs = qs.order_by('descripcion','id')
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         materiales_page = paginator.page(page)

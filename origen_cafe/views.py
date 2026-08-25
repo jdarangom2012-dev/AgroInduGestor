@@ -16,7 +16,7 @@ def listar_origen_cafe(request):
         qs = qs.filter(Q(origen__icontains=search))
     qs = qs.order_by('origen', 'id')
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         page_obj = paginator.page(page)

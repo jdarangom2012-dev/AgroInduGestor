@@ -67,6 +67,15 @@
                         modalContent.addEventListener('click', (e) => { e.stopPropagation(); });
                     }
                     root.querySelectorAll('[data-close-modal]').forEach(btn=>btn.addEventListener('click', (e)=>{ e.preventDefault(); close(); }));
+                    root.querySelectorAll('form[data-modal-filter-form]').forEach(form=>{
+                        form.addEventListener('submit', async e=>{
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const action = form.getAttribute('action') || location.pathname;
+                            const params = new URLSearchParams(new FormData(form));
+                            await loadFragment(`${action}?${params.toString()}`);
+                        });
+                    });
                             // intercept submit
                                         root.querySelectorAll('form[data-modal-form]').forEach(form=>{
                                 form.addEventListener('submit', async e=>{

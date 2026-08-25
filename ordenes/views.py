@@ -185,18 +185,17 @@ def listar_ordenes(request):
     qs = Orden.objects.select_related('cliente', 'estado_orden', 'empaque_cafe', 'tamano_empaque').order_by('-fecha_inicio_orden', '-id')
     search = request.GET.get('q', '').strip()
     if search:
-        search_int = None
-        try:
-            search_int = int(search)
-        except Exception:
-            search_int = None
         q = (
+            Q(orden__icontains=search) |
             Q(cliente__nombre__icontains=search) |
-            Q(cliente__apellidos__icontains=search)
-            # ...otros filtros...
+            Q(cliente__apellidos__icontains=search) |
+            Q(estado_orden__estado_orden__icontains=search) |
+            Q(id_inven_cafe__codigo__icontains=search) |
+            Q(id_inven_cafe__descripcion__icontains=search) |
+            Q(notas__icontains=search)
         )
         qs = qs.filter(q)
-    paginator = Paginator(qs, 20)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         ordenes = paginator.page(page)

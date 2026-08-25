@@ -219,8 +219,8 @@ class FacturacionReportTests(TestCase):
         self.assertEqual(seleccion["entrada"], 83)
         self.assertEqual(seleccion["total_de_grupo"], 61)
         self.assertEqual(seleccion["peso_aceptado"], 80)
-        self.assertEqual(seleccion["humedad"], 21.5)
-        self.assertEqual(seleccion["densidad"], 1480)
+        self.assertEqual(seleccion["humedad"], 10.75)
+        self.assertEqual(seleccion["densidad"], 740)
 
     def test_seleccion_verde_usa_pesos_catadora_para_total_de_grupo(self):
         orden = self.create_order()
@@ -246,8 +246,48 @@ class FacturacionReportTests(TestCase):
         seleccion = get_facturacion_report("2319")["procesos"]["seleccion_verde"]
 
         self.assertEqual(seleccion["total_de_grupo"], 4)
+        self.assertEqual(seleccion["humedad"], 11)
+        self.assertEqual(seleccion["densidad"], 700)
         self.assertNotIn("total_grupo1", seleccion)
         self.assertNotIn("total_grupo2", seleccion)
+
+    def test_seleccion_verde_promedio_ignora_mediciones_nulas(self):
+        orden = self.create_order()
+        for humedad, densidad in ((10.5, 750), (None, None)):
+            OrdenSeleccionVerde.objects.create(
+                orden=orden,
+                estado_tareas=self.estado_completada,
+                humedad=humedad,
+                densidad=densidad,
+                created_at=timezone.now(),
+            )
+
+        seleccion = get_facturacion_report("2319")["procesos"]["seleccion_verde"]
+
+        self.assertEqual(seleccion["humedad"], 10.5)
+        self.assertEqual(seleccion["densidad"], 750)
+
+    def test_seleccion_verde_promedio_excluye_registros_pendientes(self):
+        orden = self.create_order()
+        OrdenSeleccionVerde.objects.create(
+            orden=orden,
+            estado_tareas=self.estado_completada,
+            humedad=10.5,
+            densidad=750,
+            created_at=timezone.now(),
+        )
+        OrdenSeleccionVerde.objects.create(
+            orden=orden,
+            estado_tareas=self.estado_pendiente,
+            humedad=99,
+            densidad=999,
+            created_at=timezone.now(),
+        )
+
+        seleccion = get_facturacion_report("2319")["procesos"]["seleccion_verde"]
+
+        self.assertEqual(seleccion["humedad"], 10.5)
+        self.assertEqual(seleccion["densidad"], 750)
 
     def test_reporte_consolida_multiples_registros_por_orden_y_pdf_comparte_contexto(self):
         orden = self.create_order()
@@ -334,8 +374,8 @@ class FacturacionReportTests(TestCase):
         seleccion_verde = html_report["procesos"]["seleccion_verde"]
         self.assertEqual(seleccion_verde["total_de_grupo"], 61)
         self.assertEqual(seleccion_verde["peso_aceptado"], 35)
-        self.assertEqual(seleccion_verde["humedad"], 21.5)
-        self.assertEqual(seleccion_verde["densidad"], 1480)
+        self.assertEqual(seleccion_verde["humedad"], 10.75)
+        self.assertEqual(seleccion_verde["densidad"], 740)
 
         tueste = html_report["procesos"]["tueste"]
         self.assertEqual(tueste["entrada"], 90)

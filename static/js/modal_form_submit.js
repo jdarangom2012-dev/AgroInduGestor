@@ -630,44 +630,57 @@ function initSeleccionTuesteValidations(container) {
     const catQuaker = scope.querySelector('#id_cat_quaker');
     const pesoQuaker = scope.querySelector('#id_peso_quaker');
     const groupConfigs = [
-      ['#id_cat_grupo1', '#id_desc_grupo1'],
-      ['#id_cat_grupo2', '#id_desc_grupo2'],
-      ['#id_cat_grupo3', '#id_desc_grupo3']
+      ['#id_cat_grupo1', '#id_desc_grupo1', '#id_peso_grupo1'],
+      ['#id_cat_grupo2', '#id_desc_grupo2', '#id_peso_grupo2'],
+      ['#id_cat_grupo3', '#id_desc_grupo3', '#id_peso_grupo3']
     ];
 
-    function setFieldEnabled(field, enabled) {
+    function setFieldEnabled(field, enabled, blockedByPermission) {
       if (!field) return;
-      field.disabled = !enabled;
-      if (enabled) {
+      const shouldEnable = enabled && !blockedByPermission;
+      field.disabled = !shouldEnable;
+      if (shouldEnable) {
         field.classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
       } else {
         field.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
       }
     }
 
-    function syncQuaker() {
+    const pesoQuakerBlockedByPermission = !!(pesoQuaker && pesoQuaker.disabled);
+
+    function syncQuaker(clearWhenUnchecked) {
       if (!catQuaker || !pesoQuaker) return;
       const enabled = !!catQuaker.checked;
-      pesoQuaker.required = enabled;
+      if (clearWhenUnchecked && !enabled && !pesoQuakerBlockedByPermission) pesoQuaker.value = '';
+      setFieldEnabled(pesoQuaker, enabled, pesoQuakerBlockedByPermission);
+      pesoQuaker.required = enabled && !pesoQuakerBlockedByPermission;
 
       const peso = parseFloat(String(pesoQuaker.value || '').replace(',', '.'));
-      if (enabled && (!peso || peso <= 0)) {
+      if (pesoQuaker.required && (!peso || peso <= 0)) {
         pesoQuaker.setCustomValidity('Debe ingresar un peso mayor a 0 cuando Cat. Quaker está marcado.');
       } else {
         pesoQuaker.setCustomValidity('');
       }
     }
 
-    function bindGroupToggle(toggleSelector, descSelector) {
+    function bindGroupToggle(toggleSelector, descSelector, weightSelector) {
       const toggle = scope.querySelector(toggleSelector);
       const desc = scope.querySelector(descSelector);
-      if (!toggle || !desc) return;
+      const weight = scope.querySelector(weightSelector);
+      if (!toggle || !desc || !weight) return;
+      const descBlockedByPermission = desc.disabled;
+      const weightBlockedByPermission = weight.disabled;
 
-      function sync() {
+      function sync(clearWhenUnchecked) {
         const enabled = !!toggle.checked;
-        setFieldEnabled(desc, enabled);
-        desc.required = enabled;
-        if (enabled && !String(desc.value || '').trim()) {
+        if (clearWhenUnchecked && !enabled) {
+          if (!descBlockedByPermission) desc.value = '';
+          if (!weightBlockedByPermission) weight.value = '';
+        }
+        setFieldEnabled(desc, enabled, descBlockedByPermission);
+        setFieldEnabled(weight, enabled, weightBlockedByPermission);
+        desc.required = enabled && !descBlockedByPermission;
+        if (desc.required && !String(desc.value || '').trim()) {
           desc.setCustomValidity('Este campo es obligatorio cuando el grupo está marcado.');
         } else {
           desc.setCustomValidity('');
@@ -675,33 +688,33 @@ function initSeleccionTuesteValidations(container) {
       }
 
       if (toggle.dataset.seleccionTuesteToggleInit !== '1') {
-        toggle.addEventListener('change', sync);
+        toggle.addEventListener('change', function() { sync(true); });
         toggle.dataset.seleccionTuesteToggleInit = '1';
       }
       if (desc.dataset.seleccionTuesteDescInit !== '1') {
-        desc.addEventListener('input', sync);
-        desc.addEventListener('change', sync);
+        desc.addEventListener('input', function() { sync(false); });
+        desc.addEventListener('change', function() { sync(false); });
         desc.dataset.seleccionTuesteDescInit = '1';
       }
 
-      sync();
+      sync(false);
     }
 
     if (catQuaker && pesoQuaker) {
       if (catQuaker.dataset.seleccionTuesteQuakerInit !== '1') {
-        catQuaker.addEventListener('change', syncQuaker);
+        catQuaker.addEventListener('change', function() { syncQuaker(true); });
         catQuaker.dataset.seleccionTuesteQuakerInit = '1';
       }
       if (pesoQuaker.dataset.seleccionTuestePesoInit !== '1') {
-        pesoQuaker.addEventListener('input', syncQuaker);
-        pesoQuaker.addEventListener('change', syncQuaker);
+        pesoQuaker.addEventListener('input', function() { syncQuaker(false); });
+        pesoQuaker.addEventListener('change', function() { syncQuaker(false); });
         pesoQuaker.dataset.seleccionTuestePesoInit = '1';
       }
-      syncQuaker();
+      syncQuaker(false);
     }
 
     groupConfigs.forEach(function (config) {
-      bindGroupToggle(config[0], config[1]);
+      bindGroupToggle(config[0], config[1], config[2]);
     });
   }
 }

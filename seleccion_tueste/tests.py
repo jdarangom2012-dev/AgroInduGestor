@@ -79,6 +79,59 @@ class SeleccionTuesteFormTests(TestCase):
 
         self.assertTrue(form.is_valid(), form.errors)
 
+    def test_checkbox_desmarcado_descarta_campos_dependientes_manipulados(self):
+        form = SeleccionTuesteForm(
+            data={
+                'orden': str(self.orden.pk),
+                'estado_tareas': str(self.estado_pendiente.pk),
+                'peso_quaker': '4.5',
+                'desc_grupo1': 'Grupo manipulado 1',
+                'peso_grupo1': '1.5',
+                'desc_grupo2': 'Grupo manipulado 2',
+                'peso_grupo2': '2.5',
+                'desc_grupo3': 'Grupo manipulado 3',
+                'peso_grupo3': '3.5',
+                'notas': 'Dependientes manipulados',
+            }
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        seleccion = form.save()
+        self.assertIsNone(seleccion.peso_quaker)
+        self.assertIsNone(seleccion.desc_grupo1)
+        self.assertIsNone(seleccion.peso_grupo1)
+        self.assertIsNone(seleccion.desc_grupo2)
+        self.assertIsNone(seleccion.peso_grupo2)
+        self.assertIsNone(seleccion.desc_grupo3)
+        self.assertIsNone(seleccion.peso_grupo3)
+
+    def test_checkbox_marcado_conserva_solo_sus_campos_dependientes(self):
+        form = SeleccionTuesteForm(
+            data={
+                'orden': str(self.orden.pk),
+                'estado_tareas': str(self.estado_pendiente.pk),
+                'peso_quaker': '4.5',
+                'desc_grupo1': 'Grupo manipulado 1',
+                'peso_grupo1': '1.5',
+                'cat_grupo2': 'on',
+                'desc_grupo2': 'Grupo 2',
+                'peso_grupo2': '2.5',
+                'desc_grupo3': 'Grupo manipulado 3',
+                'peso_grupo3': '3.5',
+                'notas': 'Solo grupo 2',
+            }
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        seleccion = form.save()
+        self.assertIsNone(seleccion.peso_quaker)
+        self.assertIsNone(seleccion.desc_grupo1)
+        self.assertIsNone(seleccion.peso_grupo1)
+        self.assertEqual(seleccion.desc_grupo2, 'Grupo 2')
+        self.assertEqual(seleccion.peso_grupo2, 2.5)
+        self.assertIsNone(seleccion.desc_grupo3)
+        self.assertIsNone(seleccion.peso_grupo3)
+
     def test_completada_exige_descripcion_y_peso_grupo1(self):
         form = SeleccionTuesteForm(
             data={

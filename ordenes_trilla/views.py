@@ -6,7 +6,6 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django import forms
 from django.conf import settings
-import re
 from .models import OrdenTrilla
 from ordenes.models import Orden
 from ordenes.forms import enforce_parent_order_not_completed
@@ -160,28 +159,16 @@ def listar_ordenes_trilla(request):
     if search:
         s = search.strip()
         filters = (
+            Q(orden__orden__icontains=s) |
             Q(orden__cliente__nombre__icontains=s) |
-            Q(orden__cliente__apellidos__icontains=s)
+            Q(orden__cliente__apellidos__icontains=s) |
+            Q(estado_tareas__estado_tareas__icontains=s) |
+            Q(notas__icontains=s)
         )
-        # Soportar texto completo como "Orden 6" o el número aislado "6"
-        m = re.search(r"(?:^|\b)orden\s*(\d+)\b", s, flags=re.IGNORECASE)
-        if m:
-            try:
-                filters |= Q(orden__id=int(m.group(1)))
-            except ValueError:
-                pass
-        else:
-            # Si no hay patrón "Orden N", pero hay un número en el término, úsalo
-            m2 = re.search(r"\b(\d+)\b", s)
-            if m2:
-                try:
-                    filters |= Q(orden__id=int(m2.group(1)))
-                except ValueError:
-                    pass
         qs = qs.filter(filters)
     qs = qs.order_by('-fecha_ingreso','-id')
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         page_obj = paginator.page(page)

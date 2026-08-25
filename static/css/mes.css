@@ -55,6 +55,29 @@ body { color:var(--brand-text); background:var(--brand-light); }
 .btn-danger:focus-visible { box-shadow:0 0 0 3px rgba(221,63,46,.45); }
 
 /* Tables */
+[data-modal-root][data-role$="-list"] > .palette-surface {
+  width:min(94vw,1280px);
+  max-width:min(94vw,1280px);
+}
+
+@media (max-width: 1023px) {
+  [data-modal-root][data-role$="-list"] > .palette-surface {
+    width:calc(100vw - 2rem);
+    max-width:calc(100vw - 2rem);
+  }
+}
+
+@media (max-width: 767px) {
+  [data-modal-root][data-role$="-list"] {
+    padding:.5rem;
+  }
+
+  [data-modal-root][data-role$="-list"] > .palette-surface {
+    width:calc(100vw - 1rem);
+    max-width:calc(100vw - 1rem);
+  }
+}
+
 table.mes-table { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; }
 table.mes-table thead th { text-align:left; font-weight:600; text-transform:uppercase; letter-spacing:.6px; font-size:11.5px; padding:.55rem .5rem; background:var(--brand-dark); color:var(--brand-light); position:sticky; top:0; z-index:5; border-bottom:1px solid rgba(255,255,255,.08); }
 table.mes-table tbody tr.row { transition:background-color .18s var(--ease-emph),color .18s var(--ease-emph); }

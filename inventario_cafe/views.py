@@ -11,7 +11,7 @@ from urllib.parse import urlencode
 from .models import InventarioCafe
 from origen_cafe.models import OrigenCafe
 from proceso_inven_cafe.models import ProcesoInvenCafe
-from variendad_inven_cafe.models import VariendadInvenCafe
+from variedad_cafe.models import VariedadCafe
 from clientes.models import Cliente
 from estado_cafe.models import EstadoCafe
 from cafe_empaque.models import CafeEmpaque
@@ -23,7 +23,7 @@ class InventarioCafeForm(forms.ModelForm):
     empaquecafe = forms.ModelChoiceField(queryset=CafeEmpaque.objects.all().order_by('empaque_cafe'), required=False, widget=forms.Select(attrs={'class': 'w-full select'}))
     origen = forms.ModelChoiceField(queryset=OrigenCafe.objects.all().order_by('origen'), required=False, widget=forms.Select(attrs={'class': 'w-full select'}))
     proceso_inven_cafe = forms.ModelChoiceField(queryset=ProcesoInvenCafe.objects.all().order_by('proceso_inven_cafe'), required=False, widget=forms.Select(attrs={'class': 'w-full select'}))
-    variendad_inven_cafe = forms.ModelChoiceField(queryset=VariendadInvenCafe.objects.all().order_by('variedad_inven_cafe'), required=False, widget=forms.Select(attrs={'class': 'w-full select'}))
+    variendad_inven_cafe = forms.ModelChoiceField(queryset=VariedadCafe.objects.all().order_by('variedad_cafe'), required=False, widget=forms.Select(attrs={'class': 'w-full select'}))
 
     class Meta:
         model = InventarioCafe
@@ -51,15 +51,17 @@ def listar_cafe(request):
     f_proceso = request.GET.get('proceso') or ''
     f_variedad = request.GET.get('variedad') or ''
     if search:
-        if search.isdigit():
-            qs = qs.filter(Q(id=int(search)) | Q(codigo__icontains=search))
-        else:
-            qs = qs.filter(
-                Q(codigo__icontains=search) |
-                Q(cliente__nombre__icontains=search) |
-                Q(estado_cafe__estado_cafe__icontains=search) |
-                Q(empaquecafe__empaque_cafe__icontains=search)
-            )
+        qs = qs.filter(
+            Q(codigo__icontains=search) |
+            Q(descripcion__icontains=search) |
+            Q(cliente__nombre__icontains=search) |
+            Q(cliente__apellidos__icontains=search) |
+            Q(estado_cafe__estado_cafe__icontains=search) |
+            Q(origen__origen__icontains=search) |
+            Q(proceso_inven_cafe__proceso_inven_cafe__icontains=search) |
+            Q(variendad_inven_cafe__variedad_cafe__icontains=search) |
+            Q(empaquecafe__empaque_cafe__icontains=search)
+        )
 
     if f_origen.isdigit():
         qs = qs.filter(origen_id=int(f_origen))
@@ -68,7 +70,7 @@ def listar_cafe(request):
     if f_variedad.isdigit():
         qs = qs.filter(variendad_inven_cafe_id=int(f_variedad))
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         page_obj = paginator.page(page)
@@ -85,7 +87,7 @@ def listar_cafe(request):
         'search': search,
         'origenes': OrigenCafe.objects.all().order_by('origen'),
         'procesos': ProcesoInvenCafe.objects.all().order_by('proceso_inven_cafe'),
-        'variedades': VariendadInvenCafe.objects.all().order_by('variedad_inven_cafe'),
+        'variedades': VariedadCafe.objects.all().order_by('variedad_cafe'),
         'f_origen': f_origen,
         'f_proceso': f_proceso,
         'f_variedad': f_variedad,

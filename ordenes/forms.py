@@ -284,16 +284,18 @@ class OrdenForm(forms.ModelForm):
             "cliente": forms.Select(attrs={"class": "w-full select"}),
             "estado_orden": forms.Select(attrs={"class": "w-full select"}),
             "fecha_inicio_orden": forms.DateInput(
+                format="%d/%m/%Y",
                 attrs={
-                    "type": "date",
+                    "type": "text",
                     "class": "input-form w-full input",
                     "data-datepicker": "1",
                     "data-dp-no-opener": "1",
                 }
             ),
             "fecha_entrega": forms.DateInput(
+                format="%d/%m/%Y",
                 attrs={
-                    "type": "date",
+                    "type": "text",
                     "class": "input-form w-full input",
                     "data-datepicker": "1",
                     "data-dp-no-opener": "1",
@@ -378,19 +380,19 @@ class OrdenForm(forms.ModelForm):
                 pass
 
         date_attrs = {
-            "type": "date",
+            "type": "text",
             "class": "input-form w-full input",
             "data-datepicker": "1",
             "data-dp-no-opener": "1",
         }
         if "fecha_inicio_orden" in self.fields:
             try:
-                self.fields["fecha_inicio_orden"].widget = forms.DateInput(attrs=date_attrs)
+                self.fields["fecha_inicio_orden"].widget = forms.DateInput(format="%d/%m/%Y", attrs=date_attrs)
             except Exception:
                 pass
         if "fecha_entrega" in self.fields:
             try:
-                self.fields["fecha_entrega"].widget = forms.DateInput(attrs=date_attrs)
+                self.fields["fecha_entrega"].widget = forms.DateInput(format="%d/%m/%Y", attrs=date_attrs)
             except Exception:
                 pass
 

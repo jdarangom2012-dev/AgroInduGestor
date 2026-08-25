@@ -1,4 +1,4 @@
-from django.db.models import Sum
+from django.db.models import Avg, Sum
 
 from empaques.models import DetalleEmpaque, Empaque
 from ordenes.models import DetalleEmpaqueOrden, Orden
@@ -127,15 +127,21 @@ def build_seleccion_verde_section(orden, trilla_section=None):
         }
 
     trilla_section = trilla_section or build_trilla_section(orden)
+    registros_completados = OrdenSeleccionVerde.objects.filter(
+        orden=orden,
+        **_completed_task_filter(),
+    )
     totals = _sum_fields(
-        OrdenSeleccionVerde.objects.filter(orden=orden, **_completed_task_filter()),
+        registros_completados,
         peso_cat_ripio="peso_cat_ripio",
         peso_cat_balsos="peso_cat_balsos",
         peso_cat_grupo1="peso_cat_grupo1",
         peso_cat_grupo2="peso_cat_grupo2",
         peso_aceptado="peso_aceptado",
-        humedad="humedad",
-        densidad="densidad",
+    )
+    mediciones = registros_completados.aggregate(
+        humedad=Avg("humedad"),
+        densidad=Avg("densidad"),
     )
     total_de_grupo = sum(
         totals[field_name]
@@ -151,8 +157,8 @@ def build_seleccion_verde_section(orden, trilla_section=None):
         "entrada": _sum_value(trilla_section.get("salida")),
         "total_de_grupo": total_de_grupo,
         "peso_aceptado": totals["peso_aceptado"],
-        "humedad": totals["humedad"],
-        "densidad": totals["densidad"],
+        "humedad": _sum_value(mediciones["humedad"]),
+        "densidad": _sum_value(mediciones["densidad"]),
     }
 
 

@@ -15,7 +15,7 @@
       </div>
       <form method="get" class="flex flex-col md:flex-row md:items-center gap-2" action="" data-search-form>
         <div class="flex-1 relative">
-          <input type="text" name="q" data-autosearch value="{{ search }}" autocomplete="off" placeholder="Buscar por orden (e.g. 'Orden 6' o '6') o cliente (auto)" class="w-full field-input rounded-lg border border-brand-dark/50 bg-brand-light px-3 py-2 text-sm text-brand-dark placeholder-brand-dark/50 focus:outline-none focus:ring-2 focus:ring-brand-primary/70 focus:border-brand-primary pr-24"/>
+          <input type="text" name="q" data-autosearch value="{{ search }}" autocomplete="off" placeholder="Buscar por número de orden, cliente, estado o notas (auto)" class="w-full field-input rounded-lg border border-brand-dark/50 bg-brand-light px-3 py-2 text-sm text-brand-dark placeholder-brand-dark/50 focus:outline-none focus:ring-2 focus:ring-brand-primary/70 focus:border-brand-primary pr-24"/>
           <span data-search-status class="absolute top-1/2 -translate-y-1/2 right-3 text-[10px] font-medium text-brand-dark/60">{{ paginator.count }} resultado{% if paginator.count != 1 %}s{% endif %}</span>
         </div>
         <div class="flex gap-2">

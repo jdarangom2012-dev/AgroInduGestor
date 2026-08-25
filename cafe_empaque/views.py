@@ -16,7 +16,7 @@ def listar_cafe_empaque(request):
         qs = qs.filter(Q(empaque_cafe__icontains=search))
     qs = qs.order_by('empaque_cafe', 'id')
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         page_obj = paginator.page(page)

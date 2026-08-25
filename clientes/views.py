@@ -134,7 +134,7 @@ def listar_clientes(request):
         )
     qs = qs.order_by('nombre','apellidos','id')
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
         clientes_page = paginator.page(page)

@@ -3,6 +3,6 @@ from .models import CurvaTueste
 from .serializers import CurvaTuesteSerializer
 
 
-class CurvaTuesteViewSet(viewsets.ModelViewSet):
+class CurvaTuesteViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = CurvaTueste.objects.all()
     serializer_class = CurvaTuesteSerializer
