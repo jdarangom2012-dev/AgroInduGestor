@@ -17,7 +17,7 @@ from .models import Empaque
 logger = logging.getLogger(__name__)
 
 
-EMPAQUE_CAMPOS_OPERATIVOS = {'lleva_etiquetas', 'cant_etiquetas', 'emp_clientes'}
+EMPAQUE_CAMPOS_OPERATIVOS = {'lleva_etiquetas', 'cant_etiquetas', 'emp_clientes', 'cant_empacada'}
 EMPAQUE_ROLES_RESTRINGIDOS = {'tostador', 'empacador'}
 EMPAQUE_ROLES_ACCESO_TOTAL = {'administrador', 'admin', 'coordinador'}
 def obtener_roles_usuario(user):
@@ -101,7 +101,6 @@ def calcular_total_empacado_desde_post(data):
 def construir_post_empaque(request):
     form_data = request.POST.copy()
     total_empacado = calcular_total_empacado_desde_post(form_data)
-    form_data['emp_clientes'] = str(total_empacado)
     form_data['cant_empacada'] = str(total_empacado)
     return form_data
 
@@ -122,7 +121,6 @@ def sincronizar_resumen_empaque(instance):
     instance.nivel_molienda = primer_detalle.nivel_molienda
     instance.cant_empaque = total_pedido
     instance.cant_empacada = total_empacado
-    instance.emp_clientes = total_empacado
     instance.total_empaques = total_pedido
     instance.save()
 

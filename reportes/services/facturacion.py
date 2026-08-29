@@ -269,11 +269,14 @@ def build_etiquetas_section(orden):
         orden=orden,
         lleva_etiquetas=True,
     )
-    totals = empaques_con_etiquetas.aggregate(total=Sum("cant_etiquetas"))
-    total_etiquetas = _sum_value(totals.get("total"))
+    etiquetas_cliente = _sum_value(
+        Empaque.objects.filter(orden=orden).aggregate(total=Sum("emp_clientes")).get("total")
+    )
     invima = bool(getattr(orden, "etiqueta_invima", False))
-    etiquetas_cliente = 0 if invima else total_etiquetas
-    etiquetas_invima = total_etiquetas if invima else 0
+    etiquetas_invima = _sum_value(
+        empaques_con_etiquetas.aggregate(total=Sum("cant_etiquetas")).get("total")
+    ) if invima else 0
+    total_etiquetas = etiquetas_cliente + etiquetas_invima
     return {
         "cliente": etiquetas_cliente,
         "invima": etiquetas_invima,

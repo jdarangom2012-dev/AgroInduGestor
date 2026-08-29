@@ -60,7 +60,7 @@ class EmpaqueForm(forms.ModelForm):
 
     class Meta:
         model = Empaque
-        fields = ['orden', 'estado_tareas', 'lleva_etiquetas', 'cant_etiquetas', 'emp_clientes', 'total_paquetes', 'notas']
+        fields = ['orden', 'estado_tareas', 'lleva_etiquetas', 'cant_etiquetas', 'emp_clientes', 'cant_empacada', 'total_paquetes', 'notas']
         widgets = {
             'estado_tareas': forms.Select(attrs={'class': 'w-full select'}),
             'lleva_etiquetas': forms.CheckboxInput(attrs={
@@ -68,7 +68,8 @@ class EmpaqueForm(forms.ModelForm):
                 'onchange': "(function(checkbox){const form=checkbox.form||checkbox.closest('form');if(!form)return;const target=form.querySelector('[name=cant_etiquetas]');if(!target)return;target.disabled=!checkbox.checked;if(!checkbox.checked){target.value='';}})(this)",
             }),
             'cant_etiquetas': forms.NumberInput(attrs={'class': 'w-full input', 'min': '0', 'step': '1'}),
-            'emp_clientes': forms.NumberInput(attrs={'class': 'w-full input', 'min': '0', 'step': '1', 'readonly': 'readonly'}),
+            'emp_clientes': forms.NumberInput(attrs={'class': 'w-full input', 'min': '0', 'step': '1'}),
+            'cant_empacada': forms.NumberInput(attrs={'class': 'w-full input', 'min': '0', 'step': '1', 'readonly': 'readonly'}),
             'total_paquetes': forms.NumberInput(attrs={'class': 'w-full input', 'min': '0', 'step': '1'}),
             'notas': forms.Textarea(attrs={'class': 'w-full textarea', 'rows': '3', 'maxlength': '500'}),
         }
@@ -111,29 +112,14 @@ class EmpaqueForm(forms.ModelForm):
         else:
             self.fields['cant_etiquetas'].widget.attrs.pop('disabled', None)
 
-        valor_cant_empacada = getattr(self.instance, 'cant_empacada', None)
-        if valor_cant_empacada is None:
-            valor_cant_empacada = getattr(self.instance, 'emp_clientes', None)
-        if valor_cant_empacada is not None and not self.is_bound:
-            self.fields['emp_clientes'].initial = valor_cant_empacada
-            self.initial['emp_clientes'] = valor_cant_empacada
-
         valor_total_paquetes = getattr(self.instance, 'total_paquetes', None)
         if valor_total_paquetes is not None and not self.is_bound:
             self.fields['total_paquetes'].initial = valor_total_paquetes
             self.initial['total_paquetes'] = valor_total_paquetes
 
         self.fields['emp_clientes'].required = False
-        self.fields['emp_clientes'].widget.attrs['readonly'] = 'readonly'
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        valor_empacada = self.cleaned_data.get('emp_clientes')
-        instance.cant_empacada = valor_empacada
-        instance.emp_clientes = valor_empacada
-        if commit:
-            instance.save()
-        return instance
+        self.fields['cant_empacada'].required = False
+        self.fields['cant_empacada'].widget.attrs['readonly'] = 'readonly'
 
     def clean(self):
         cleaned = super().clean()
@@ -151,7 +137,7 @@ class EmpaqueForm(forms.ModelForm):
         if not estado_completada:
             return cleaned
 
-        cantidades_requeridas = [cleaned.get('emp_clientes')]
+        cantidades_requeridas = [cleaned.get('cant_empacada')]
         if requiere_cant_etiquetas and cant_etiquetas not in (None, '') and cant_etiquetas > 0:
             cantidades_requeridas.append(cant_etiquetas)
 

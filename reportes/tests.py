@@ -672,8 +672,7 @@ class FacturacionReportTests(TestCase):
         Empaque.objects.create(
             orden=orden,
             estado_tareas=self.estado_completada,
-            lleva_etiquetas=True,
-            cant_etiquetas=12,
+            emp_clientes=12,
         )
 
         etiquetas = get_facturacion_report("2319")["etiquetas"]

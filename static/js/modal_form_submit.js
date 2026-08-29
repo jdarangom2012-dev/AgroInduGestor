@@ -933,7 +933,7 @@ function initEmpaqueDetalleGrid(container) {
     }
 
     function syncEmpacadoTotal() {
-      const totalField = scope.querySelector('#id_emp_clientes');
+      const totalField = scope.querySelector('#id_cant_empacada');
       if (!totalField) return;
 
       const total = visibleRows().reduce(function (sum, row) {
@@ -1024,7 +1024,7 @@ function syncEmpaqueEmpacadoTotal(scope) {
   if (!scope || !scope.querySelector) return;
 
   const grid = scope.querySelector('[data-empaque-detalle-grid]');
-  const totalField = scope.querySelector('#id_emp_clientes');
+  const totalField = scope.querySelector('#id_cant_empacada');
   if (!grid || !totalField) return;
 
   const rows = Array.from(grid.querySelectorAll('[data-empaque-detalle-row]')).filter(function (row) {

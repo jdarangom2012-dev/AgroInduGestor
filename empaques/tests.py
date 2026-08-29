@@ -114,7 +114,7 @@ class EmpaqueDetalleFormsetTests(TestCase):
         self.assertIn(f'value="{orden_si.pk}"', rendered)
 
     def test_sincroniza_totales_y_referencias_desde_el_detalle(self):
-        empaque = Empaque.objects.create(orden=self.orden, estado_tareas=self.estado, notas='Base')
+        empaque = Empaque.objects.create(orden=self.orden, estado_tareas=self.estado, emp_clientes=6, notas='Base')
         formset = build_detalle_empaque_formset(
             data={
                 **self._detalle_management(total_forms=1),
@@ -137,7 +137,7 @@ class EmpaqueDetalleFormsetTests(TestCase):
 
         self.assertEqual(empaque.cant_empaque, 25)
         self.assertEqual(empaque.cant_empacada, 20)
-        self.assertEqual(empaque.emp_clientes, 20)
+        self.assertEqual(empaque.emp_clientes, 6)
         self.assertEqual(empaque.total_empaques, 25)
         self.assertEqual(empaque.total_paquetes, 20)
         self.assertEqual(empaque.tamano_id, self.tamano.pk)
@@ -155,13 +155,14 @@ class EmpaqueDetalleFormsetTests(TestCase):
 
         self.assertEqual(total, 11)
 
-    def test_formulario_guarda_cant_empacada_y_total_paquetes_en_modelo(self):
+    def test_formulario_guarda_bolsas_empacadas_y_etiquetas_cliente_por_separado(self):
         form = EmpaqueForm(
             data={
                 'orden': str(self.orden.pk),
                 'estado_tareas': str(self.estado.pk),
                 'cant_etiquetas': '0',
-                'emp_clientes': '12',
+                'emp_clientes': '4',
+                'cant_empacada': '12',
                 'total_paquetes': '9',
                 'notas': 'Persistencia',
             }
@@ -171,7 +172,7 @@ class EmpaqueDetalleFormsetTests(TestCase):
         empaque = form.save()
 
         self.assertEqual(empaque.cant_empacada, 12)
-        self.assertEqual(empaque.emp_clientes, 12)
+        self.assertEqual(empaque.emp_clientes, 4)
         self.assertEqual(empaque.total_paquetes, 9)
 
     def test_sincronizar_resumen_no_sobrescribe_total_paquetes_manual(self):
@@ -201,7 +202,7 @@ class EmpaqueDetalleFormsetTests(TestCase):
                 self.nivel_molienda = None
                 self.cant_empaque = None
                 self.cant_empacada = None
-                self.emp_clientes = None
+                self.emp_clientes = 3
                 self.total_empaques = None
                 self.total_paquetes = 56
                 self.saved = False
@@ -216,7 +217,7 @@ class EmpaqueDetalleFormsetTests(TestCase):
         sincronizar_resumen_empaque(instance)
 
         self.assertEqual(instance.total_paquetes, 56)
-        self.assertEqual(instance.emp_clientes, 7)
+        self.assertEqual(instance.emp_clientes, 3)
         self.assertTrue(instance.saved)
 
     def test_nuevo_empaque_permte_cant_etiquetas_en_cero_si_lleva_etiquetas(self):
@@ -306,10 +307,11 @@ class EmpaqueDetalleFormsetTests(TestCase):
 
         self.assertTrue(form.is_valid(), form.errors)
 
-    def test_emp_clientes_permanece_solo_lectura_en_formulario(self):
+    def test_etiquetas_cliente_es_editable_y_bolsas_empacadas_solo_lectura(self):
         form = EmpaqueForm()
 
-        self.assertEqual(form.fields['emp_clientes'].widget.attrs.get('readonly'), 'readonly')
+        self.assertIsNone(form.fields['emp_clientes'].widget.attrs.get('readonly'))
+        self.assertEqual(form.fields['cant_empacada'].widget.attrs.get('readonly'), 'readonly')
 
     def test_nuevo_empaque_permite_guardar_pedido_y_empacado_en_cero(self):
         formset = build_detalle_empaque_formset(
