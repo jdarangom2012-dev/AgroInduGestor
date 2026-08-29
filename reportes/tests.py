@@ -289,6 +289,30 @@ class FacturacionReportTests(TestCase):
         self.assertEqual(seleccion["humedad"], 10.5)
         self.assertEqual(seleccion["densidad"], 750)
 
+    def test_seleccion_verde_usa_mediciones_disponibles_del_mismo_cliente(self):
+        self.create_order()
+        otra_orden = Orden.objects.create(
+            orden="OP-CLIENTE-MEDICIONES",
+            cliente=self.cliente,
+            selec_cafe_verde=True,
+        )
+        estado_pendiente = EstadoTarea.objects.create(estado_tareas="Pendiente medición")
+        OrdenSeleccionVerde.objects.create(
+            orden=otra_orden,
+            estado_tareas=estado_pendiente,
+            medir_humedad=True,
+            humedad=12,
+            medir_densidad=True,
+            densidad=700,
+            created_at=timezone.now(),
+            updated_at=timezone.now(),
+        )
+
+        seleccion = get_facturacion_report("2319")["procesos"]["seleccion_verde"]
+
+        self.assertEqual(seleccion["humedad"], 12)
+        self.assertEqual(seleccion["densidad"], 700)
+
     def test_reporte_consolida_multiples_registros_por_orden_y_pdf_comparte_contexto(self):
         orden = self.create_order()
 

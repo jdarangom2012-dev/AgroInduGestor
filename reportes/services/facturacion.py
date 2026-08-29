@@ -139,10 +139,22 @@ def build_seleccion_verde_section(orden, trilla_section=None):
         peso_cat_grupo2="peso_cat_grupo2",
         peso_aceptado="peso_aceptado",
     )
-    mediciones = registros_completados.aggregate(
+    mediciones_cliente = OrdenSeleccionVerde.objects.filter(
+        orden__cliente_id=getattr(orden, "cliente_id", None),
+    )
+    mediciones = mediciones_cliente.filter(**_completed_task_filter()).aggregate(
         humedad=Avg("humedad"),
         densidad=Avg("densidad"),
     )
+    if mediciones["humedad"] is None or mediciones["densidad"] is None:
+        mediciones_disponibles = mediciones_cliente.aggregate(
+            humedad=Avg("humedad"),
+            densidad=Avg("densidad"),
+        )
+        if mediciones["humedad"] is None:
+            mediciones["humedad"] = mediciones_disponibles["humedad"]
+        if mediciones["densidad"] is None:
+            mediciones["densidad"] = mediciones_disponibles["densidad"]
     total_de_grupo = sum(
         totals[field_name]
         for field_name in (
