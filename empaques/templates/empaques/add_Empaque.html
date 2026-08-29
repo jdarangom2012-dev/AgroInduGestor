@@ -71,9 +71,9 @@
                 <span>Lleva Etiquetas</span>
               </label>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="label">Cant. Etiquetas</label>
+                <label class="label">Cant. Etiquetas Invima</label>
                 <div class="w-full max-w-[16rem]">
                   {{ form.cant_etiquetas }}
                   {{ form.cant_etiquetas.errors }}
@@ -86,6 +86,8 @@
                   {{ form.emp_clientes.errors }}
                 </div>
               </div>
+            </div>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="label">Cantidad Bolsas Empacadas</label>
                 <div class="w-full max-w-[16rem]">
@@ -93,11 +95,11 @@
                   {{ form.cant_empacada.errors }}
                 </div>
               </div>
-            </div>
-            <div class="mt-4 max-w-[16rem]">
-              <label class="label">Total Paquetes</label>
-              {{ form.total_paquetes }}
-              {{ form.total_paquetes.errors }}
+              <div class="max-w-[16rem]">
+                <label class="label">Total Paquetes</label>
+                {{ form.total_paquetes }}
+                {{ form.total_paquetes.errors }}
+              </div>
             </div>
             {{ form.lleva_etiquetas.errors }}
           </div>
