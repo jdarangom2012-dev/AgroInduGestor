@@ -127,12 +127,9 @@ def build_seleccion_verde_section(orden, trilla_section=None):
         }
 
     trilla_section = trilla_section or build_trilla_section(orden)
-    registros_completados = OrdenSeleccionVerde.objects.filter(
-        orden=orden,
-        **_completed_task_filter(),
-    )
+    registros_orden = OrdenSeleccionVerde.objects.filter(orden=orden)
     totals = _sum_fields(
-        registros_completados,
+        registros_orden,
         peso_cat_ripio="peso_cat_ripio",
         peso_cat_balsos="peso_cat_balsos",
         peso_cat_grupo1="peso_cat_grupo1",

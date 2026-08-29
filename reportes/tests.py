@@ -251,6 +251,23 @@ class FacturacionReportTests(TestCase):
         self.assertNotIn("total_grupo1", seleccion)
         self.assertNotIn("total_grupo2", seleccion)
 
+    def test_seleccion_verde_incluye_totales_de_registros_pendientes(self):
+        orden = self.create_order()
+        OrdenSeleccionVerde.objects.create(
+            orden=orden,
+            estado_tareas=self.estado_pendiente,
+            peso_cat_ripio=0.62,
+            peso_cat_grupo1=1.49,
+            peso_cat_grupo2=1.25,
+            peso_aceptado=82,
+            created_at=timezone.now(),
+        )
+
+        seleccion = get_facturacion_report("2319")["procesos"]["seleccion_verde"]
+
+        self.assertEqual(seleccion["total_de_grupo"], 3.36)
+        self.assertEqual(seleccion["peso_aceptado"], 82)
+
     def test_seleccion_verde_promedio_ignora_mediciones_nulas(self):
         orden = self.create_order()
         for humedad, densidad in ((10.5, 750), (None, None)):
