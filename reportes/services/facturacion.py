@@ -104,7 +104,7 @@ def build_trilla_section(orden):
         return {"aplica": False, "entrada": 0, "salida": 0}
 
     totals = _sum_fields(
-        OrdenTrilla.objects.filter(orden=orden, **_completed_task_filter()),
+        OrdenTrilla.objects.filter(orden__cliente_id=getattr(orden, "cliente_id", None)),
         entrada="peso_cafe_bruto",
         salida="peso_cafe_verde",
     )

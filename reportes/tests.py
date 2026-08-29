@@ -120,7 +120,7 @@ class FacturacionReportTests(TestCase):
         self.assertEqual(trilla["entrada"], 150)
         self.assertEqual(trilla["salida"], 122)
 
-    def test_excluye_trillas_pendientes(self):
+    def test_trilla_suma_todos_los_registros_del_mismo_cliente(self):
         orden = self.create_order()
         OrdenTrilla.objects.create(
             orden=orden,
@@ -130,19 +130,20 @@ class FacturacionReportTests(TestCase):
             peso_cafe_verde=80,
             created_at=timezone.now(),
         )
+        otra_orden = self.create_order(orden="2320")
         OrdenTrilla.objects.create(
-            orden=orden,
+            orden=otra_orden,
             cliente=self.cliente,
             estado_tareas=self.estado_pendiente,
-            peso_cafe_bruto=999,
-            peso_cafe_verde=999,
+            peso_cafe_bruto=50,
+            peso_cafe_verde=40,
             created_at=timezone.now(),
         )
 
         trilla = get_facturacion_report("2319")["procesos"]["trilla"]
 
-        self.assertEqual(trilla["entrada"], 100)
-        self.assertEqual(trilla["salida"], 80)
+        self.assertEqual(trilla["entrada"], 150)
+        self.assertEqual(trilla["salida"], 120)
 
     def test_tueste_con_multiples_batches(self):
         orden = self.create_order()
