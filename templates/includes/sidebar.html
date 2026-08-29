@@ -64,13 +64,6 @@
   {% if CAN_MOD_ORDEN_TUESTE %}<li><a href="/ordenes-tueste/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🔥</span><span class="flex-1">Órdenes de Tueste</span></a></li>{% endif %}
   {% if CAN_MOD_SEL_TUESTE %}<li><a href="{% url 'ordenes_seleccion_tueste_listar' %}" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🔍</span><span class="flex-1">Órdenes Selección Tueste</span></a></li>{% endif %}
   {% if CAN_VER_SEL_VERDE %}<li><a href="{% url 'ordenes_seleccion_verde_listar' %}" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🍃</span><span class="flex-1">Órdenes Selección Verde</span></a></li>{% endif %}
-  {% if CAN_VER_ORDENES_SEL_VERDE %}
-  <li>
-    <a href="{% url 'ordenes_seleccion_verde_listar' %}" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700">
-      <span class="w-4 text-[11px]">🍃</span><span class="flex-1">Selección Café Verde</span>
-    </a>
-  </li>
-  {% endif %}
   {% if CAN_VER_EMPAQUE %}<li><a href="/empaque/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🏷️</span><span class="flex-1">Órdenes de Empaque</span></a></li>{% endif %}
       </ul>
     </div>
