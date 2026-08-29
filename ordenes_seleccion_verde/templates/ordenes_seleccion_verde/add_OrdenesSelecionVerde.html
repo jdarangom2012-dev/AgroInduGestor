@@ -1,7 +1,7 @@
 {% load seguridad_permisos %}
 {% tiene_permiso request.user "crear_orden_seleccion_verde" as puede_guardar %}
 
-<div class="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-6 overflow-y-auto" data-modal-root>
+<div class="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-6 overflow-y-auto" data-modal-root data-orden-seleccion-verde-defaults-url="{% url 'orden_seleccion_verde_defaults' %}">
   <div class="palette-surface w-full max-w-4xl rounded-xl shadow-xl border border-brand-dark/30 fade-in">
     <div class="modal-head flex items-center justify-between px-6 py-4 rounded-t-xl">
       <h2 class="text-lg font-semibold flex items-center gap-2">➕ Nueva Selección Verde</h2>
@@ -91,6 +91,7 @@
             </div>
           </div>
         </div>
+        <p class="hidden text-xs text-amber-700 md:col-span-2" data-mediciones-cliente-aviso>Este cliente ya tiene humedad y densidad registradas en otra Selección Verde.</p>
         <div class="md:col-span-2">
           <label class="label">Notas</label>
           {{ form.notas }}

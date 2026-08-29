@@ -11,7 +11,7 @@ from django.utils import timezone
 from seguridad.helpers import tiene_permiso_accion
 
 from .models import OrdenSeleccionVerde
-from .forms import OrdenSeleccionVerdeForm
+from .forms import OrdenSeleccionVerdeForm, cliente_tiene_mediciones_seleccion_verde
 from ordenes.forms import enforce_parent_order_not_completed
 from ordenes.models import Orden
 
@@ -35,11 +35,12 @@ def permiso_o_codigo_required(django_perm: str, codigo: str):
     return decorator
 
 
-def _build_orden_seleccion_verde_defaults(orden):
+def _build_orden_seleccion_verde_defaults(orden, excluir_pk=None):
     cliente = getattr(orden, 'cliente', None)
     return {
         'cliente_id': getattr(cliente, 'id', None),
         'cliente_label': str(cliente) if cliente is not None else '',
+        'mediciones_bloqueadas': cliente_tiene_mediciones_seleccion_verde(orden, excluir_pk),
     }
 
 
@@ -50,15 +51,16 @@ def _build_orden_seleccion_verde_defaults(orden):
 )
 def orden_seleccion_verde_defaults(request):
     orden_id = request.GET.get('orden_id')
+    excluir_pk = request.GET.get('excluir_pk')
     if not orden_id:
-        return JsonResponse(_build_orden_seleccion_verde_defaults(Orden()))
+        return JsonResponse(_build_orden_seleccion_verde_defaults(Orden(), excluir_pk))
 
     try:
         orden = Orden.objects.select_related('cliente').get(pk=orden_id, selec_cafe_verde=True)
     except (TypeError, ValueError, Orden.DoesNotExist):
         return JsonResponse({'detail': 'Orden no encontrada.'}, status=404)
 
-    return JsonResponse(_build_orden_seleccion_verde_defaults(orden))
+    return JsonResponse(_build_orden_seleccion_verde_defaults(orden, excluir_pk))
 
 
 @permiso_o_codigo_required(

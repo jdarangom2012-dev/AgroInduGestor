@@ -6,7 +6,11 @@ from estado_tareas.models import EstadoTarea
 from ordenes.models import Orden
 from zaranda_grupo.models import ZarandaGrupo
 
-from .forms import OrdenSeleccionVerdeForm, SELECCION_TIPO_REQUERIDO_ERROR
+from .forms import (
+    MEDICIONES_CLIENTE_UNICAS_ERROR,
+    OrdenSeleccionVerdeForm,
+    SELECCION_TIPO_REQUERIDO_ERROR,
+)
 from .models import OrdenSeleccionVerde
 
 
@@ -280,3 +284,60 @@ class OrdenSeleccionVerdeFormTests(TestCase):
         self.assertIsNone(actualizado.peso_cat_grupo2)
         self.assertIsNone(actualizado.humedad)
         self.assertIsNone(actualizado.densidad)
+
+    def test_otro_registro_del_mismo_cliente_bloquea_humedad_y_densidad(self):
+        OrdenSeleccionVerde.objects.create(
+            orden=self.orden,
+            estado_tareas=self.estado,
+            catadora=True,
+            medir_humedad=True,
+            humedad=10.5,
+            medir_densidad=True,
+            densidad=700,
+            created_at=timezone.now(),
+            updated_at=timezone.now(),
+        )
+        otra_orden = Orden.objects.create(
+            orden='OP-SV-002',
+            cliente=self.cliente,
+            selec_cafe_verde=True,
+        )
+
+        form_inicial = OrdenSeleccionVerdeForm(data={
+            'orden': str(otra_orden.pk),
+            'estado_tareas': str(self.estado.pk),
+            'catadora': 'on',
+        })
+        self.assertTrue(form_inicial.mediciones_cliente_bloqueadas)
+        for campo in ('medir_humedad', 'humedad', 'medir_densidad', 'densidad'):
+            self.assertTrue(form_inicial.fields[campo].disabled)
+
+        form = OrdenSeleccionVerdeForm(data={
+            'orden': str(otra_orden.pk),
+            'estado_tareas': str(self.estado.pk),
+            'catadora': 'on',
+            'medir_humedad': 'on',
+            'humedad': '11',
+            'medir_densidad': 'on',
+            'densidad': '710',
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn(MEDICIONES_CLIENTE_UNICAS_ERROR, form.non_field_errors())
+
+    def test_registro_que_tiene_las_mediciones_puede_editarlas(self):
+        seleccion = OrdenSeleccionVerde.objects.create(
+            orden=self.orden,
+            estado_tareas=self.estado,
+            catadora=True,
+            medir_humedad=True,
+            humedad=10.5,
+            medir_densidad=True,
+            densidad=700,
+            created_at=timezone.now(),
+            updated_at=timezone.now(),
+        )
+        form = OrdenSeleccionVerdeForm(instance=seleccion)
+
+        self.assertFalse(form.mediciones_cliente_bloqueadas)
+        for campo in ('medir_humedad', 'humedad', 'medir_densidad', 'densidad'):
+            self.assertFalse(form.fields[campo].disabled)

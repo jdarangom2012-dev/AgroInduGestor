@@ -1,4 +1,5 @@
 from django import forms
+from django.db.models import Q
 
 from clientes.models import Cliente
 from estado_tareas.models import EstadoTarea
@@ -15,6 +16,23 @@ SELECCION_TIPO_REQUERIDO_ERROR = 'Debe seleccionar Zaranda o Catadora para guard
 PESO_ACEPTADO_REQUERIDO_ERROR = 'Debe ingresar un Peso Aceptado mayor a cero.'
 HUMEDAD_REQUERIDA_ERROR = 'Debe ingresar un valor de Humedad mayor a cero porque la opción Medir Humedad está seleccionada.'
 DENSIDAD_REQUERIDA_ERROR = 'Debe ingresar un valor de Densidad mayor a cero porque la opción Medir Densidad está seleccionada.'
+MEDICIONES_CLIENTE_UNICAS_ERROR = 'La humedad y la densidad ya fueron registradas en otra Selección Verde de este cliente.'
+
+
+def cliente_tiene_mediciones_seleccion_verde(orden, excluir_pk=None):
+    cliente_id = getattr(orden, 'cliente_id', None)
+    if not cliente_id:
+        return False
+
+    registros = OrdenSeleccionVerde.objects.filter(orden__cliente_id=cliente_id)
+    if excluir_pk:
+        registros = registros.exclude(pk=excluir_pk)
+    return registros.filter(
+        Q(medir_humedad=True) |
+        Q(humedad__isnull=False) |
+        Q(medir_densidad=True) |
+        Q(densidad__isnull=False)
+    ).exists()
 
 
 class OrdenSeleccionVerdeForm(forms.ModelForm):
@@ -113,6 +131,25 @@ class OrdenSeleccionVerdeForm(forms.ModelForm):
             if cliente is not None:
                 self.fields['cliente'].initial = cliente.pk
                 self.initial['cliente'] = cliente.pk
+
+        orden_mediciones = None
+        orden_id_mediciones = self.data.get('orden') if self.is_bound else None
+        if orden_id_mediciones:
+            try:
+                orden_mediciones = Orden.objects.get(pk=orden_id_mediciones)
+            except (TypeError, ValueError, Orden.DoesNotExist):
+                orden_mediciones = None
+        elif getattr(self.instance, 'orden', None) is not None:
+            orden_mediciones = self.instance.orden
+
+        self.mediciones_cliente_bloqueadas = cliente_tiene_mediciones_seleccion_verde(
+            orden_mediciones,
+            excluir_pk=getattr(self.instance, 'pk', None),
+        )
+        if self.mediciones_cliente_bloqueadas:
+            for field_name in ('medir_humedad', 'humedad', 'medir_densidad', 'densidad'):
+                self.fields[field_name].disabled = True
+                self.fields[field_name].widget.attrs['data-medicion-cliente-bloqueada'] = '1'
 
         if estado_pendiente is not None and not getattr(self.instance, 'pk', None) and not self.is_bound:
             self.fields['estado_tareas'].initial = estado_pendiente.pk
@@ -246,6 +283,21 @@ class OrdenSeleccionVerdeForm(forms.ModelForm):
         orden = cleaned_data.get('orden')
         if orden and not getattr(orden, 'selec_cafe_verde', False):
             self.add_error('orden', 'Solo se permiten órdenes de producción con selección verde habilitada.')
+
+        if cliente_tiene_mediciones_seleccion_verde(
+            orden,
+            excluir_pk=getattr(self.instance, 'pk', None),
+        ):
+            intento_medicion = any(
+                self.data.get(field_name)
+                for field_name in ('medir_humedad', 'humedad', 'medir_densidad', 'densidad')
+            )
+            if intento_medicion:
+                raise forms.ValidationError(MEDICIONES_CLIENTE_UNICAS_ERROR)
+            cleaned_data['medir_humedad'] = False
+            cleaned_data['humedad'] = None
+            cleaned_data['medir_densidad'] = False
+            cleaned_data['densidad'] = None
 
         zaranda = bool(cleaned_data.get('zaranda'))
         catadora = bool(cleaned_data.get('catadora'))

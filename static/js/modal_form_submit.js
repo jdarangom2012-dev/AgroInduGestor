@@ -434,11 +434,27 @@ function initOrdenSeleccionVerdeDefaults(container) {
 
     const ordenField = scope.querySelector('#id_orden');
     const clienteField = scope.querySelector('#id_cliente');
-    if (!ordenField || !clienteField) continue;
+    if (!ordenField) continue;
+
+    function bloquearMedicionesCliente(bloquear) {
+      scope.dataset.medicionesClienteBloqueadas = bloquear ? '1' : '0';
+      const aviso = scope.querySelector('[data-mediciones-cliente-aviso]');
+      if (aviso) aviso.classList.toggle('hidden', !bloquear);
+      ['#id_medir_humedad', '#id_medir_densidad'].forEach(function(selector) {
+        const checkbox = scope.querySelector(selector);
+        if (!checkbox) return;
+        checkbox.disabled = bloquear;
+        if (bloquear) checkbox.checked = false;
+      });
+      initSeleccionVerdeCamposDependientes(scope);
+    }
 
     function applyDefaults(data) {
-      clienteField.value = data && data.cliente_id ? String(data.cliente_id) : '';
-      clienteField.dispatchEvent(new Event('change', { bubbles: true }));
+      if (clienteField) {
+        clienteField.value = data && data.cliente_id ? String(data.cliente_id) : '';
+        clienteField.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      bloquearMedicionesCliente(!!(data && data.mediciones_bloqueadas));
     }
 
     let currentRequest = 0;
@@ -447,7 +463,10 @@ function initOrdenSeleccionVerdeDefaults(container) {
       const requestId = ++currentRequest;
 
       try {
-        const url = ordenId ? defaultsUrl + '?orden_id=' + encodeURIComponent(ordenId) : defaultsUrl;
+        const params = new URLSearchParams();
+        if (ordenId) params.set('orden_id', ordenId);
+        if (scope.dataset.seleccionVerdeId) params.set('excluir_pk', scope.dataset.seleccionVerdeId);
+        const url = params.toString() ? defaultsUrl + '?' + params.toString() : defaultsUrl;
         const response = await fetch(url, {
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
           credentials: 'same-origin',
@@ -468,7 +487,7 @@ function initOrdenSeleccionVerdeDefaults(container) {
 
     const shouldSyncOnLoad =
       !scope.dataset.seleccionVerdeDefaultsSynced ||
-      (String(ordenField.value || '').trim() && !String(clienteField.value || '').trim());
+      String(ordenField.value || '').trim();
 
     if (shouldSyncOnLoad) {
       scope.dataset.seleccionVerdeDefaultsSynced = '1';
@@ -591,9 +610,15 @@ function initSeleccionVerdeCamposDependientes(container) {
       const campo = scope.querySelector(relacion[1]);
       if (!checkbox || !campo) return;
 
-      const campoBloqueadoPorPermiso = campo.disabled;
+      if (!campo.dataset.seleccionVerdePermisoDetectado) {
+        campo.dataset.bloqueadoPorPermiso =
+          campo.disabled && campo.dataset.medicionClienteBloqueada !== '1' ? '1' : '0';
+        campo.dataset.seleccionVerdePermisoDetectado = '1';
+      }
+      const campoBloqueadoPorPermiso = campo.dataset.bloqueadoPorPermiso === '1';
       function sincronizar(limpiarAlDesmarcar) {
-        const habilitado = checkbox.checked && !checkbox.disabled && !campoBloqueadoPorPermiso;
+        const bloqueadoPorCliente = scope.dataset.medicionesClienteBloqueadas === '1';
+        const habilitado = checkbox.checked && !checkbox.disabled && !campoBloqueadoPorPermiso && !bloqueadoPorCliente;
         campo.disabled = !habilitado;
         campo.classList.toggle('bg-gray-200', !habilitado);
         campo.classList.toggle('cursor-not-allowed', !habilitado);
