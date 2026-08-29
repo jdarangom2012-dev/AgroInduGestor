@@ -57,13 +57,13 @@ class OrdenTrillaFormValidationTests(TestCase):
             data={
                 **self._base_data(),
                 'estado_tareas': str(self.estado_pendiente.pk),
-                'peso_cafe_bruto': '50',
-                'peso_cafe_verde': '28',
+                'peso_cafe_bruto': '82',
+                'peso_cafe_verde': '60',
                 'rendimiento': '0',
             }
         )
         self.assertTrue(form.is_valid(), form.errors)
-        self.assertEqual(form.cleaned_data['rendimiento'], 56.0)
+        self.assertEqual(form.cleaned_data['rendimiento'], 73.17)
 
     def test_pendiente_permite_guardar_sin_pesos_positivos(self):
         form = OrdenTrillaForm(

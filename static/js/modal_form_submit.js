@@ -70,7 +70,7 @@ function calcularRendimiento(scope) {
       rendimiento.value = '0.00';
       return;
     }
-    resultado = (neto / verde) * 100;
+    resultado = (verde / neto) * 100;
   } else {
     const tostado = parseFloat(String(fields.pesoTostado.value || '').replace(',', '.'));
     resultado = ((tostado || 0) / verde) * 100;

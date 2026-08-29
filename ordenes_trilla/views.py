@@ -47,10 +47,10 @@ def _calcular_rendimiento(peso_cafe_neto, peso_cafe_verde):
     except (TypeError, ValueError):
         verde = 0.0
 
-    if not verde or verde == 0:
+    if not neto or neto == 0:
         return 0.0
 
-    return round((neto / verde) * 100.0, 2)
+    return round((verde / neto) * 100.0, 2)
 
 
 class OrdenTrillaForm(forms.ModelForm):
