@@ -686,7 +686,7 @@ class FacturacionReportTests(TestCase):
         orden = self.create_order(etiqueta_invima=True)
         Empaque.objects.create(
             orden=orden,
-            estado_tareas=self.estado_completada,
+            estado_tareas=self.estado_pendiente,
             lleva_etiquetas=True,
             cant_etiquetas=8,
         )

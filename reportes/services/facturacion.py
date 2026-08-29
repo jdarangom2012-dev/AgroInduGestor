@@ -268,7 +268,6 @@ def build_etiquetas_section(orden):
     empaques_con_etiquetas = Empaque.objects.filter(
         orden=orden,
         lleva_etiquetas=True,
-        **_completed_task_filter(),
     )
     totals = empaques_con_etiquetas.aggregate(total=Sum("cant_etiquetas"))
     total_etiquetas = _sum_value(totals.get("total"))
