@@ -16,7 +16,7 @@
             {% endif %}
           </div>
           {% if form.non_field_errors %}
-          <div class="mb-2 text-sm px-3 py-2 rounded border bg-yellow-50 border-yellow-300 text-yellow-800">
+          <div class="mb-2 text-sm px-3 py-2 rounded border bg-yellow-50 border-yellow-300 text-yellow-800" data-completion-validation-message>
             {{ form.non_field_errors }}
           </div>
           {% endif %}
@@ -144,12 +144,12 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="label">Fecha Inicio Orden</label>
-              <input type="text" name="fecha_inicio_orden" class="input-form w-full input" data-datepicker="1" data-dp-no-opener="1" value="{{ form.fecha_inicio_orden.value|date:'d/m/Y' }}">
+              {{ form.fecha_inicio_orden }}
               {{ form.fecha_inicio_orden.errors }}
             </div>
             <div>
               <label class="label">Fecha Entrega</label>
-              <input type="text" name="fecha_entrega" class="input-form w-full input" data-datepicker="1" data-dp-no-opener="1" value="{{ form.fecha_entrega.value|date:'d/m/Y' }}">
+              {{ form.fecha_entrega }}
               {{ form.fecha_entrega.errors }}
             </div>
             <div>

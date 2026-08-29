@@ -263,6 +263,16 @@
                         }, []);
                     }
 
+                    const estadoOrdenSelect = root.querySelector('form[data-modal-form] select[name="estado_orden"]');
+                    if (estadoOrdenSelect) {
+                        estadoOrdenSelect.addEventListener('change', () => {
+                            const estadoLabel = estadoOrdenSelect.options[estadoOrdenSelect.selectedIndex]?.text || '';
+                            if (!/completada/i.test(estadoLabel)) {
+                                clearCompletionValidationMessage(estadoOrdenSelect.form);
+                            }
+                        });
+                    }
+
                                 // Datepicker (Flatpickr + fallback) inicializado de forma genérica
                                 (function initDatePickers(){
                                     const inputs = Array.from(root.querySelectorAll('input[data-datepicker], input[name="fecha_orden"], input[name="fecha_inicio_orden"], input[name="fecha_entrega"]'));

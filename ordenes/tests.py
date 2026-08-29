@@ -280,6 +280,33 @@ class OrdenTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('No es posible completar la Orden de Producción', str(form.non_field_errors()))
 
+    def test_form_acepta_en_espera_con_confirmaciones_pendientes_y_conserva_fechas(self):
+        from ordenes.forms import OrdenForm
+        from ordenes.views import _validar_estado_completada_en_vista
+
+        estado_espera = EstadoOrden.objects.create(estado_orden='En Espera')
+        form = OrdenForm(data={
+            'cliente': self.cliente.id,
+            'orden': 'ORDESPERA01',
+            'estado_orden': estado_espera.id,
+            'fecha_inicio_orden': '22/08/2026',
+            'fecha_entrega': '30/08/2026',
+            'trilla': 'on',
+            'selec_cafe_verde': 'on',
+            'tueste_flag': 'on',
+            'selec_cafe_tostado': 'on',
+            'empaque_flag': 'on',
+            'peso_bruto': '97.57',
+            'peso': '79.34',
+            'prioridad': 3,
+        })
+
+        self.assertTrue(form.is_valid(), form.errors.as_json())
+        self.assertTrue(_validar_estado_completada_en_vista(form))
+        self.assertFalse(form.non_field_errors())
+        self.assertEqual(form.cleaned_data['fecha_inicio_orden'].strftime('%d/%m/%Y'), '22/08/2026')
+        self.assertEqual(form.cleaned_data['fecha_entrega'].strftime('%d/%m/%Y'), '30/08/2026')
+
     def test_form_bloquea_completada_si_confirmaciones_ok_pero_faltan_ordenes_hijas(self):
         from ordenes.forms import OrdenForm
         from django.utils import timezone

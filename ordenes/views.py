@@ -62,6 +62,11 @@ def _validar_estado_completada_en_vista(form):
     if not form.is_valid():
         return False
 
+    estado_orden = form.cleaned_data.get('estado_orden')
+    estado_nombre = (getattr(estado_orden, 'estado_orden', '') or '').strip().lower()
+    if estado_nombre != 'completada':
+        return True
+
     pending_confirmations = get_pending_completion_confirmations(form.cleaned_data, form.data)
     if pending_confirmations:
         form.add_error(None, build_completion_validation_message(pending_confirmations))
