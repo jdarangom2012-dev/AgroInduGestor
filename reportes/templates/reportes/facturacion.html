@@ -63,8 +63,8 @@
       </dl>
     </section>
 
-    <section class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-12 gap-4 items-start">
-      <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5 xl:col-span-3">
+    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+      <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5">
         <h2 class="text-lg font-semibold mb-3">Trilla</h2>
         {% if report.procesos.trilla.aplica %}
           <dl class="space-y-2 text-sm">
@@ -77,38 +77,7 @@
         {% endif %}
       </div>
 
-      <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5 xl:col-span-5">
-        <h2 class="text-lg font-semibold mb-3">Selección Verde</h2>
-        {% if report.procesos.seleccion_verde.aplica %}
-          <dl class="space-y-2 text-sm">
-            <div class="flex justify-between gap-3"><dt>Total Verde Grupo</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.total_de_grupo|floatformat:2 }} kg</dd></div>
-            <div class="flex justify-between gap-3"><dt>Peso Aceptado</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.peso_aceptado|floatformat:2 }} kg</dd></div>
-            <div class="flex justify-between gap-3"><dt>Humedad</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.humedad|floatformat:2 }}</dd></div>
-            <div class="flex justify-between gap-3"><dt>Densidad</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.densidad|floatformat:2 }}</dd></div>
-            {% if es_reporte_clientes %}
-              <div class="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700 font-semibold">Mallas</div>
-              <div class="flex justify-between gap-3"><dt>Peso Malla Grupo 1</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.mallas.grupo1|floatformat:2 }} kg</dd></div>
-              <div class="flex justify-between gap-3"><dt>Peso Malla Grupo 2</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.mallas.grupo2|floatformat:2 }} kg</dd></div>
-              <div class="flex justify-between gap-3"><dt>Peso Malla Grupo 3</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.mallas.grupo3|floatformat:2 }} kg</dd></div>
-              <div class="flex justify-between gap-3"><dt>Peso Malla Grupo 4</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.mallas.grupo4|floatformat:2 }} kg</dd></div>
-              <div class="flex justify-between gap-3"><dt>Peso Malla Grupo 5</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.mallas.grupo5|floatformat:2 }} kg</dd></div>
-              <div class="flex justify-between gap-3"><dt>Peso Ripio</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.mallas.ripio|floatformat:2 }} kg</dd></div>
-              {% if report.procesos.seleccion_verde.cataciones.ripio.seleccionada or report.procesos.seleccion_verde.cataciones.balsos.seleccionada or report.procesos.seleccion_verde.cataciones.grupo1.seleccionada or report.procesos.seleccion_verde.cataciones.grupo2.seleccionada %}
-                <div class="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700 font-semibold">Catadora</div>
-                {% if report.procesos.seleccion_verde.cataciones.ripio.seleccionada %}<div class="flex justify-between gap-3"><dt>Peso Catación Ripio</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.cataciones.ripio.peso|floatformat:2 }} kg</dd></div>{% endif %}
-                {% if report.procesos.seleccion_verde.cataciones.balsos.seleccionada %}<div class="flex justify-between gap-3"><dt>Peso Catación Balsos</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.cataciones.balsos.peso|floatformat:2 }} kg</dd></div>{% endif %}
-                {% if report.procesos.seleccion_verde.cataciones.grupo1.seleccionada %}<div class="flex justify-between gap-3"><dt>Peso Catación Grupo 1</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.cataciones.grupo1.peso|floatformat:2 }} kg</dd></div>{% endif %}
-                {% if report.procesos.seleccion_verde.cataciones.grupo2.seleccionada %}<div class="flex justify-between gap-3"><dt>Peso Catación Grupo 2</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.cataciones.grupo2.peso|floatformat:2 }} kg</dd></div>{% endif %}
-              {% endif %}
-            {% endif %}
-          </dl>
-        {% else %}
-          <p class="text-sm text-gray-500">Sin registros.</p>
-        {% endif %}
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:col-span-2 xl:col-span-4 xl:grid-cols-1 gap-4">
-        <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5">
+      <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5">
           <h2 class="text-lg font-semibold mb-3">Tueste</h2>
           {% if report.procesos.tueste.aplica %}
             <dl class="space-y-2 text-sm">
@@ -122,9 +91,9 @@
           {% else %}
             <p class="text-sm text-gray-500">Sin registros.</p>
           {% endif %}
-        </div>
+      </div>
 
-        <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5">
+      <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5 md:col-span-2 xl:col-span-1">
           <h2 class="text-lg font-semibold mb-3">Selección Tueste</h2>
           {% if report.procesos.seleccion_tostado.aplica %}
             <dl class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-2 text-sm">
@@ -137,8 +106,48 @@
           {% else %}
             <p class="text-sm text-gray-500">Sin registros.</p>
           {% endif %}
-        </div>
       </div>
+    </section>
+
+    <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-4">Selección Verde</h2>
+      {% if report.procesos.seleccion_verde.aplica %}
+        <div class="grid grid-cols-1 {% if es_reporte_clientes %}md:grid-cols-2 xl:grid-cols-3{% else %}sm:grid-cols-2 lg:grid-cols-4{% endif %} gap-6 text-sm">
+          <dl class="space-y-2">
+            {% if es_reporte_clientes %}<div class="font-semibold mb-2">Resumen</div>{% endif %}
+            <div class="flex justify-between gap-3"><dt>Total Verde Grupo</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.total_de_grupo|floatformat:2 }} kg</dd></div>
+            <div class="flex justify-between gap-3"><dt>Peso Aceptado</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.peso_aceptado|floatformat:2 }} kg</dd></div>
+            {% if es_reporte_clientes %}
+              <div class="flex justify-between gap-3"><dt>Humedad</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.humedad|floatformat:2 }}</dd></div>
+              <div class="flex justify-between gap-3"><dt>Densidad</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.densidad|floatformat:2 }}</dd></div>
+            {% endif %}
+          </dl>
+          {% if not es_reporte_clientes %}
+            <dl><div class="flex justify-between gap-3"><dt>Humedad</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.humedad|floatformat:2 }}</dd></div></dl>
+            <dl><div class="flex justify-between gap-3"><dt>Densidad</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.densidad|floatformat:2 }}</dd></div></dl>
+          {% else %}
+            <dl class="space-y-2 md:border-l md:border-gray-200 md:dark:border-gray-700 md:pl-6">
+              <div class="font-semibold mb-2">Mallas</div>
+              <div class="flex justify-between gap-3"><dt>Peso Malla Grupo 1</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.mallas.grupo1|floatformat:2 }} kg</dd></div>
+              <div class="flex justify-between gap-3"><dt>Peso Malla Grupo 2</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.mallas.grupo2|floatformat:2 }} kg</dd></div>
+              <div class="flex justify-between gap-3"><dt>Peso Malla Grupo 3</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.mallas.grupo3|floatformat:2 }} kg</dd></div>
+              <div class="flex justify-between gap-3"><dt>Peso Malla Grupo 4</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.mallas.grupo4|floatformat:2 }} kg</dd></div>
+              <div class="flex justify-between gap-3"><dt>Peso Malla Grupo 5</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.mallas.grupo5|floatformat:2 }} kg</dd></div>
+              <div class="flex justify-between gap-3"><dt>Peso Ripio</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.mallas.ripio|floatformat:2 }} kg</dd></div>
+            </dl>
+            <dl class="space-y-2 md:col-span-2 xl:col-span-1 xl:border-l xl:border-gray-200 xl:dark:border-gray-700 xl:pl-6">
+              <div class="font-semibold mb-2">Catadora</div>
+              {% if report.procesos.seleccion_verde.cataciones.ripio.seleccionada %}<div class="flex justify-between gap-3"><dt>Peso Catación Ripio</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.cataciones.ripio.peso|floatformat:2 }} kg</dd></div>{% endif %}
+              {% if report.procesos.seleccion_verde.cataciones.balsos.seleccionada %}<div class="flex justify-between gap-3"><dt>Peso Catación Balsos</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.cataciones.balsos.peso|floatformat:2 }} kg</dd></div>{% endif %}
+              {% if report.procesos.seleccion_verde.cataciones.grupo1.seleccionada %}<div class="flex justify-between gap-3"><dt>Peso Catación Grupo 1</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.cataciones.grupo1.peso|floatformat:2 }} kg</dd></div>{% endif %}
+              {% if report.procesos.seleccion_verde.cataciones.grupo2.seleccionada %}<div class="flex justify-between gap-3"><dt>Peso Catación Grupo 2</dt><dd class="font-semibold">{{ report.procesos.seleccion_verde.cataciones.grupo2.peso|floatformat:2 }} kg</dd></div>{% endif %}
+              {% if not report.procesos.seleccion_verde.cataciones.ripio.seleccionada and not report.procesos.seleccion_verde.cataciones.balsos.seleccionada and not report.procesos.seleccion_verde.cataciones.grupo1.seleccionada and not report.procesos.seleccion_verde.cataciones.grupo2.seleccionada %}<div class="text-gray-500">Sin cataciones seleccionadas.</div>{% endif %}
+            </dl>
+          {% endif %}
+        </div>
+      {% else %}
+        <p class="text-sm text-gray-500">Sin registros.</p>
+      {% endif %}
     </section>
 
     <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6 space-y-6">
