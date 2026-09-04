@@ -90,7 +90,7 @@ def _cropped_logo_buffer(path):
 
 
 def _logo_flowable(styles, max_width, max_height):
-    logo_path = _find_static_asset("img/Logo_central.png")
+    logo_path = _find_static_asset("img/La-Central-Logo.png")
     if not logo_path:
         return None
 
