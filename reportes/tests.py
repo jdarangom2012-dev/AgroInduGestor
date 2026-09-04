@@ -734,6 +734,20 @@ class FacturacionReportTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("/login/", response["Location"])
 
+    def test_reporte_clientes_requiere_autenticacion(self):
+        response = self.client.get(reverse("reportes_clientes"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login/", response["Location"])
+
+    def test_reporte_clientes_muestra_pantalla_base(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("reportes_clientes"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Reporte Clientes")
+
     def test_usuario_no_autenticado_no_descarga_pdf(self):
         orden = self.create_order()
 

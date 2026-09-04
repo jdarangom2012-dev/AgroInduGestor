@@ -33,6 +33,11 @@ def facturacion_view(request):
 
 
 @login_required
+def clientes_view(request):
+    return render(request, "reportes/clientes.html")
+
+
+@login_required
 def facturacion_pdf_view(request, orden_id):
     report = get_facturacion_report_by_id(orden_id)
     if report["not_found"] or not report["orden"]:
