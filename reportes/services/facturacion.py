@@ -268,6 +268,7 @@ def build_empaque_section(orden):
         return {
             "aplica": False,
             "bolsas_empacadas": [],
+            "detalle_empaque": [],
             "empaques_suministrados": [],
             "suministro_cliente": bool(getattr(orden, "trabajo_empaque", False)),
             "cantidad_bolsas_empacadas": 0,
@@ -281,6 +282,16 @@ def build_empaque_section(orden):
         .values("empaque_cafe__empaque_cafe", "tamano_empaque__tamano_empaque", "suministro")
         .annotate(cantidad=Sum("empacado"))
         .order_by("empaque_cafe__empaque_cafe", "tamano_empaque__tamano_empaque", "suministro")
+    )
+    detalle_empaque = list(
+        DetalleEmpaque.objects.filter(empaque_id__in=empaques)
+        .values(
+            "empaque_cafe__empaque_cafe",
+            "tamano_empaque__tamano_empaque",
+            "pedido",
+            "empacado",
+        )
+        .order_by("empaque_id", "id")
     )
 
     suministro_cliente = bool(getattr(orden, "trabajo_empaque", False))
@@ -302,6 +313,7 @@ def build_empaque_section(orden):
     return {
         "aplica": True,
         "bolsas_empacadas": bolsas_empacadas,
+        "detalle_empaque": detalle_empaque,
         "suministro_cliente": suministro_cliente,
         "empaques_suministrados": empaques_suministrados,
         "cantidad_bolsas_empacadas": totals["cantidad_bolsas_empacadas"],

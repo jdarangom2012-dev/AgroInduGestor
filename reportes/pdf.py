@@ -495,6 +495,26 @@ def render_facturacion_pdf(report, incluir_detalle_cliente=False):
         )
     )
 
+    if incluir_detalle_cliente:
+        story += _section("DETALLE DEL EMPAQUE", styles)
+        story.append(
+            _data_table(
+                ["Empaque Café", "Tamaño Empaque", "Pedido", "Empacado"],
+                [
+                    [
+                        _text(row.get("empaque_cafe__empaque_cafe"), "Sin tipo"),
+                        _text(row.get("tamano_empaque__tamano_empaque"), "Sin tamaño"),
+                        _number(row.get("pedido")),
+                        _number(row.get("empacado")),
+                    ]
+                    for row in empaque["detalle_empaque"]
+                ],
+                "Sin registros.",
+                styles,
+                col_widths=[4.8 * cm, 4.2 * cm, 3 * cm, 3 * cm],
+            )
+        )
+
     story += _section("EMPAQUES SUMINISTRADOS POR EL CLIENTE", styles)
     story.append(
         _data_table(

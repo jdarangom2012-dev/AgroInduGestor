@@ -623,6 +623,28 @@ class FacturacionReportTests(TestCase):
         self.assertEqual(grouped[("Bolsa Tricapa Blanca", "500 gr", True)], 5)
         self.assertEqual(grouped[("Bolsa Tricapa Blanca", "500 gr", False)], 3)
 
+    def test_reporte_clientes_incluye_detalle_del_empaque(self):
+        orden = self.create_order()
+        empaque = Empaque.objects.create(
+            orden=orden,
+            estado_tareas=self.estado_pendiente,
+        )
+        DetalleEmpaque.objects.create(
+            empaque=empaque,
+            empaque_cafe=self.empaque_cafe,
+            tamano_empaque=self.tamano,
+            pedido=99,
+            empacado=80,
+        )
+
+        detalle = get_facturacion_report("2319")["procesos"]["empaque"]["detalle_empaque"]
+
+        self.assertEqual(len(detalle), 1)
+        self.assertEqual(detalle[0]["empaque_cafe__empaque_cafe"], "Bolsa Tricapa Blanca")
+        self.assertEqual(detalle[0]["tamano_empaque__tamano_empaque"], "500 gr")
+        self.assertEqual(detalle[0]["pedido"], 99)
+        self.assertEqual(detalle[0]["empacado"], 80)
+
     def test_empaque_pendiente_con_detalle_se_muestra_en_facturacion(self):
         orden = self.create_order(orden="4256")
         empaque = Empaque.objects.create(
