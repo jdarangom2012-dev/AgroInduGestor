@@ -63,8 +63,8 @@
       </dl>
     </section>
 
-    <section class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-      <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5">
+    <section class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-12 gap-4 items-start">
+      <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5 xl:col-span-3">
         <h2 class="text-lg font-semibold mb-3">Trilla</h2>
         {% if report.procesos.trilla.aplica %}
           <dl class="space-y-2 text-sm">
@@ -77,7 +77,7 @@
         {% endif %}
       </div>
 
-      <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5">
+      <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5 xl:col-span-5">
         <h2 class="text-lg font-semibold mb-3">Selección Verde</h2>
         {% if report.procesos.seleccion_verde.aplica %}
           <dl class="space-y-2 text-sm">
@@ -107,36 +107,38 @@
         {% endif %}
       </div>
 
-      <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5">
-        <h2 class="text-lg font-semibold mb-3">Tueste</h2>
-        {% if report.procesos.tueste.aplica %}
-          <dl class="space-y-2 text-sm">
-            <div class="flex justify-between gap-3"><dt>Peso Café Verde Total</dt><dd class="font-semibold">{{ report.procesos.tueste.entrada|floatformat:2 }} kg</dd></div>
-            <div class="flex justify-between gap-3"><dt>Peso Café Tostado Total</dt><dd class="font-semibold">{{ report.procesos.tueste.salida|floatformat:2 }} kg</dd></div>
-            {% if es_reporte_clientes %}
-              <div class="flex justify-between gap-3"><dt>Rendimiento</dt><dd class="font-semibold">{{ report.procesos.tueste.rendimiento|floatformat:2 }} %</dd></div>
-              <div class="flex justify-between gap-3"><dt>Nivel de Tueste</dt><dd class="font-semibold">{{ report.procesos.tueste.nivel_tueste }}</dd></div>
-            {% endif %}
-          </dl>
-        {% else %}
-          <p class="text-sm text-gray-500">Sin registros.</p>
-        {% endif %}
-      </div>
-    </section>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:col-span-2 xl:col-span-4 xl:grid-cols-1 gap-4">
+        <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5">
+          <h2 class="text-lg font-semibold mb-3">Tueste</h2>
+          {% if report.procesos.tueste.aplica %}
+            <dl class="space-y-2 text-sm">
+              <div class="flex justify-between gap-3"><dt>Peso Café Verde Total</dt><dd class="font-semibold">{{ report.procesos.tueste.entrada|floatformat:2 }} kg</dd></div>
+              <div class="flex justify-between gap-3"><dt>Peso Café Tostado Total</dt><dd class="font-semibold">{{ report.procesos.tueste.salida|floatformat:2 }} kg</dd></div>
+              {% if es_reporte_clientes %}
+                <div class="flex justify-between gap-3"><dt>Rendimiento</dt><dd class="font-semibold">{{ report.procesos.tueste.rendimiento|floatformat:2 }} %</dd></div>
+                <div class="flex justify-between gap-3"><dt>Nivel de Tueste</dt><dd class="font-semibold">{{ report.procesos.tueste.nivel_tueste }}</dd></div>
+              {% endif %}
+            </dl>
+          {% else %}
+            <p class="text-sm text-gray-500">Sin registros.</p>
+          {% endif %}
+        </div>
 
-    <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
-      <h2 class="text-lg font-semibold mb-3">Selección Tueste</h2>
-      {% if report.procesos.seleccion_tostado.aplica %}
-        <dl class="grid grid-cols-1 md:grid-cols-5 gap-4 text-sm">
-          <div><dt class="text-gray-500">Peso Quaker</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.peso_quaker|floatformat:2 }} kg</dd></div>
-          <div><dt class="text-gray-500">Peso Grupo 1</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.peso_grupo1|floatformat:2 }} kg</dd></div>
-          <div><dt class="text-gray-500">Peso Grupo 2</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.peso_grupo2|floatformat:2 }} kg</dd></div>
-          <div><dt class="text-gray-500">Peso Grupo 3</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.peso_grupo3|floatformat:2 }} kg</dd></div>
-          <div><dt class="text-gray-500">Total registrado</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.total_registrado|floatformat:2 }} kg</dd></div>
-        </dl>
-      {% else %}
-        <p class="text-sm text-gray-500">Sin registros.</p>
-      {% endif %}
+        <div class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-5">
+          <h2 class="text-lg font-semibold mb-3">Selección Tueste</h2>
+          {% if report.procesos.seleccion_tostado.aplica %}
+            <dl class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-2 text-sm">
+              <div class="flex justify-between gap-3"><dt>Peso Quaker</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.peso_quaker|floatformat:2 }} kg</dd></div>
+              <div class="flex justify-between gap-3"><dt>Peso Grupo 1</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.peso_grupo1|floatformat:2 }} kg</dd></div>
+              <div class="flex justify-between gap-3"><dt>Peso Grupo 2</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.peso_grupo2|floatformat:2 }} kg</dd></div>
+              <div class="flex justify-between gap-3"><dt>Peso Grupo 3</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.peso_grupo3|floatformat:2 }} kg</dd></div>
+              <div class="flex justify-between gap-3"><dt>Total registrado</dt><dd class="font-semibold">{{ report.procesos.seleccion_tostado.total_registrado|floatformat:2 }} kg</dd></div>
+            </dl>
+          {% else %}
+            <p class="text-sm text-gray-500">Sin registros.</p>
+          {% endif %}
+        </div>
+      </div>
     </section>
 
     <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6 space-y-6">
@@ -225,8 +227,9 @@
       </div>
     </section>
 
-    {% if es_reporte_clientes %}
-      <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
+    <div class="grid grid-cols-1 {% if es_reporte_clientes %}xl:grid-cols-3{% endif %} gap-4 items-start">
+      {% if es_reporte_clientes %}
+      <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6 xl:col-span-2">
         <h2 class="text-lg font-semibold mb-3">Detalle del Empaque</h2>
         {% if report.procesos.empaque.detalle_empaque %}
           <div class="overflow-x-auto">
@@ -255,25 +258,26 @@
           <p class="text-sm text-gray-500">Sin registros.</p>
         {% endif %}
       </section>
-    {% endif %}
+      {% endif %}
 
-    <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
-      <h2 class="text-lg font-semibold mb-3">Etiquetas</h2>
-      <dl class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-        <div>
-          <dt class="text-gray-500">Etiquetas Cliente</dt>
-          <dd class="font-semibold">{{ report.etiquetas.cliente|floatformat:0 }}</dd>
-        </div>
-        <div>
-          <dt class="text-gray-500">Etiquetas INVIMA</dt>
-          <dd class="font-semibold">{{ report.etiquetas.invima|floatformat:0 }}</dd>
-        </div>
-        <div>
-          <dt class="text-gray-500">Total Etiquetas</dt>
-          <dd class="font-semibold">{{ report.etiquetas.total|floatformat:0 }}</dd>
-        </div>
-      </dl>
-    </section>
+      <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold mb-3">Etiquetas</h2>
+        <dl class="grid grid-cols-1 {% if not es_reporte_clientes %}md:grid-cols-3{% endif %} gap-4 text-sm">
+          <div>
+            <dt class="text-gray-500">Etiquetas Cliente</dt>
+            <dd class="font-semibold">{{ report.etiquetas.cliente|floatformat:0 }}</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500">Etiquetas INVIMA</dt>
+            <dd class="font-semibold">{{ report.etiquetas.invima|floatformat:0 }}</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500">Total Etiquetas</dt>
+            <dd class="font-semibold">{{ report.etiquetas.total|floatformat:0 }}</dd>
+          </div>
+        </dl>
+      </section>
+    </div>
 
     <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
       <h2 class="text-lg font-semibold mb-3">Observaciones</h2>
