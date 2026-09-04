@@ -102,6 +102,7 @@ class FacturacionReportTests(TestCase):
 
         self.assertEqual(trilla["entrada"], 120)
         self.assertEqual(trilla["salida"], 95)
+        self.assertAlmostEqual(trilla["rendimiento"], 79.1666667)
 
     def test_multiples_trillas_completadas_se_suman(self):
         orden = self.create_order()
@@ -167,6 +168,8 @@ class FacturacionReportTests(TestCase):
 
         self.assertEqual(tueste_section["entrada"], 30)
         self.assertEqual(tueste_section["salida"], 25)
+        self.assertAlmostEqual(tueste_section["rendimiento"], 83.3333333)
+        self.assertEqual(tueste_section["nivel_tueste"], "Medio")
 
     def test_seleccion_verde_entrada_sale_de_trilla_y_suma_peso_aceptado(self):
         orden = self.create_order()
@@ -251,6 +254,41 @@ class FacturacionReportTests(TestCase):
         self.assertEqual(seleccion["densidad"], 700)
         self.assertNotIn("total_grupo1", seleccion)
         self.assertNotIn("total_grupo2", seleccion)
+
+    def test_reporte_clientes_detalla_mallas_y_cataciones_seleccionadas(self):
+        orden = self.create_order()
+        OrdenSeleccionVerde.objects.create(
+            orden=orden,
+            estado_tareas=self.estado_pendiente,
+            peso_grupo1=10,
+            peso_grupo2=9,
+            peso_grupo3=8,
+            peso_grupo4=7,
+            peso_grupo5=6,
+            peso_grupo_ripio=5,
+            catacion_ripio=True,
+            peso_cat_ripio=2,
+            catacion_balsos=False,
+            peso_cat_balsos=99,
+            catacion_grupo1=True,
+            peso_cat_grupo1=3,
+            created_at=timezone.now(),
+        )
+
+        seleccion = get_facturacion_report("2319")["procesos"]["seleccion_verde"]
+
+        self.assertEqual(seleccion["mallas"], {
+            "grupo1": 10,
+            "grupo2": 9,
+            "grupo3": 8,
+            "grupo4": 7,
+            "grupo5": 6,
+            "ripio": 5,
+        })
+        self.assertTrue(seleccion["cataciones"]["ripio"]["seleccionada"])
+        self.assertEqual(seleccion["cataciones"]["ripio"]["peso"], 2)
+        self.assertFalse(seleccion["cataciones"]["balsos"]["seleccionada"])
+        self.assertEqual(seleccion["cataciones"]["balsos"]["peso"], 0)
 
     def test_seleccion_verde_incluye_totales_de_registros_pendientes(self):
         orden = self.create_order()

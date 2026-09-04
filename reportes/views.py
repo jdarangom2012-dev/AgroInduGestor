@@ -34,7 +34,31 @@ def facturacion_view(request):
 
 @login_required
 def clientes_view(request):
-    return render(request, "reportes/clientes.html")
+    selected_order = request.GET.get("orden", "")
+    report = get_facturacion_report(selected_order)
+    return render(
+        request,
+        "reportes/facturacion.html",
+        {
+            "orders": get_available_orders(),
+            "report": report,
+            "selected_order": selected_order,
+            "es_reporte_clientes": True,
+        },
+    )
+
+
+@login_required
+def clientes_pdf_view(request, orden_id):
+    report = get_facturacion_report_by_id(orden_id)
+    if report["not_found"] or not report["orden"]:
+        raise Http404("Orden de Producción no encontrada")
+
+    pdf_bytes = render_facturacion_pdf(report, incluir_detalle_cliente=True)
+    orden_numero = report["orden"].orden or orden_id
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="Reporte_Cliente_Orden_{orden_numero}.pdf"'
+    return response
 
 
 @login_required

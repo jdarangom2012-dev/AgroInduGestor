@@ -109,7 +109,7 @@ def _logo_flowable(styles, max_width, max_height):
     return logo
 
 
-def _report_header(orden, styles):
+def _report_header(orden, styles, title="REPORTE DE FACTURACIÓN"):
     rl = styles["_rl"]
     colors = rl["colors"]
     cm = rl["cm"]
@@ -122,7 +122,7 @@ def _report_header(orden, styles):
 
     order_info = Table(
         [
-            [Paragraph("REPORTE DE FACTURACIÓN", styles["HeaderTitle"])],
+            [Paragraph(title, styles["HeaderTitle"])],
             [Paragraph("Tostadora La Central", styles["HeaderSubtitle"])],
             [Paragraph(f"<b>Orden de Producción:</b> {_text(orden.orden)}", styles["HeaderMeta"])],
             [Paragraph(f"<b>Cliente:</b> {_text(orden.cliente)}", styles["HeaderMeta"])],
@@ -241,7 +241,7 @@ def _data_table(headers, rows, empty_text, styles, col_widths=None):
     return table
 
 
-def render_facturacion_pdf(report):
+def render_facturacion_pdf(report, incluir_detalle_cliente=False):
     rl = _load_reportlab()
     colors = rl["colors"]
     letter = rl["letter"]
@@ -353,19 +353,26 @@ def render_facturacion_pdf(report):
     orden = report["orden"]
     procesos = report["procesos"]
     story = [
-        _report_header(orden, styles),
+        _report_header(
+            orden,
+            styles,
+            "REPORTE CLIENTES" if incluir_detalle_cliente else "REPORTE DE FACTURACIÓN",
+        ),
         Spacer(1, 0.15 * cm),
     ]
 
     trilla = procesos["trilla"]
+    trilla_rows = [
+        ["Peso Café Neto Total", _kg(trilla["entrada"]) if trilla["aplica"] else "Sin registros."],
+        ["Peso Café Verde Total", _kg(trilla["salida"]) if trilla["aplica"] else "Sin registros."],
+    ]
+    if incluir_detalle_cliente:
+        trilla_rows.append(["Rendimiento", f'{_number(trilla.get("rendimiento"))} %' if trilla["aplica"] else "Sin registros."])
     story.append(
         _keep_section(
             "TRILLA",
         _key_value_table(
-            [
-                ["Peso Café Neto Total", _kg(trilla["entrada"]) if trilla["aplica"] else "Sin registros."],
-                ["Peso Café Verde Total", _kg(trilla["salida"]) if trilla["aplica"] else "Sin registros."],
-            ],
+            trilla_rows,
             rl,
         ),
             styles,
@@ -373,16 +380,37 @@ def render_facturacion_pdf(report):
     )
 
     seleccion_verde = procesos["seleccion_verde"]
+    seleccion_verde_rows = [
+        ["Total de Grupo", _kg(seleccion_verde["total_de_grupo"]) if seleccion_verde["aplica"] else "Sin registros."],
+        ["Peso Aceptado", _kg(seleccion_verde["peso_aceptado"]) if seleccion_verde["aplica"] else "Sin registros."],
+        ["Humedad", _number(seleccion_verde["humedad"]) if seleccion_verde["aplica"] else "Sin registros."],
+        ["Densidad", _number(seleccion_verde["densidad"]) if seleccion_verde["aplica"] else "Sin registros."],
+    ]
+    if incluir_detalle_cliente and seleccion_verde["aplica"]:
+        mallas = seleccion_verde["mallas"]
+        seleccion_verde_rows.extend([
+            ["Peso Malla Grupo 1", _kg(mallas["grupo1"])],
+            ["Peso Malla Grupo 2", _kg(mallas["grupo2"])],
+            ["Peso Malla Grupo 3", _kg(mallas["grupo3"])],
+            ["Peso Malla Grupo 4", _kg(mallas["grupo4"])],
+            ["Peso Malla Grupo 5", _kg(mallas["grupo5"])],
+            ["Peso Ripio", _kg(mallas["ripio"])],
+        ])
+        etiquetas_catacion = {
+            "ripio": "Peso Catación Ripio",
+            "balsos": "Peso Catación Balsos",
+            "grupo1": "Peso Catación Grupo 1",
+            "grupo2": "Peso Catación Grupo 2",
+        }
+        for clave, etiqueta in etiquetas_catacion.items():
+            catacion = seleccion_verde["cataciones"][clave]
+            if catacion["seleccionada"]:
+                seleccion_verde_rows.append([etiqueta, _kg(catacion["peso"])])
     story.append(
         _keep_section(
             "SELECCIÓN VERDE",
         _key_value_table(
-            [
-                ["Total de Grupo", _kg(seleccion_verde["total_de_grupo"]) if seleccion_verde["aplica"] else "Sin registros."],
-                ["Peso Aceptado", _kg(seleccion_verde["peso_aceptado"]) if seleccion_verde["aplica"] else "Sin registros."],
-                ["Humedad", _number(seleccion_verde["humedad"]) if seleccion_verde["aplica"] else "Sin registros."],
-                ["Densidad", _number(seleccion_verde["densidad"]) if seleccion_verde["aplica"] else "Sin registros."],
-            ],
+            seleccion_verde_rows,
             rl,
         ),
             styles,
@@ -390,14 +418,20 @@ def render_facturacion_pdf(report):
     )
 
     tueste = procesos["tueste"]
+    tueste_rows = [
+        ["Peso Café Verde Total", _kg(tueste["entrada"]) if tueste["aplica"] else "Sin registros."],
+        ["Peso Café Tostado Total", _kg(tueste["salida"]) if tueste["aplica"] else "Sin registros."],
+    ]
+    if incluir_detalle_cliente:
+        tueste_rows.extend([
+            ["Rendimiento", f'{_number(tueste.get("rendimiento"))} %' if tueste["aplica"] else "Sin registros."],
+            ["Nivel de Tueste", tueste.get("nivel_tueste", "-") if tueste["aplica"] else "Sin registros."],
+        ])
     story.append(
         _keep_section(
             "TUESTE",
         _key_value_table(
-            [
-                ["Peso Café Verde Total", _kg(tueste["entrada"]) if tueste["aplica"] else "Sin registros."],
-                ["Peso Café Tostado Total", _kg(tueste["salida"]) if tueste["aplica"] else "Sin registros."],
-            ],
+            tueste_rows,
             rl,
         ),
             styles,

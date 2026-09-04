@@ -108,10 +108,12 @@ def build_trilla_section(orden):
         entrada="peso_cafe_bruto",
         salida="peso_cafe_verde",
     )
+    rendimiento = (totals["salida"] / totals["entrada"] * 100) if totals["entrada"] else 0
     return {
         "aplica": True,
         "entrada": totals["entrada"],
         "salida": totals["salida"],
+        "rendimiento": rendimiento,
     }
 
 
@@ -130,6 +132,12 @@ def build_seleccion_verde_section(orden, trilla_section=None):
     registros_orden = OrdenSeleccionVerde.objects.filter(orden=orden)
     totals = _sum_fields(
         registros_orden,
+        peso_grupo1="peso_grupo1",
+        peso_grupo2="peso_grupo2",
+        peso_grupo3="peso_grupo3",
+        peso_grupo4="peso_grupo4",
+        peso_grupo5="peso_grupo5",
+        peso_grupo_ripio="peso_grupo_ripio",
         peso_cat_ripio="peso_cat_ripio",
         peso_cat_balsos="peso_cat_balsos",
         peso_cat_grupo1="peso_cat_grupo1",
@@ -161,6 +169,24 @@ def build_seleccion_verde_section(orden, trilla_section=None):
             "peso_cat_grupo2",
         )
     )
+    cataciones = {
+        "ripio": {
+            "seleccionada": registros_orden.filter(catacion_ripio=True).exists(),
+            "peso": _sum_fields(registros_orden.filter(catacion_ripio=True), peso="peso_cat_ripio")["peso"],
+        },
+        "balsos": {
+            "seleccionada": registros_orden.filter(catacion_balsos=True).exists(),
+            "peso": _sum_fields(registros_orden.filter(catacion_balsos=True), peso="peso_cat_balsos")["peso"],
+        },
+        "grupo1": {
+            "seleccionada": registros_orden.filter(catacion_grupo1=True).exists(),
+            "peso": _sum_fields(registros_orden.filter(catacion_grupo1=True), peso="peso_cat_grupo1")["peso"],
+        },
+        "grupo2": {
+            "seleccionada": registros_orden.filter(catacion_grupo2=True).exists(),
+            "peso": _sum_fields(registros_orden.filter(catacion_grupo2=True), peso="peso_cat_grupo2")["peso"],
+        },
+    }
     return {
         "aplica": True,
         "entrada": _sum_value(trilla_section.get("salida")),
@@ -168,6 +194,15 @@ def build_seleccion_verde_section(orden, trilla_section=None):
         "peso_aceptado": totals["peso_aceptado"],
         "humedad": _sum_value(mediciones["humedad"]),
         "densidad": _sum_value(mediciones["densidad"]),
+        "mallas": {
+            "grupo1": totals["peso_grupo1"],
+            "grupo2": totals["peso_grupo2"],
+            "grupo3": totals["peso_grupo3"],
+            "grupo4": totals["peso_grupo4"],
+            "grupo5": totals["peso_grupo5"],
+            "ripio": totals["peso_grupo_ripio"],
+        },
+        "cataciones": cataciones,
     }
 
 
@@ -175,15 +210,25 @@ def build_tueste_section(orden):
     if not _process_applies(orden, "tueste_flag"):
         return {"aplica": False, "entrada": 0, "salida": 0}
 
+    registros = Tueste.objects.filter(orden=orden, **_completed_task_filter())
     totals = _sum_fields(
-        Tueste.objects.filter(orden=orden, **_completed_task_filter()),
+        registros,
         entrada="peso_cafe_vede_total",
         salida="peso_cafe_tostado_total",
     )
+    niveles = list(
+        registros.exclude(nivel_tueste__nivel_tueste__isnull=True)
+        .exclude(nivel_tueste__nivel_tueste="")
+        .values_list("nivel_tueste__nivel_tueste", flat=True)
+        .distinct()
+    )
+    rendimiento = (totals["salida"] / totals["entrada"] * 100) if totals["entrada"] else 0
     return {
         "aplica": True,
         "entrada": totals["entrada"],
         "salida": totals["salida"],
+        "rendimiento": rendimiento,
+        "nivel_tueste": ", ".join(niveles) if niveles else "-",
     }
 
 
