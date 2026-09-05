@@ -456,6 +456,7 @@ def render_facturacion_pdf(report, incluir_detalle_cliente=False):
                 ],
                 "Sin batches registrados.",
                 styles,
+                col_widths=[2.2 * cm, 1.4 * cm, 3.5 * cm, 3.0 * cm, 4.0 * cm, 4.0 * cm],
             )
         )
 
