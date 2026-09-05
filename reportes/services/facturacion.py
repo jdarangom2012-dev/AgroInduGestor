@@ -233,7 +233,6 @@ def build_tueste_section(orden):
             "nivel_tueste__nivel_tueste",
             "kilos_verde",
             "kilos_tostado",
-            "observaciones",
         )
     )
     rendimiento = (totals["salida"] / totals["entrada"] * 100) if totals["entrada"] else 0

@@ -442,7 +442,7 @@ def render_facturacion_pdf(report, incluir_detalle_cliente=False):
         story += _section("DETALLE DE BATCHES DE TUESTE", styles)
         story.append(
             _data_table(
-                ["Tueste", "Batch", "Estado", "Nivel", "Kg verdes", "Kg tostados", "Observaciones"],
+                ["Tueste", "Batch", "Estado", "Nivel", "Kg verdes", "Kg tostados"],
                 [
                     [
                         f'#{row.get("tueste_id")}',
@@ -451,7 +451,6 @@ def render_facturacion_pdf(report, incluir_detalle_cliente=False):
                         _text(row.get("nivel_tueste__nivel_tueste")),
                         _kg(row.get("kilos_verde")),
                         _kg(row.get("kilos_tostado")),
-                        _text(row.get("observaciones")),
                     ]
                     for row in tueste.get("detalle_batches", [])
                 ],
