@@ -438,6 +438,28 @@ def render_facturacion_pdf(report, incluir_detalle_cliente=False):
         )
     )
 
+    if incluir_detalle_cliente:
+        story += _section("DETALLE DE BATCHES DE TUESTE", styles)
+        story.append(
+            _data_table(
+                ["Tueste", "Batch", "Estado", "Nivel", "Kg verdes", "Kg tostados", "Observaciones"],
+                [
+                    [
+                        f'#{row.get("tueste_id")}',
+                        _text(row.get("numero_batch")),
+                        _text(row.get("estado_orden__estado_orden")),
+                        _text(row.get("nivel_tueste__nivel_tueste")),
+                        _kg(row.get("kilos_verde")),
+                        _kg(row.get("kilos_tostado")),
+                        _text(row.get("observaciones")),
+                    ]
+                    for row in tueste.get("detalle_batches", [])
+                ],
+                "Sin batches registrados.",
+                styles,
+            )
+        )
+
     seleccion_tostado = procesos["seleccion_tostado"]
     story.append(
         _keep_section(

@@ -109,6 +109,44 @@
       </div>
     </section>
 
+    {% if es_reporte_clientes %}
+      <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold mb-3">Detalle de Batches de Tueste</h2>
+        {% if report.procesos.tueste.detalle_batches %}
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead>
+                <tr class="text-left border-b border-gray-200 dark:border-gray-800">
+                  <th class="py-2 pr-3">Tueste</th>
+                  <th class="py-2 pr-3">Batch</th>
+                  <th class="py-2 pr-3">Estado</th>
+                  <th class="py-2 pr-3">Nivel de Tueste</th>
+                  <th class="py-2 pr-3 text-right">Kilos Verdes</th>
+                  <th class="py-2 pr-3 text-right">Kilos Tostados</th>
+                  <th class="py-2">Observaciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for batch in report.procesos.tueste.detalle_batches %}
+                  <tr class="border-b border-gray-100 dark:border-gray-800">
+                    <td class="py-2 pr-3">#{{ batch.tueste_id }}</td>
+                    <td class="py-2 pr-3 font-semibold">{{ batch.numero_batch }}</td>
+                    <td class="py-2 pr-3">{{ batch.estado_orden__estado_orden|default:"-" }}</td>
+                    <td class="py-2 pr-3">{{ batch.nivel_tueste__nivel_tueste|default:"-" }}</td>
+                    <td class="py-2 pr-3 text-right font-semibold">{{ batch.kilos_verde|floatformat:2 }} kg</td>
+                    <td class="py-2 pr-3 text-right font-semibold">{{ batch.kilos_tostado|floatformat:2 }} kg</td>
+                    <td class="py-2">{{ batch.observaciones|default:"-" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-sm text-gray-500">Sin batches registrados.</p>
+        {% endif %}
+      </section>
+    {% endif %}
+
     <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
       <h2 class="text-lg font-semibold mb-4">Selección Verde</h2>
       {% if report.procesos.seleccion_verde.aplica %}

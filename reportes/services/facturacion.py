@@ -208,7 +208,7 @@ def build_seleccion_verde_section(orden, trilla_section=None):
 
 def build_tueste_section(orden):
     if not _process_applies(orden, "tueste_flag"):
-        return {"aplica": False, "entrada": 0, "salida": 0}
+        return {"aplica": False, "entrada": 0, "salida": 0, "detalle_batches": []}
 
     registros = Tueste.objects.filter(orden=orden, **_completed_task_filter())
     totals = _sum_fields(
@@ -222,6 +222,20 @@ def build_tueste_section(orden):
         .values_list("nivel_tueste__nivel_tueste", flat=True)
         .distinct()
     )
+    detalle_batches = list(
+        DetalleTueste.objects.filter(tueste__in=registros)
+        .select_related("estado_orden", "nivel_tueste")
+        .order_by("tueste_id", "numero_batch", "id")
+        .values(
+            "tueste_id",
+            "numero_batch",
+            "estado_orden__estado_orden",
+            "nivel_tueste__nivel_tueste",
+            "kilos_verde",
+            "kilos_tostado",
+            "observaciones",
+        )
+    )
     rendimiento = (totals["salida"] / totals["entrada"] * 100) if totals["entrada"] else 0
     return {
         "aplica": True,
@@ -229,6 +243,7 @@ def build_tueste_section(orden):
         "salida": totals["salida"],
         "rendimiento": rendimiento,
         "nivel_tueste": ", ".join(niveles) if niveles else "-",
+        "detalle_batches": detalle_batches,
     }
 
 
