@@ -16,6 +16,7 @@ class InventarioCafe(models.Model):
     codigo = models.CharField(db_column='Codigo', max_length=26, blank=True, null=True)
     descripcion = models.CharField(db_column='Descripcion', max_length=50, blank=True, null=True)
     cantidad = models.FloatField(db_column='Cantidad', blank=True, null=True)
+    cantidad_existente = models.FloatField(db_column='CantidadExistente', default=0)
     sacos = models.IntegerField(db_column='Sacos', blank=True, null=True)
     cantidad_bolsas_emp = models.IntegerField(db_column='CantidadBolsasEmp', blank=True, null=True)
     cantidad_paquetes = models.IntegerField(db_column='CantidadPaquetes', blank=True, null=True)
@@ -55,5 +56,7 @@ class InventarioCafe(models.Model):
         return ''.join(parts)
 
     def save(self, *args, **kwargs):
+        if self._state.adding:
+            self.cantidad_existente = self.cantidad or 0
         self.codigo = self.build_codigo()
         super().save(*args, **kwargs)

@@ -68,6 +68,7 @@ class Command(BaseCommand):
                 fecha_ingreso=fecha,
                 codigo=codigo,
                 cantidad=cantidad,
+                cantidad_existente=cantidad,
                 sacos=sacos,
                 cantidad_bolsas_emp=bolsas,
                 cantidad_paquetes=paquetes,

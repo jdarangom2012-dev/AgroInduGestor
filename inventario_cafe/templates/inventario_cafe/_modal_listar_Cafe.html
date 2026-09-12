@@ -39,7 +39,8 @@
               <th>Proceso</th>
               <th>Variedad</th>
               <th>Empaque Café</th>
-              <th>Cantidad</th>
+              <th>Cantidad ingresada</th>
+              <th>Cantidad Existe</th>
               <th>Sacos</th>
               <th>Editar</th>
               <th>Eliminar</th>
@@ -58,6 +59,7 @@
                 <td class="td">{{ r.variendad_inven_cafe|default:'—' }}</td>
                 <td class="td">{{ r.empaquecafe|default:'—' }}</td>
                 <td class="td">{{ r.cantidad|default_if_none:'—' }}</td>
+                <td class="td">{{ r.cantidad_existente|default_if_none:'—' }}</td>
                 <td class="td">{{ r.sacos|default_if_none:'—' }}</td>
                 <td class="td action">
                   {% if puede_editar %}
@@ -75,7 +77,7 @@
                 </td>
               </tr>
             {% empty %}
-              <tr><td colspan="13" class="text-center py-8 text-brand-dark/60 text-sm">No hay registros de Inventario de Café.</td></tr>
+              <tr><td colspan="14" class="text-center py-8 text-brand-dark/60 text-sm">No hay registros de Inventario de Café.</td></tr>
             {% endfor %}
           </tbody>
         </table>

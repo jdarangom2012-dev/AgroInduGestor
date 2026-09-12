@@ -24,14 +24,30 @@ class InventarioCafeForm(forms.ModelForm):
     origen = forms.ModelChoiceField(queryset=OrigenCafe.objects.all().order_by('origen'), required=False, widget=forms.Select(attrs={'class': 'w-full select'}))
     proceso_inven_cafe = forms.ModelChoiceField(queryset=ProcesoInvenCafe.objects.all().order_by('proceso_inven_cafe'), required=False, widget=forms.Select(attrs={'class': 'w-full select'}))
     variendad_inven_cafe = forms.ModelChoiceField(queryset=VariedadCafe.objects.all().order_by('variedad_cafe'), required=False, widget=forms.Select(attrs={'class': 'w-full select'}))
+    cantidad_existente = forms.FloatField(
+        label='Cantidad Existe',
+        required=False,
+        disabled=True,
+        widget=forms.NumberInput(attrs={'class': 'w-full input bg-gray-100 text-gray-500 cursor-not-allowed', 'step': '0.01', 'data-cantidad-existente': '1'}),
+    )
 
     class Meta:
         model = InventarioCafe
-        fields = ['cliente', 'estado_cafe', 'origen', 'proceso_inven_cafe', 'variendad_inven_cafe', 'empaquecafe', 'codigo', 'descripcion', 'cantidad', 'sacos', 'cantidad_bolsas_emp', 'cantidad_paquetes']
+        fields = ['cliente', 'estado_cafe', 'origen', 'proceso_inven_cafe', 'variendad_inven_cafe', 'empaquecafe', 'codigo', 'descripcion', 'cantidad', 'cantidad_existente', 'sacos', 'cantidad_bolsas_emp', 'cantidad_paquetes']
+        labels = {
+            'cantidad': 'Cantidad ingresada',
+            'cantidad_existente': 'Cantidad Existe',
+        }
         widgets = {
             'codigo': forms.TextInput(attrs={'class': 'w-full input'}),
             'descripcion': forms.TextInput(attrs={'class': 'w-full input'}),
-            'cantidad': forms.NumberInput(attrs={'class': 'w-full input', 'step': '0.01'}),
+            'cantidad': forms.NumberInput(attrs={
+                'class': 'w-full input',
+                'step': '0.01',
+                'min': '0',
+                'data-cantidad-ingresada': '1',
+                'oninput': "this.form.querySelector('[data-cantidad-existente]').value = this.value || '0'",
+            }),
             'sacos': forms.NumberInput(attrs={'class': 'w-full input', 'step': '1', 'min': '0'}),
             'cantidad_bolsas_emp': forms.NumberInput(attrs={'class': 'w-full input', 'step': '1', 'min': '0'}),
             'cantidad_paquetes': forms.NumberInput(attrs={'class': 'w-full input', 'step': '1', 'min': '0'}),
@@ -43,7 +59,7 @@ def listar_cafe(request):
     qs = (
         InventarioCafe.objects
         .select_related('cliente', 'estado_cafe', 'empaquecafe', 'origen', 'proceso_inven_cafe', 'variendad_inven_cafe')
-        .only('id', 'cliente', 'estado_cafe', 'empaquecafe', 'origen', 'proceso_inven_cafe', 'variendad_inven_cafe', 'codigo', 'cantidad', 'sacos')
+        .only('id', 'cliente', 'estado_cafe', 'empaquecafe', 'origen', 'proceso_inven_cafe', 'variendad_inven_cafe', 'codigo', 'cantidad', 'cantidad_existente', 'sacos')
         .order_by('-id')
     )
     search = request.GET.get('q', '').strip()
