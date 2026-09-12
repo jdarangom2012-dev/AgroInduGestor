@@ -218,7 +218,16 @@ class OrdenForm(forms.ModelForm):
             return descripcion
         return str(obj)
 
-    id_inven_cafe = forms.ModelChoiceField(queryset=None, required=False, label="Café", widget=forms.Select(attrs={"class": "w-full select"}))
+    id_inven_cafe = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        label="Café",
+        widget=forms.Select(attrs={
+            "class": "w-full select",
+            "data-inventario-por-cliente": "1",
+            "data-inventario-cliente-url": "/ordenes-produccion/inventarios-por-cliente/",
+        }),
+    )
     variedad_cafe = forms.ModelChoiceField(queryset=None, required=False, label="Variedad Café", widget=forms.Select(attrs={"class": "w-full select"}))
     proceso_inventario_cafe = forms.ModelChoiceField(queryset=None, required=False, label="Proceso Inventario Café", widget=forms.Select(attrs={"class": "w-full select"}))
     empaque_cafe = forms.ModelChoiceField(queryset=None, required=False, label="Empaque Café", widget=forms.Select(attrs={"class": "w-full select"}))
@@ -320,7 +329,19 @@ class OrdenForm(forms.ModelForm):
         self.fields["estado_orden"].queryset = EstadoOrden.objects.all().order_by('estado_orden', 'id')
         estado_pendiente = EstadoOrden.objects.filter(estado_orden__iexact="Pendiente").order_by('id').first()
         self.fields["id_empleado"].queryset = Empleado.objects.all()
-        self.fields["id_inven_cafe"].queryset = InventarioCafe.objects.all()
+        cliente_id = None
+        if self.is_bound:
+            cliente_id = self.data.get(self.add_prefix("cliente"))
+        elif getattr(self.instance, "cliente_id", None):
+            cliente_id = self.instance.cliente_id
+        elif self.initial.get("cliente"):
+            cliente_inicial = self.initial["cliente"]
+            cliente_id = getattr(cliente_inicial, "pk", cliente_inicial)
+
+        inventarios_cliente = InventarioCafe.objects.none()
+        if str(cliente_id or "").isdigit():
+            inventarios_cliente = InventarioCafe.objects.filter(cliente_id=int(cliente_id)).order_by("-id")
+        self.fields["id_inven_cafe"].queryset = inventarios_cliente
         self.fields["variedad_cafe"].queryset = VariedadCafe.objects.all().order_by('variedad_cafe', 'id')
         self.fields["proceso_inventario_cafe"].queryset = ProcesoInvenCafe.objects.all().order_by('proceso_inven_cafe', 'id')
         self.fields["empaque_cafe"].queryset = CafeEmpaque.objects.all().order_by('empaque_cafe', 'id')

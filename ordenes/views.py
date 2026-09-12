@@ -1,7 +1,8 @@
 import logging
 from html import escape
 
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.urls import reverse
@@ -22,6 +23,30 @@ from .forms import (
 
 
 logger = logging.getLogger(__name__)
+
+
+@require_http_methods(["GET"])
+@login_required
+def inventarios_por_cliente(request):
+    from inventario_cafe.models import InventarioCafe
+
+    cliente_id = request.GET.get("cliente_id", "")
+    if not cliente_id.isdigit():
+        return JsonResponse({"inventarios": []})
+
+    inventarios = (
+        InventarioCafe.objects.filter(cliente_id=int(cliente_id))
+        .order_by("-id")
+        .values("id", "codigo", "descripcion")
+    )
+    data = []
+    for inventario in inventarios:
+        codigo = (inventario["codigo"] or "").strip()
+        descripcion = (inventario["descripcion"] or "").strip()
+        etiqueta = f"{codigo} - {descripcion}" if codigo and descripcion else codigo or descripcion or f'InventarioCafe {inventario["id"]}'
+        data.append({"id": inventario["id"], "etiqueta": etiqueta})
+
+    return JsonResponse({"inventarios": data})
 
 
 def _catalogos_nueva_orden_snapshot():

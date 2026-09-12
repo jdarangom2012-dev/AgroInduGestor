@@ -1020,6 +1020,56 @@ function initEmpaqueDetalleGrid(container) {
 window.initEmpaqueDetalleGrid = initEmpaqueDetalleGrid;
 
 
+function initInventarioPorCliente(container) {
+  const scope = container && container.querySelector ? container : document;
+  const selects = [];
+  if (scope.matches && scope.matches('[data-inventario-por-cliente]')) selects.push(scope);
+  selects.push(...scope.querySelectorAll('[data-inventario-por-cliente]'));
+
+  selects.forEach(function (inventarioField) {
+    if (inventarioField.dataset.inventarioClienteInit === '1') return;
+    const form = inventarioField.closest('form');
+    const clienteField = form && form.querySelector('select[name="cliente"]');
+    const url = inventarioField.dataset.inventarioClienteUrl;
+    if (!clienteField || !url) return;
+
+    inventarioField.dataset.inventarioClienteInit = '1';
+    let requestNumber = 0;
+
+    clienteField.addEventListener('change', async function () {
+      const currentRequest = ++requestNumber;
+      const clienteId = clienteField.value;
+      inventarioField.innerHTML = '<option value="">Seleccione…</option>';
+      if (!clienteId) return;
+
+      inventarioField.disabled = true;
+      try {
+        const response = await fetch(url + '?cliente_id=' + encodeURIComponent(clienteId), {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin'
+        });
+        if (!response.ok) throw new Error('Error ' + response.status);
+        const payload = await response.json();
+        if (currentRequest !== requestNumber) return;
+
+        (payload.inventarios || []).forEach(function (inventario) {
+          const option = document.createElement('option');
+          option.value = String(inventario.id);
+          option.textContent = inventario.etiqueta;
+          inventarioField.appendChild(option);
+        });
+      } catch (error) {
+        console.error('No fue posible cargar el inventario del cliente:', error);
+      } finally {
+        if (currentRequest === requestNumber) inventarioField.disabled = false;
+      }
+    });
+  });
+}
+
+window.initInventarioPorCliente = initInventarioPorCliente;
+
+
 function syncEmpaqueEmpacadoTotal(scope) {
   if (!scope || !scope.querySelector) return;
 
@@ -1131,6 +1181,7 @@ const _rendMo = new MutationObserver(function (mutations) {
         initSeleccionTuesteValidations(node);
         initOrdenEmpaqueToggle(node);
         initEmpaqueDetalleGrid(node);
+        initInventarioPorCliente(node);
       } else if (node.querySelector) {
         const modal = node.querySelector('[data-modal-root]');
         if (modal) {
@@ -1146,6 +1197,7 @@ const _rendMo = new MutationObserver(function (mutations) {
           initOrdenEmpaqueToggle(modal);
           initEmpaqueOrderToggle(modal);
           initEmpaqueDetalleGrid(modal);
+          initInventarioPorCliente(modal);
         }
       }
     }
@@ -1174,6 +1226,7 @@ document.addEventListener('DOMContentLoaded', function () {
   initOrdenEmpaqueToggle(document);
   initEmpaqueOrderToggle(document);
   initEmpaqueDetalleGrid(document);
+  initInventarioPorCliente(document);
   syncEmpaqueEmpacadoTotal(document);
 });
 
@@ -1195,6 +1248,7 @@ document.addEventListener('DOMContentLoaded', function () {
       initOrdenEmpaqueToggle(target);
       initEmpaqueOrderToggle(target);
       initEmpaqueDetalleGrid(target);
+      initInventarioPorCliente(target);
       syncEmpaqueEmpacadoTotal(target);
     });
   }
