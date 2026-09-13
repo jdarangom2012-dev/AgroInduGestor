@@ -197,6 +197,7 @@
                   <tr class="text-left border-b border-gray-200 dark:border-gray-800">
                     <th class="py-2 pr-3">Empaque Café</th>
                     <th class="py-2 pr-3">Tamaño Empaque</th>
+                    <th class="py-2 pr-3">Nivel Molienda</th>
                     <th class="py-2 pr-3">Suministro</th>
                     <th class="py-2 text-right">Cantidad Bolsas Empacadas</th>
                   </tr>
@@ -206,6 +207,7 @@
                     <tr class="border-b border-gray-100 dark:border-gray-800">
                       <td class="py-2 pr-3">{{ row.empaque_cafe__empaque_cafe|default:"Sin tipo" }}</td>
                       <td class="py-2 pr-3">{{ row.tamano_empaque__tamano_empaque|default:"Sin tamaño" }}</td>
+                      <td class="py-2 pr-3">{{ row.nivel_molienda__nivel_molienda|default:"Sin molienda" }}</td>
                       <td class="py-2 pr-3">{% if row.suministro %}☑ Sí{% else %}☐ No{% endif %}</td>
                       <td class="py-2 text-right font-semibold">{{ row.cantidad|default:0 }}</td>
                     </tr>

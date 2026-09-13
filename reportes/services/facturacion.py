@@ -293,9 +293,19 @@ def build_empaque_section(orden):
     empaques = empaques_qs.values("id")
     bolsas_empacadas = list(
         DetalleEmpaque.objects.filter(empaque_id__in=empaques)
-        .values("empaque_cafe__empaque_cafe", "tamano_empaque__tamano_empaque", "suministro")
+        .values(
+            "empaque_cafe__empaque_cafe",
+            "tamano_empaque__tamano_empaque",
+            "nivel_molienda__nivel_molienda",
+            "suministro",
+        )
         .annotate(cantidad=Sum("empacado"))
-        .order_by("empaque_cafe__empaque_cafe", "tamano_empaque__tamano_empaque", "suministro")
+        .order_by(
+            "empaque_cafe__empaque_cafe",
+            "tamano_empaque__tamano_empaque",
+            "nivel_molienda__nivel_molienda",
+            "suministro",
+        )
     )
     detalle_empaque = list(
         DetalleEmpaque.objects.filter(empaque_id__in=empaques)

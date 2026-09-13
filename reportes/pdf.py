@@ -485,11 +485,12 @@ def render_facturacion_pdf(report, incluir_detalle_cliente=False):
     story += _section("BOLSAS EMPACADAS", styles)
     story.append(
         _data_table(
-            ["Empaque Café", "Tamaño Empaque", "Suministro", "Cantidad Bolsas Empacadas"],
+            ["Empaque Café", "Tamaño Empaque", "Nivel Molienda", "Suministro", "Cantidad Bolsas Empacadas"],
             [
                 [
                     _text(row.get("empaque_cafe__empaque_cafe"), "Sin tipo"),
                     _text(row.get("tamano_empaque__tamano_empaque"), "Sin tamaño"),
+                    _text(row.get("nivel_molienda__nivel_molienda"), "Sin molienda"),
                     "Sí" if row.get("suministro") else "No",
                     _number(row.get("cantidad")),
                 ]
@@ -499,7 +500,7 @@ def render_facturacion_pdf(report, incluir_detalle_cliente=False):
             else [],
             "Sin registros.",
             styles,
-            col_widths=[4.8 * cm, 3.45 * cm, 2.4 * cm, 4.35 * cm],
+            col_widths=[3.6 * cm, 2.7 * cm, 2.8 * cm, 2.0 * cm, 3.9 * cm],
         )
     )
 

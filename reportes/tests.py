@@ -579,6 +579,7 @@ class FacturacionReportTests(TestCase):
         rows = get_facturacion_report("2319")["procesos"]["empaque"]["bolsas_empacadas"]
 
         self.assertEqual(len(rows), 2)
+        self.assertTrue(all(row["nivel_molienda__nivel_molienda"] == "Media" for row in rows))
         grouped = {
             (row["empaque_cafe__empaque_cafe"], row["tamano_empaque__tamano_empaque"], row["suministro"]): row["cantidad"]
             for row in rows
