@@ -307,6 +307,22 @@ class OrdenTests(TestCase):
         self.assertEqual(form.cleaned_data['fecha_inicio_orden'].strftime('%d/%m/%Y'), '22/08/2026')
         self.assertEqual(form.cleaned_data['fecha_entrega'].strftime('%d/%m/%Y'), '30/08/2026')
 
+    def test_form_acepta_peso_bruto_para_descontar_menor_que_peso_neto_existente(self):
+        from ordenes.forms import OrdenForm
+
+        estado_espera = EstadoOrden.objects.create(estado_orden='En Espera')
+        form = OrdenForm(data={
+            'cliente': self.cliente.id,
+            'orden': 'ORD-DESCUENTO-10',
+            'estado_orden': estado_espera.id,
+            'fecha_inicio_orden': '22/08/2026',
+            'peso_bruto': '10',
+            'peso': '79.34',
+            'prioridad': 1,
+        })
+
+        self.assertTrue(form.is_valid(), form.errors.as_json())
+
     def test_form_bloquea_completada_si_confirmaciones_ok_pero_faltan_ordenes_hijas(self):
         from ordenes.forms import OrdenForm
         from django.utils import timezone

@@ -492,8 +492,6 @@ class OrdenForm(forms.ModelForm):
 
         peso_bruto = cleaned.get("peso_bruto")
         peso = cleaned.get("peso")
-        if peso_bruto is not None and peso is not None and peso > peso_bruto:
-            self.add_error("peso", "El peso neto debe ser menor o igual al peso bruto.")
 
         estado_orden = cleaned.get("estado_orden")
         estado_nombre = (getattr(estado_orden, "estado_orden", "") or "").strip().lower()
