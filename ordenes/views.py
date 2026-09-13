@@ -388,13 +388,8 @@ def edit_orden(request, pk):
             inst.updated_at = timezone.now()
             try:
                 with transaction.atomic():
-                    anterior = Orden.objects.select_for_update().get(pk=inst.pk)
-                    ajustar_inventario_de_orden(
-                        inst,
-                        inventario_anterior_id=anterior.id_inven_cafe_id,
-                        peso_bruto_anterior=anterior.peso_bruto,
-                        descuento_anterior=anterior.inventario_descontado,
-                    )
+                    Orden.objects.select_for_update().get(pk=inst.pk)
+                    ajustar_inventario_de_orden(inst)
                     inst.save()
                     _save_detalle_empaque(inst, form, detalle_formset)
             except SaldoInventarioInsuficiente as e:
