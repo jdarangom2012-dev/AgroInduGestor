@@ -45,7 +45,7 @@ def inventarios_por_cliente(request):
         descripcion = (inventario["descripcion"] or "").strip()
         identificacion = f"{codigo} - {descripcion}" if codigo and descripcion else codigo or descripcion or f'InventarioCafe {inventario["id"]}'
         cantidad_existente = inventario["cantidad_existente"] or 0
-        etiqueta = f"{identificacion} - Cantidad Existente: {cantidad_existente:g} kg"
+        etiqueta = f"{identificacion} - {cantidad_existente:g} kg"
         data.append({"id": inventario["id"], "etiqueta": etiqueta})
 
     return JsonResponse({"inventarios": data})

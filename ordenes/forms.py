@@ -221,7 +221,7 @@ class OrdenForm(forms.ModelForm):
         else:
             identificacion = str(obj)
 
-        return f"{identificacion} - Cantidad Existente: {cantidad_texto} kg"
+        return f"{identificacion} - {cantidad_texto} kg"
 
     id_inven_cafe = forms.ModelChoiceField(
         queryset=None,
