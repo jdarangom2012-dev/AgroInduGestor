@@ -20,6 +20,7 @@ from .forms import (
     detalle_empaque_table_exists,
     get_pending_completion_confirmations,
 )
+from .services.inventario import SaldoInventarioInsuficiente, ajustar_inventario_de_orden
 
 
 logger = logging.getLogger(__name__)
@@ -333,7 +334,11 @@ def add_orden(request):
                             instance.updated_at = timezone.now()
                             instance.save()
                     if not form.errors:
+                        ajustar_inventario_de_orden(instance)
+                        instance.save(update_fields=['inventario_descontado'])
                         _save_detalle_empaque(instance, form, detalle_formset)
+            except SaldoInventarioInsuficiente as e:
+                form.add_error('id_inven_cafe', str(e))
             except (IntegrityError, DatabaseError) as e:
                 logger.exception('Error capturado al guardar nueva orden')
                 print(f"[ORDENES DEBUG] save_error={e}")
@@ -383,8 +388,17 @@ def edit_orden(request, pk):
             inst.updated_at = timezone.now()
             try:
                 with transaction.atomic():
+                    anterior = Orden.objects.select_for_update().get(pk=inst.pk)
+                    ajustar_inventario_de_orden(
+                        inst,
+                        inventario_anterior_id=anterior.id_inven_cafe_id,
+                        peso_bruto_anterior=anterior.peso_bruto,
+                        descuento_anterior=anterior.inventario_descontado,
+                    )
                     inst.save()
                     _save_detalle_empaque(inst, form, detalle_formset)
+            except SaldoInventarioInsuficiente as e:
+                form.add_error('id_inven_cafe', str(e))
             except (IntegrityError, DatabaseError) as e:
                 form.add_error(None, f'Error al guardar en base de datos: {e}')
             else:

@@ -41,6 +41,11 @@ class Orden(models.Model):
         blank=True,
         null=True
     )
+    inventario_descontado = models.BooleanField(
+        db_column='InventarioDescontado',
+        default=False,
+        editable=False,
+    )
     estado_orden = models.ForeignKey('estado_ordenes.EstadoOrden', models.SET_NULL, db_column='IdEstadoOrden', blank=True, null=True)
     fecha_ingreso = models.DateTimeField(db_column='FechaIngreso', blank=True, null=True)
     fecha_inicio_orden = models.DateTimeField(db_column='FechaIncioOrden', blank=True, null=True)
