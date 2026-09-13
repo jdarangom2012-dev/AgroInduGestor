@@ -209,14 +209,19 @@ class OrdenForm(forms.ModelForm):
     def cafe_label_from_instance(self, obj):
         codigo = (getattr(obj, "codigo", None) or "").strip()
         descripcion = (getattr(obj, "descripcion", None) or "").strip()
+        cantidad_existente = getattr(obj, "cantidad_existente", 0) or 0
+        cantidad_texto = f"{cantidad_existente:g}"
 
         if codigo and descripcion:
-            return f"{codigo} - {descripcion}"
-        if codigo:
-            return codigo
-        if descripcion:
-            return descripcion
-        return str(obj)
+            identificacion = f"{codigo} - {descripcion}"
+        elif codigo:
+            identificacion = codigo
+        elif descripcion:
+            identificacion = descripcion
+        else:
+            identificacion = str(obj)
+
+        return f"{identificacion} - Cantidad Existente: {cantidad_texto} kg"
 
     id_inven_cafe = forms.ModelChoiceField(
         queryset=None,

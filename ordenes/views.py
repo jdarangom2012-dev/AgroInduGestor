@@ -37,13 +37,15 @@ def inventarios_por_cliente(request):
     inventarios = (
         InventarioCafe.objects.filter(cliente_id=int(cliente_id))
         .order_by("-id")
-        .values("id", "codigo", "descripcion")
+        .values("id", "codigo", "descripcion", "cantidad_existente")
     )
     data = []
     for inventario in inventarios:
         codigo = (inventario["codigo"] or "").strip()
         descripcion = (inventario["descripcion"] or "").strip()
-        etiqueta = f"{codigo} - {descripcion}" if codigo and descripcion else codigo or descripcion or f'InventarioCafe {inventario["id"]}'
+        identificacion = f"{codigo} - {descripcion}" if codigo and descripcion else codigo or descripcion or f'InventarioCafe {inventario["id"]}'
+        cantidad_existente = inventario["cantidad_existente"] or 0
+        etiqueta = f"{identificacion} - Cantidad Existente: {cantidad_existente:g} kg"
         data.append({"id": inventario["id"], "etiqueta": etiqueta})
 
     return JsonResponse({"inventarios": data})
