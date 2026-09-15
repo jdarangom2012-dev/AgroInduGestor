@@ -13,9 +13,9 @@ def _peso(valor):
 
 @transaction.atomic
 def ajustar_inventario_de_orden(orden):
-    """Resta del inventario el peso bruto informado en el guardado actual."""
+    """Resta del inventario el peso neto informado en el guardado actual."""
     inventario_nuevo_id = orden.id_inven_cafe_id
-    peso_nuevo = _peso(orden.peso_bruto)
+    peso_nuevo = _peso(orden.peso)
 
     debe_descontar = bool(inventario_nuevo_id and peso_nuevo > 0)
     if debe_descontar:
@@ -28,7 +28,7 @@ def ajustar_inventario_de_orden(orden):
         if disponible + 1e-9 < peso_nuevo:
             raise SaldoInventarioInsuficiente(
                 f"Inventario insuficiente: hay {disponible:g} kg disponibles "
-                f"y el Peso Bruto es {peso_nuevo:g} kg."
+                f"y el Peso Neto es {peso_nuevo:g} kg."
             )
         nuevo.cantidad_existente = disponible - peso_nuevo
         nuevo.save(update_fields=["cantidad_existente"])
