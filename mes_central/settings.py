@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'reportes.apps.ReportesConfig',
     'usuarios.apps.UsuariosConfig',
     'empleados.apps.EmpleadosConfig',
+    'rag.apps.RagConfig',
 ]
 
 MIDDLEWARE = [
@@ -293,6 +294,11 @@ SIMPLE_JWT = {
 CORRELATION_ID_HEADER = 'HTTP_X_CORRELATION_ID'
 APP_NAME = 'mes-la-central'
 ORDER_DETALLE_CACHE_SECONDS = int(os.getenv('ORDER_DETALLE_CACHE_SECONDS', '30'))  # TTL cache para /ordenes/{id}/detalle/
+
+# OpenAI RAG
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '').strip()
+OPENAI_VECTOR_STORE_ID = os.getenv('OPENAI_VECTOR_STORE_ID', '').strip()
+OPENAI_MODEL = os.getenv('OPENAI_MODEL', '').strip()
 
 LOGGING = {
     'version': 1,
