@@ -299,6 +299,7 @@ ORDER_DETALLE_CACHE_SECONDS = int(os.getenv('ORDER_DETALLE_CACHE_SECONDS', '30')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '').strip()
 OPENAI_VECTOR_STORE_ID = os.getenv('OPENAI_VECTOR_STORE_ID', '').strip()
 OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4.1-mini').strip() or 'gpt-4.1-mini'
+RAG_MONTHLY_QUERY_LIMIT = int(os.getenv('RAG_MONTHLY_QUERY_LIMIT', '10'))
 
 LOGGING = {
     'version': 1,

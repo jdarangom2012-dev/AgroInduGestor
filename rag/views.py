@@ -3,7 +3,14 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 from openai import OpenAIError
 
-from .services import RagConfigurationError, responder_pregunta
+from .quota import (
+    RagQuotaExceeded,
+    complete_query,
+    fail_query,
+    get_quota_status,
+    reserve_query,
+)
+from .services import RagConfigurationError, responder_pregunta_hibrida
 
 
 SESSION_KEY = 'rag_chat_history'
@@ -30,11 +37,33 @@ def chat_view(request):
         elif len(question) > MAX_QUESTION_LENGTH:
             error = f'La pregunta no puede superar {MAX_QUESTION_LENGTH} caracteres.'
         else:
+            reservation = None
             try:
-                answer = responder_pregunta(question)
+                reservation = reserve_query(request.user, question)
+                answer = responder_pregunta_hibrida(question, request.user)
+            except RagQuotaExceeded as exc:
+                error = str(exc)
             except (RagConfigurationError, ValueError, RuntimeError, OpenAIError) as exc:
+                if reservation is not None:
+                    fail_query(reservation, exc)
                 error = f'No fue posible consultar el asistente: {exc}'
             else:
+                complete_query(reservation, answer.operation)
+                uses_docs = 'buscar_documentacion' in answer.operation
+                uses_system = any(
+                    operation in answer.operation
+                    for operation in (
+                        'buscar_orden', 'contar_ordenes_por_estado',
+                        'consultar_inventario_cliente', 'consultar_procesos_orden',
+                        'generar_reporte_facturacion', 'generar_reporte_cliente',
+                    )
+                )
+                if uses_docs and uses_system:
+                    source_type = 'Documentos + datos del sistema'
+                elif uses_system:
+                    source_type = 'Datos actuales del sistema'
+                else:
+                    source_type = 'Documentación indexada'
                 history.append({
                     'question': question,
                     'answer': answer.text,
@@ -45,12 +74,15 @@ def chat_view(request):
                         }
                         for source in answer.sources
                     ],
+                    'actions': list(answer.actions),
+                    'source_type': source_type,
                 })
                 history = history[-MAX_HISTORY_ITEMS:]
                 request.session[SESSION_KEY] = history
                 request.session.modified = True
                 return redirect('rag_chat')
 
+    quota = get_quota_status()
     return render(
         request,
         'rag/chat.html',
@@ -59,5 +91,6 @@ def chat_view(request):
             'error': error,
             'question': question,
             'max_question_length': MAX_QUESTION_LENGTH,
+            'quota': quota,
         },
     )

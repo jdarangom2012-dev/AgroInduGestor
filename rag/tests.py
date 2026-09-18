@@ -9,11 +9,13 @@ from django.test import RequestFactory
 from django.urls import reverse
 
 from rag.views import chat_view
+from rag.quota import QuotaStatus
 
 from rag.services import (
     RagConfigurationError,
     buscar_documentos,
     responder_pregunta,
+    responder_pregunta_hibrida,
     subir_documento,
 )
 
@@ -92,6 +94,32 @@ class RagServicesTests(SimpleTestCase):
         self.assertIn('El backend utiliza Django.', call['input'])
         self.assertFalse(call['store'])
 
+    @override_settings(OPENAI_API_KEY='test', OPENAI_MODEL='gpt-4.1-mini')
+    @patch('rag.tools.buscar_orden')
+    @patch('rag.services.get_openai_client')
+    def test_respuesta_hibrida_ejecuta_herramienta_autorizada(self, get_client, buscar_orden):
+        client = Mock()
+        tool_call = SimpleNamespace(
+            type='function_call',
+            name='buscar_orden',
+            arguments='{"numero_orden":"1201"}',
+            call_id='call_1',
+        )
+        first_response = SimpleNamespace(output=[tool_call])
+        final_response = SimpleNamespace(output_text='La orden 1201 está completada.')
+        client.responses.create.side_effect = [first_response, final_response]
+        get_client.return_value = client
+        buscar_orden.return_value = {'ok': True, 'orden': '1201', 'estado': 'Completada'}
+
+        answer = responder_pregunta_hibrida('¿Cuál es el estado de la orden 1201?', Mock())
+
+        self.assertEqual(answer.text, 'La orden 1201 está completada.')
+        self.assertEqual(answer.operation, 'buscar_orden')
+        buscar_orden.assert_called_once()
+        second_call = client.responses.create.call_args_list[1].kwargs
+        self.assertEqual(second_call['tool_choice'], 'none')
+        self.assertEqual(second_call['input'][-1]['type'], 'function_call_output')
+
 
 class SessionDict(dict):
     modified = False
@@ -103,6 +131,12 @@ class RagChatViewTests(SimpleTestCase):
         self.user = Mock(is_authenticated=True, is_staff=True, is_superuser=True)
         self.user.has_perm.return_value = False
         self.user.groups.values_list.return_value = []
+        self.quota_patcher = patch(
+            'rag.views.get_quota_status',
+            return_value=SimpleNamespace(used=0, limit=10, remaining=10),
+        )
+        self.quota_patcher.start()
+        self.addCleanup(self.quota_patcher.stop)
 
     def build_request(self, method='get', data=None, session=None, anonymous=False):
         request_method = getattr(self.factory, method)
@@ -126,13 +160,19 @@ class RagChatViewTests(SimpleTestCase):
         self.assertContains(response, 'aria-label="Cerrar asistente"')
         self.assertContains(response, reverse('dashboard'))
 
-    @patch('rag.views.responder_pregunta')
-    def test_chat_guarda_respuesta_y_fuentes_en_sesion(self, responder):
+    @patch('rag.views.complete_query')
+    @patch('rag.views.reserve_query')
+    @patch('rag.views.responder_pregunta_hibrida')
+    def test_chat_guarda_respuesta_y_fuentes_en_sesion(self, responder, reserve, complete):
+        reservation = SimpleNamespace(pk=1)
+        reserve.return_value = reservation
         responder.return_value = SimpleNamespace(
             text='El backend utiliza Django [Fuente 1].',
             sources=(
                 SimpleNamespace(filename='manual.docx', score=0.95),
             ),
+            actions=({'url': '/reporte.pdf', 'label': 'Descargar reporte'},),
+            operation='buscar_documentacion',
         )
         session = SessionDict()
 
@@ -148,7 +188,9 @@ class RagChatViewTests(SimpleTestCase):
         page = chat_view(self.build_request(session=session))
         self.assertContains(page, 'El backend utiliza Django')
         self.assertContains(page, 'manual.docx')
-        responder.assert_called_once_with('¿Qué usa el backend?')
+        self.assertContains(page, 'Descargar reporte')
+        responder.assert_called_once_with('¿Qué usa el backend?', self.user)
+        complete.assert_called_once_with(reservation, 'buscar_documentacion')
 
     def test_chat_permite_limpiar_historial(self):
         session = SessionDict(
@@ -162,3 +204,12 @@ class RagChatViewTests(SimpleTestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('rag_chat'))
         self.assertNotIn('rag_chat_history', session)
+
+
+class RagQuotaValueTests(SimpleTestCase):
+    def test_saldo_nunca_es_negativo(self):
+        self.assertEqual(QuotaStatus(used=10, limit=10).remaining, 0)
+        self.assertEqual(QuotaStatus(used=12, limit=10).remaining, 0)
+
+    def test_saldo_refleja_consultas_disponibles(self):
+        self.assertEqual(QuotaStatus(used=3, limit=10).remaining, 7)
