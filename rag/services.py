@@ -17,6 +17,12 @@ class RagSearchResult:
     text: str
 
 
+@dataclass(frozen=True)
+class RagAnswer:
+    text: str
+    sources: tuple[RagSearchResult, ...]
+
+
 def get_openai_client():
     if not settings.OPENAI_API_KEY:
         raise RagConfigurationError('Falta OPENAI_API_KEY en el archivo .env.')
@@ -52,6 +58,43 @@ def buscar_documentos(pregunta, max_resultados=3):
         )
         for item in response.data
     ]
+
+
+def responder_pregunta(pregunta, max_resultados=3):
+    """Recupera contexto relevante y genera una respuesta sustentada en él."""
+    pregunta = str(pregunta or '').strip()
+    if not pregunta:
+        raise ValueError('La pregunta no puede estar vacía.')
+
+    resultados = buscar_documentos(pregunta, max_resultados=max_resultados)
+    if not resultados:
+        return RagAnswer(
+            text='No encontré información suficiente en los documentos indexados.',
+            sources=(),
+        )
+
+    contexto = '\n\n'.join(
+        f'[Fuente {position}: {resultado.filename}]\n{resultado.text}'
+        for position, resultado in enumerate(resultados, start=1)
+    )
+    response = get_openai_client().responses.create(
+        model=settings.OPENAI_MODEL,
+        instructions=(
+            'Eres el asistente de conocimiento de AgroInduGestor. '
+            'Responde en español, de forma clara y breve, usando únicamente el '
+            'contexto recuperado. No inventes información. Si el contexto no '
+            'permite responder, indícalo explícitamente. Al sustentar un dato, '
+            'menciona la fuente con el formato [Fuente N].'
+        ),
+        input=f'Pregunta:\n{pregunta}\n\nContexto recuperado:\n{contexto}',
+        max_output_tokens=500,
+        store=False,
+    )
+    respuesta = (response.output_text or '').strip()
+    if not respuesta:
+        raise RuntimeError('OpenAI no devolvió una respuesta de texto.')
+
+    return RagAnswer(text=respuesta, sources=tuple(resultados))
 
 
 def subir_documento(ruta, categoria='documentacion'):
