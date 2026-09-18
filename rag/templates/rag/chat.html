@@ -14,15 +14,21 @@
         Consulta la documentación de AgroInduGestor mediante RAG y OpenAI.
       </p>
     </div>
-    {% if history %}
-    <form method="post">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="clear">
-      <button type="submit" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800">
-        Limpiar conversación
-      </button>
-    </form>
-    {% endif %}
+    <div class="flex items-center gap-2">
+      {% if history %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="clear">
+        <button type="submit" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800">
+          Limpiar conversación
+        </button>
+      </form>
+      {% endif %}
+      <a href="{% url 'dashboard' %}" aria-label="Cerrar asistente" title="Cerrar"
+        class="flex h-10 w-10 items-center justify-center rounded-lg text-2xl leading-none text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white">
+        &times;
+      </a>
+    </div>
   </div>
 
   <div class="flex-1 space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-inner dark:border-gray-700 dark:bg-gray-950/40" aria-live="polite">

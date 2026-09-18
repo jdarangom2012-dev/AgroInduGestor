@@ -123,6 +123,8 @@ class RagChatViewTests(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Asistente de conocimiento')
         self.assertContains(response, 'name="question"')
+        self.assertContains(response, 'aria-label="Cerrar asistente"')
+        self.assertContains(response, reverse('dashboard'))
 
     @patch('rag.views.responder_pregunta')
     def test_chat_guarda_respuesta_y_fuentes_en_sesion(self, responder):
