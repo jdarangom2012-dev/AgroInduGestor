@@ -10,7 +10,7 @@
 
 {% tiene_permiso request.user "ver_empaque" as CAN_VER_EMPAQUE %}
 
-{% tiene_permiso request.user "ver_curvas_tueste" as CAN_VER_CURVAS_TUESTE %}
+{% tiene_permiso_accion request.user 'calidad.view_calidad' 'ver_curvas_tueste' as CAN_VER_CALIDAD %}
 
 {% tiene_permiso request.user "ver_inventario" as CAN_VER_INVENTARIO %}
 
@@ -72,7 +72,7 @@
   <!-- Grupo: Calidad -->
   {% if user.is_authenticated %}
     {% if user.is_staff or HAS_GROUP_CALIDAD %}
-  {% if CAN_VER_CURVAS_TUESTE %}
+  {% if CAN_VER_CALIDAD %}
   <div class="sidebar-group" data-open="false">
       <button type="button" class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700 transition group parent-btn" aria-expanded="false">
         <span class="w-4 text-[11px]">🧪</span>
@@ -80,7 +80,7 @@
         <span class="caret transition-transform duration-200 text-[10px]">▶</span>
       </button>
   <ul class="mt-1 space-y-1 children hidden">
-  <li><a href="/curvas_tueste/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">📈</span><span class="flex-1">Curvas de Tueste</span></a></li>
+  <li><a href="{% url 'calidad_listar' %}" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🧪</span><span class="flex-1">Muestras de Laboratorio</span></a></li>
       </ul>
     </div>
   {% endif %}

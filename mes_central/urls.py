@@ -79,6 +79,7 @@ urlpatterns.append(path('', include('reportes.urls')))  # rutas HTML reportes (/
 urlpatterns.append(path('', include('rag.urls')))  # asistente de conocimiento RAG
 # urlpatterns.append(path('', include('molienda.urls')))  # módulo Molienda oculto en la UI
 urlpatterns.append(path('', include('curvas_tueste.urls')))  # rutas HTML curvas tueste (/curvas_tueste/ etc.)
+urlpatterns.append(path('', include('calidad.urls')))  # muestras de laboratorio
 urlpatterns.append(path('usuarios/', include('usuarios.urls')))  # página Usuarios y Roles
 urlpatterns.append(path('', include('clientes.urls')))  # rutas HTML clientes (/clientes/listar/ etc.)
 urlpatterns.append(path('', include('empleados.urls')))  # rutas HTML empleados (/empleados/ etc.)

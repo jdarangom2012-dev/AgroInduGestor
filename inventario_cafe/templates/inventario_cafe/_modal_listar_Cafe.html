@@ -4,7 +4,7 @@
 {% tiene_permiso_accion request.user 'inventario_cafe.delete_inventariocafe' 'eliminar_inventario' as puede_eliminar %}
 {% url 'inventario_cafe_listar' as base_list_url %}
 <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/45 p-6 overflow-y-auto" data-modal-root data-role="inventario-cafe-list" data-list-url="{{ base_list_url }}">
-  <div class="palette-surface w-full max-w-5xl rounded-xl shadow-xl border border-brand-dark/30 fade-in relative">
+  <div class="palette-surface w-full max-w-7xl rounded-xl shadow-xl border border-brand-dark/30 fade-in relative">
     <div class="modal-head flex items-center justify-between px-6 py-4 rounded-t-xl">
       <h2 class="text-lg font-semibold flex items-center gap-2 tracking-tight">🫘 Inventario — Café</h2>
       <button type="button" class="close transition text-sm" data-close-modal aria-label="Cerrar">✕</button>
@@ -41,6 +41,9 @@
               <th>Empaque Café</th>
               <th>Cantidad ingresada</th>
               <th>Cantidad Existe</th>
+              <th>Kilos Ingresar</th>
+              <th>Kilos Sacar</th>
+              <th>Notas</th>
               <th>Sacos</th>
               <th>Editar</th>
               <th>Eliminar</th>
@@ -59,7 +62,10 @@
                 <td class="td">{{ r.variendad_inven_cafe|default:'—' }}</td>
                 <td class="td">{{ r.empaquecafe|default:'—' }}</td>
                 <td class="td">{{ r.cantidad|default_if_none:'—' }}</td>
-                <td class="td">{{ r.cantidad_existente|default_if_none:'—' }}</td>
+                <td class="td">{% if r.cantidad_existente is not None %}{{ r.cantidad_existente|floatformat:2 }}{% else %}—{% endif %}</td>
+                <td class="td">{{ r.kilos_ingresar|default_if_none:'—' }}</td>
+                <td class="td">{{ r.kilos_sacar|default_if_none:'—' }}</td>
+                <td class="td" title="{{ r.notas|default:'' }}">{{ r.notas|default:'—'|truncatechars:60 }}</td>
                 <td class="td">{{ r.sacos|default_if_none:'—' }}</td>
                 <td class="td action">
                   {% if puede_editar %}
@@ -77,7 +83,7 @@
                 </td>
               </tr>
             {% empty %}
-              <tr><td colspan="14" class="text-center py-8 text-brand-dark/60 text-sm">No hay registros de Inventario de Café.</td></tr>
+              <tr><td colspan="17" class="text-center py-8 text-brand-dark/60 text-sm">No hay registros de Inventario de Café.</td></tr>
             {% endfor %}
           </tbody>
         </table>

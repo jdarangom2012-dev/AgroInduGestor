@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'ordenes_seleccion_verde.apps.OrdenesSeleccionVerdeConfig',
     'ordenes_seleccion_tostado.apps.OrdenesSeleccionTostadoConfig',
     'curvas_tueste.apps.CurvasTuesteConfig',
+    'calidad.apps.CalidadConfig',
     'inventario_cafe.apps.InventarioCafeConfig',
     'seleccion_tueste.apps.SeleccionTuesteConfig',
     'tueste.apps.TuesteConfig',

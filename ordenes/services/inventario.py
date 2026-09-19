@@ -12,8 +12,13 @@ def _peso(valor):
 
 
 @transaction.atomic
-def ajustar_inventario_de_orden(orden):
-    """Resta del inventario el peso neto informado en el guardado actual."""
+def ajustar_inventario_de_orden(orden, orden_anterior):
+    """Descuenta una sola vez al pasar una orden existente a Completada."""
+    estado_anterior = (getattr(orden_anterior.estado_orden, 'estado_orden', '') or '').strip().casefold()
+    estado_nuevo = (getattr(orden.estado_orden, 'estado_orden', '') or '').strip().casefold()
+    if estado_anterior == 'completada' or estado_nuevo != 'completada' or orden_anterior.inventario_descontado:
+        return
+
     inventario_nuevo_id = orden.id_inven_cafe_id
     peso_nuevo = _peso(orden.peso)
 
@@ -30,7 +35,7 @@ def ajustar_inventario_de_orden(orden):
                 f"Inventario insuficiente: hay {disponible:g} kg disponibles "
                 f"y el Peso Neto es {peso_nuevo:g} kg."
             )
-        nuevo.cantidad_existente = disponible - peso_nuevo
+        nuevo.cantidad_existente = round(disponible - peso_nuevo, 2)
         nuevo.save(update_fields=["cantidad_existente"])
 
     orden.inventario_descontado = debe_descontar

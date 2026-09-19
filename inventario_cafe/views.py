@@ -9,6 +9,7 @@ from django.urls import reverse
 from urllib.parse import urlencode
 
 from .models import InventarioCafe
+from .services import SaldoCafeInsuficiente, actualizar_movimientos, vaciar_saldo
 from origen_cafe.models import OrigenCafe
 from proceso_inven_cafe.models import ProcesoInvenCafe
 from variedad_cafe.models import VariedadCafe
@@ -18,6 +19,8 @@ from cafe_empaque.models import CafeEmpaque
 
 
 class InventarioCafeForm(forms.ModelForm):
+    kilos_ingresar = forms.FloatField(required=False, min_value=0, label='Kilos Ingresar')
+    kilos_sacar = forms.FloatField(required=False, min_value=0, label='Kilos Sacar')
     cliente = forms.ModelChoiceField(queryset=Cliente.objects.all().order_by('nombre'), required=False, widget=forms.Select(attrs={'class': 'w-full select'}))
     estado_cafe = forms.ModelChoiceField(queryset=EstadoCafe.objects.all().order_by('estado_cafe'), required=False, widget=forms.Select(attrs={'class': 'w-full select'}))
     empaquecafe = forms.ModelChoiceField(queryset=CafeEmpaque.objects.all().order_by('empaque_cafe'), required=False, widget=forms.Select(attrs={'class': 'w-full select'}))
@@ -33,10 +36,11 @@ class InventarioCafeForm(forms.ModelForm):
 
     class Meta:
         model = InventarioCafe
-        fields = ['cliente', 'estado_cafe', 'origen', 'proceso_inven_cafe', 'variendad_inven_cafe', 'empaquecafe', 'codigo', 'descripcion', 'cantidad', 'cantidad_existente', 'sacos', 'cantidad_bolsas_emp', 'cantidad_paquetes']
+        fields = ['cliente', 'estado_cafe', 'origen', 'proceso_inven_cafe', 'variendad_inven_cafe', 'empaquecafe', 'codigo', 'descripcion', 'cantidad', 'cantidad_existente', 'kilos_ingresar', 'kilos_sacar', 'notas', 'sacos', 'cantidad_bolsas_emp', 'cantidad_paquetes']
         labels = {
             'cantidad': 'Cantidad ingresada',
             'cantidad_existente': 'Cantidad Existe',
+            'notas': 'Notas',
         }
         widgets = {
             'codigo': forms.TextInput(attrs={'class': 'w-full input'}),
@@ -46,12 +50,35 @@ class InventarioCafeForm(forms.ModelForm):
                 'step': '0.01',
                 'min': '0',
                 'data-cantidad-ingresada': '1',
-                'oninput': "this.form.querySelector('[data-cantidad-existente]').value = this.value || '0'",
             }),
             'sacos': forms.NumberInput(attrs={'class': 'w-full input', 'step': '1', 'min': '0'}),
             'cantidad_bolsas_emp': forms.NumberInput(attrs={'class': 'w-full input', 'step': '1', 'min': '0'}),
             'cantidad_paquetes': forms.NumberInput(attrs={'class': 'w-full input', 'step': '1', 'min': '0'}),
+            'notas': forms.Textarea(attrs={'class': 'w-full textarea', 'rows': 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in ('kilos_ingresar', 'kilos_sacar'):
+            self.fields[field_name].widget.attrs.update({'class': 'w-full input', 'step': '0.01', 'min': '0'})
+        if self.instance.pk:
+            self.initial['cantidad_existente'] = f'{(self.instance.cantidad_existente or 0):.2f}'
+            editables = {'cantidad', 'kilos_ingresar', 'kilos_sacar', 'notas'}
+            for field_name, field in self.fields.items():
+                if field_name not in editables:
+                    field.disabled = True
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not self.instance.pk:
+            saldo_inicial = (
+                (cleaned_data.get('cantidad') or 0)
+                + (cleaned_data.get('kilos_ingresar') or 0)
+                - (cleaned_data.get('kilos_sacar') or 0)
+            )
+            if saldo_inicial < 0:
+                self.add_error('kilos_sacar', 'Los kilos a sacar superan los kilos disponibles.')
+        return cleaned_data
 
 
 @permiso_accion_requerido('inventario_cafe.view_inventariocafe', 'ver_inventario')
@@ -59,7 +86,7 @@ def listar_cafe(request):
     qs = (
         InventarioCafe.objects
         .select_related('cliente', 'estado_cafe', 'empaquecafe', 'origen', 'proceso_inven_cafe', 'variendad_inven_cafe')
-        .only('id', 'cliente', 'estado_cafe', 'empaquecafe', 'origen', 'proceso_inven_cafe', 'variendad_inven_cafe', 'codigo', 'cantidad', 'cantidad_existente', 'sacos')
+        .only('id', 'cliente', 'estado_cafe', 'empaquecafe', 'origen', 'proceso_inven_cafe', 'variendad_inven_cafe', 'codigo', 'descripcion', 'cantidad', 'cantidad_existente', 'kilos_ingresar', 'kilos_sacar', 'notas', 'sacos')
         .order_by('-id')
     )
     search = request.GET.get('q', '').strip()
@@ -162,15 +189,19 @@ def edit_cafe(request, pk):
         if form.is_valid():
             inst = form.save(commit=False)
             inst.updated_at = timezone.now()
-            inst.save()
-            preserve = {k: (request.GET.get(k) or request.POST.get(k)) for k in ['q','origen','proceso','variedad','page'] if (request.GET.get(k) or request.POST.get(k))}
-            if request.headers.get('X-Fragment') or request.GET.get('fragment') == '1':
-                qp = urlencode(preserve)
-                url = f"{reverse('inventario_cafe_listar')}?fragment=1" + (f"&{qp}" if qp else '')
-                return redirect(url)
-            if preserve:
-                return redirect(f"{reverse('inventario_cafe_listar')}?{urlencode(preserve)}")
-            return redirect('inventario_cafe_listar')
+            try:
+                actualizar_movimientos(inst)
+            except SaldoCafeInsuficiente as error:
+                form.add_error('kilos_sacar', str(error))
+            else:
+                preserve = {k: (request.GET.get(k) or request.POST.get(k)) for k in ['q','origen','proceso','variedad','page'] if (request.GET.get(k) or request.POST.get(k))}
+                if request.headers.get('X-Fragment') or request.GET.get('fragment') == '1':
+                    qp = urlencode(preserve)
+                    url = f"{reverse('inventario_cafe_listar')}?fragment=1" + (f"&{qp}" if qp else '')
+                    return redirect(url)
+                if preserve:
+                    return redirect(f"{reverse('inventario_cafe_listar')}?{urlencode(preserve)}")
+                return redirect('inventario_cafe_listar')
     else:
         form = InventarioCafeForm(instance=obj)
     preserve = {k: request.GET.get(k) for k in ['q','origen','proceso','variedad','page'] if request.GET.get(k)}
@@ -194,7 +225,7 @@ def edit_cafe(request, pk):
 def delete_cafe(request, pk):
     obj = get_object_or_404(InventarioCafe, pk=pk)
     if request.method == 'POST':
-        obj.delete()
+        vaciar_saldo(obj.pk)
         preserve = {k: (request.GET.get(k) or request.POST.get(k)) for k in ['q','origen','proceso','variedad','page'] if (request.GET.get(k) or request.POST.get(k))}
         if request.headers.get('X-Fragment') or request.GET.get('fragment') == '1':
             qp = urlencode(preserve)

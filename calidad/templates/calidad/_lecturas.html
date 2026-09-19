@@ -1,0 +1,12 @@
+<table class="mes-table w-full">
+  <thead><tr><th>Tiempo</th><th>Temperatura (°C)</th><th>Evento</th></tr></thead>
+  <tbody>
+    {% for tiempo, temperatura, evento in filas %}
+    <tr>
+      <td class="td whitespace-nowrap">{{ tiempo }}</td>
+      <td class="td">{{ temperatura }}{{ temperatura.errors }}</td>
+      <td class="td">{{ evento }}{{ evento.errors }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

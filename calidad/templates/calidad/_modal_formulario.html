@@ -1,0 +1,61 @@
+<div class="fixed inset-0 z-50 flex items-start justify-center bg-black/45 p-6 overflow-y-auto" data-modal-root>
+  <div class="palette-surface w-full max-w-6xl rounded-xl shadow-xl border border-brand-dark/30 fade-in">
+    <div class="modal-head flex items-center justify-between px-6 py-4 rounded-t-xl">
+      <h2 class="text-lg font-semibold">🧪 {{ titulo }}</h2>
+      <button type="button" class="close" data-close-modal aria-label="Cerrar">✕</button>
+    </div>
+    <form method="post" action="{% if registro %}{% url 'calidad_editar' registro.pk %}{% else %}{% url 'calidad_nuevo' %}{% endif %}{% if is_fragment %}?fragment=1{% endif %}" class="p-6 space-y-6" data-modal-form>
+      {% csrf_token %}
+      <input type="hidden" name="q" value="{{ search }}">
+      <input type="hidden" name="page" value="{{ page }}">
+      {{ form.non_field_errors }}
+
+      <section class="space-y-4">
+        <h3 class="font-semibold border-b pb-2">Datos de la muestra</h3>
+        {% if registro %}<p class="text-sm">Fecha de ingreso: {{ registro.fecha_ingreso|date:'d/m/Y H:i' }}</p>{% endif %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div><label class="label" for="{{ form.cliente.id_for_label }}">Cliente</label>{{ form.cliente }}{{ form.cliente.errors }}</div>
+          <div><label class="label" for="{{ form.fecha_recibido.id_for_label }}">Fecha recibido</label>{{ form.fecha_recibido }}{{ form.fecha_recibido.errors }}</div>
+          <div><label class="label" for="{{ form.muestra_numero.id_for_label }}">Muestra #</label>{{ form.muestra_numero }}{{ form.muestra_numero.errors }}</div>
+          <div><label class="label" for="{{ form.orden.id_for_label }}">Orden (digitada)</label>{{ form.orden }}{{ form.orden.errors }}</div>
+          <div><label class="label" for="{{ form.variedad.id_for_label }}">Variedad</label>{{ form.variedad }}{{ form.variedad.errors }}</div>
+          <div><label class="label" for="{{ form.proceso.id_for_label }}">Proceso</label>{{ form.proceso }}{{ form.proceso.errors }}</div>
+          <div><label class="label" for="{{ form.origen.id_for_label }}">Origen</label>{{ form.origen }}{{ form.origen.errors }}</div>
+          <div><label class="label" for="{{ form.altura.id_for_label }}">Altura (m)</label>{{ form.altura }}{{ form.altura.errors }}</div>
+          <div class="flex items-end gap-6 pb-2"><label class="flex items-center gap-2">{{ form.sencilla }} Sencilla</label><label class="flex items-center gap-2">{{ form.q_grader }} Q grader</label></div>
+        </div>
+      </section>
+
+      <section class="space-y-4">
+        <h3 class="font-semibold border-b pb-2">Evaluación en verde</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div><label class="label">Peso Pergamino (kg)</label>{{ form.peso_pergamino }}{{ form.peso_pergamino.errors }}</div>
+          <div><label class="label">Humedad</label>{{ form.humedad }}{{ form.humedad.errors }}</div>
+          <div><label class="label">Densidad</label>{{ form.densidad }}{{ form.densidad.errors }}</div>
+          <div><label class="label">Peso Verde (kg)</label>{{ form.peso_verde }}{{ form.peso_verde.errors }}</div>
+          <div><label class="label">Peso Excelsio (kg)</label>{{ form.peso_excelsio }}{{ form.peso_excelsio.errors }}</div>
+          <div><label class="label">Factor</label>{{ form.factor }}{{ form.factor.errors }}</div>
+        </div>
+        <div><label class="label">Notas</label>{{ form.notas }}{{ form.notas.errors }}</div>
+      </section>
+
+      <section class="space-y-4">
+        <h3 class="font-semibold border-b pb-2">Tostión</h3>
+        <p class="text-sm opacity-70">Registra temperatura y evento en cada tiempo. Las filas sin datos se dejan vacías.</p>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-x-auto">
+          <div class="min-w-[340px]">{% include 'calidad/_lecturas.html' with filas=form.tostion_filas|slice:':10' %}</div>
+          <div class="min-w-[340px]">{% include 'calidad/_lecturas.html' with filas=form.tostion_filas|slice:'10:' %}</div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label class="label">Peso Tostado (kg)</label>{{ form.peso_tostado }}{{ form.peso_tostado.errors }}</div>
+          <div><label class="label">Observaciones</label>{{ form.observaciones }}{{ form.observaciones.errors }}</div>
+        </div>
+      </section>
+
+      <div class="flex justify-end gap-2 pt-2">
+        {% if is_fragment %}<a href="{% url 'calidad_listar' %}?fragment=1" class="btn-base" data-modal-navigate>Cancelar</a>{% else %}<a href="{% url 'calidad_listar' %}" class="btn-base">Cancelar</a>{% endif %}
+        <button type="submit" class="btn-base btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>

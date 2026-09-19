@@ -67,6 +67,28 @@ class OrdenTests(TestCase):
         perms = Permission.objects.filter(codename__in=['add_orden', 'change_orden', 'view_orden', 'delete_orden'])
         self.user.user_permissions.set(perms)
 
+    def test_nueva_orden_inicia_procesos_y_confirmaciones_en_no(self):
+        from ordenes.forms import OrdenForm
+
+        form = OrdenForm()
+        for field_name in (
+            'trilla', 'selec_cafe_verde', 'tueste_flag', 'selec_cafe_tostado',
+            'empaque_flag', 'conf_trilla', 'conf_sel_verde', 'conf_tueste',
+            'conf_sel_tostado', 'conf_empaque',
+        ):
+            self.assertIs(form[field_name].value(), False, field_name)
+
+    def test_edicion_conserva_valor_de_proceso(self):
+        from ordenes.forms import OrdenForm
+
+        orden = Orden.objects.create(
+            cliente=self.cliente,
+            estado_orden=self.estado_orden,
+            trilla=True,
+        )
+
+        self.assertIs(OrdenForm(instance=orden)['trilla'].value(), True)
+
     def _detalle_management_data(self, total_forms, initial_forms=0):
         return {
             'detalle_empaque-TOTAL_FORMS': str(total_forms),

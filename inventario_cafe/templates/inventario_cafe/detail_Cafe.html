@@ -4,7 +4,7 @@
       <h2 class="text-lg font-semibold flex items-center gap-2 tracking-tight">📝 Editar Registro de Café #{{ obj.id }}</h2>
       <button type="button" class="close transition text-sm" data-close-modal aria-label="Cerrar">✕</button>
     </div>
-    <form method="post" action="{% url 'inventario_cafe_editar' obj.id %}" class="p-6 space-y-4" data-modal-form>
+    <form method="post" action="{% url 'inventario_cafe_editar' obj.id %}" class="p-6 space-y-4" data-modal-form data-inventario-cafe-form="editar" data-saldo-inicial="{{ form.initial.cantidad_existente|default_if_none:0 }}" data-kilos-ingresar-inicial="{{ form.initial.kilos_ingresar|default_if_none:0 }}" data-kilos-sacar-inicial="{{ form.initial.kilos_sacar|default_if_none:0 }}">
       {% csrf_token %}
       <input type="hidden" name="q" value="{{ search }}" />
       <input type="hidden" name="origen" value="{{ f_origen }}" />
@@ -44,23 +44,35 @@
         {{ form.empaquecafe.errors }}
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="label">Código</label>
-          {{ form.codigo }}
+        <div class="space-y-4">
+          <div>
+            <label class="label">Código</label>
+            {{ form.codigo }}
+          </div>
+          <div>
+            <label class="label">Cantidad ingresada (kg)</label>
+            {{ form.cantidad }}
+          </div>
+          <div>
+            <label class="label">Kilos Ingresar (kg)</label>
+            {{ form.kilos_ingresar }}
+            {{ form.kilos_ingresar.errors }}
+          </div>
         </div>
-        <div>
-          <label class="label">Descripción</label>
-          {{ form.descripcion }}
-        </div>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="label">Cantidad ingresada (kg)</label>
-          {{ form.cantidad }}
-        </div>
-        <div>
-          <label class="label">Cantidad Existe (kg)</label>
-          {{ form.cantidad_existente }}
+        <div class="space-y-4">
+          <div>
+            <label class="label">Descripción</label>
+            {{ form.descripcion }}
+          </div>
+          <div>
+            <label class="label">Kilos Sacar (kg)</label>
+            {{ form.kilos_sacar }}
+            {{ form.kilos_sacar.errors }}
+          </div>
+          <div>
+            <label class="label">Cantidad Existe (kg)</label>
+            {{ form.cantidad_existente }}
+          </div>
         </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -76,6 +88,11 @@
           <label class="label">Paquetes</label>
           {{ form.cantidad_paquetes }}
         </div>
+      </div>
+      <div>
+        <label class="label">Notas</label>
+        {{ form.notas }}
+        {{ form.notas.errors }}
       </div>
 
       <div class="flex justify-end gap-2 pt-2">

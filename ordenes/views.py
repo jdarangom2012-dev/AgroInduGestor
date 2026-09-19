@@ -334,8 +334,6 @@ def add_orden(request):
                             instance.updated_at = timezone.now()
                             instance.save()
                     if not form.errors:
-                        ajustar_inventario_de_orden(instance)
-                        instance.save(update_fields=['inventario_descontado'])
                         _save_detalle_empaque(instance, form, detalle_formset)
             except SaldoInventarioInsuficiente as e:
                 form.add_error('id_inven_cafe', str(e))
@@ -388,8 +386,8 @@ def edit_orden(request, pk):
             inst.updated_at = timezone.now()
             try:
                 with transaction.atomic():
-                    Orden.objects.select_for_update().get(pk=inst.pk)
-                    ajustar_inventario_de_orden(inst)
+                    orden_anterior = Orden.objects.select_for_update().get(pk=inst.pk)
+                    ajustar_inventario_de_orden(inst, orden_anterior)
                     inst.save()
                     _save_detalle_empaque(inst, form, detalle_formset)
             except SaldoInventarioInsuficiente as e:

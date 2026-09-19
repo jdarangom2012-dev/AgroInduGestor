@@ -374,6 +374,13 @@ class OrdenForm(forms.ModelForm):
             self.fields["estado_orden"].initial = estado_pendiente.pk
             self.initial["estado_orden"] = estado_pendiente.pk
 
+        procesos_fields = (
+            "trilla",
+            "selec_cafe_verde",
+            "tueste_flag",
+            "selec_cafe_tostado",
+            "empaque_flag",
+        )
         confirmacion_fields = (
             "conf_trilla",
             "conf_sel_verde",
@@ -382,11 +389,14 @@ class OrdenForm(forms.ModelForm):
             "conf_empaque",
         )
         if not self.is_bound:
-            for field_name in confirmacion_fields:
+            nueva_orden = not getattr(self.instance, "pk", None)
+            for field_name in procesos_fields + confirmacion_fields:
                 if field_name not in self.fields:
                     continue
                 current_value = getattr(self.instance, field_name, None)
-                normalized_value = False if current_value is None else current_value
+                if not nueva_orden and field_name in procesos_fields:
+                    continue
+                normalized_value = False if nueva_orden or current_value is None else current_value
                 self.fields[field_name].initial = normalized_value
                 self.initial[field_name] = normalized_value
 
