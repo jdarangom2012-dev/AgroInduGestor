@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+  <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6">
+    <div class="flex items-start justify-between gap-4 mb-5">
+      <div>
+        <h1 class="text-2xl font-bold">Reporte de Calidad</h1>
+        <p class="text-sm text-gray-600 dark:text-gray-300">Muestras de laboratorio por cliente.</p>
+      </div>
+      <a href="{% url 'dashboard' %}" class="text-xl" aria-label="Cerrar reporte" title="Cerrar reporte">✕</a>
+    </div>
+    <form method="get" class="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+      <div>
+        <label for="id_cliente" class="block text-sm font-semibold mb-1">Cliente</label>
+        <select id="id_cliente" name="cliente" class="w-full select" required>
+          <option value="">Seleccione un cliente</option>
+          {% for item in clientes %}<option value="{{ item.pk }}" {% if selected_cliente == item.pk|stringformat:'s' %}selected{% endif %}>{{ item }}</option>{% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn-primary">CONSULTAR</button>
+    </form>
+  </section>
+
+  {% if selected_cliente and not cliente %}
+    <div class="bg-red-50 border border-red-300 text-red-700 rounded-lg p-4">No se encontró el cliente seleccionado.</div>
+  {% endif %}
+  {% if cliente %}
+    <section class="bg-white dark:bg-gray-900 border border-black/10 dark:border-gray-800 rounded-lg shadow p-6 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div><h2 class="text-lg font-semibold">{{ cliente }}</h2><p class="text-sm text-gray-500">{{ registros|length }} muestra{{ registros|length|pluralize }} registrada{{ registros|length|pluralize }}</p></div>
+        {% if registros %}<a href="{% url 'reportes_calidad_pdf' %}?cliente={{ cliente.pk }}" class="btn-primary text-center">EXPORTAR PDF</a>{% endif %}
+      </div>
+      {% for registro in registros %}
+        <article class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-4">
+          <div class="flex flex-wrap justify-between gap-2"><h3 class="font-semibold">Muestra #{{ registro.muestra_numero|default:registro.pk }} · Orden {{ registro.orden }}</h3><span class="text-sm text-gray-500">Ingreso: {{ registro.fecha_ingreso|date:'d/m/Y H:i' }}</span></div>
+          <dl class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div><dt class="text-gray-500">Fecha recibida</dt><dd>{{ registro.fecha_recibido|date:'d/m/Y'|default:'—' }}</dd></div>
+            <div><dt class="text-gray-500">Tipo</dt><dd>{% if registro.sencilla %}Sencilla{% endif %}{% if registro.sencilla and registro.q_grader %} / {% endif %}{% if registro.q_grader %}Q Grader{% endif %}{% if not registro.sencilla and not registro.q_grader %}—{% endif %}</dd></div>
+            <div><dt class="text-gray-500">Variedad</dt><dd>{{ registro.variedad|default:'—' }}</dd></div>
+            <div><dt class="text-gray-500">Proceso</dt><dd>{{ registro.proceso }}</dd></div>
+            <div><dt class="text-gray-500">Origen</dt><dd>{{ registro.origen|default:'—' }}</dd></div>
+            <div><dt class="text-gray-500">Altura</dt><dd>{{ registro.altura|default_if_none:'—' }}</dd></div>
+            <div><dt class="text-gray-500">Peso pergamino</dt><dd>{{ registro.peso_pergamino|default_if_none:'—' }}</dd></div>
+            <div><dt class="text-gray-500">Peso verde</dt><dd>{{ registro.peso_verde|default_if_none:'—' }}</dd></div>
+            <div><dt class="text-gray-500">Peso excelsio</dt><dd>{{ registro.peso_excelsio|default_if_none:'—' }}</dd></div>
+            <div><dt class="text-gray-500">Humedad</dt><dd>{{ registro.humedad|default_if_none:'—' }}</dd></div>
+            <div><dt class="text-gray-500">Densidad</dt><dd>{{ registro.densidad|default_if_none:'—' }}</dd></div>
+            <div><dt class="text-gray-500">Factor</dt><dd>{{ registro.factor|default_if_none:'—' }}</dd></div>
+            <div><dt class="text-gray-500">Peso tostado</dt><dd>{{ registro.peso_tostado|default_if_none:'—' }}</dd></div>
+          </dl>
+          {% if registro.notas %}<p class="text-sm"><strong>Notas:</strong> {{ registro.notas|linebreaksbr }}</p>{% endif %}
+          {% if registro.lecturas_tostion %}<div class="overflow-x-auto"><h4 class="font-semibold mb-2">Tostión</h4><table class="mes-table w-full"><thead><tr><th>Tiempo</th><th>Temperatura</th><th>Evento</th></tr></thead><tbody>{% for lectura in registro.lecturas_tostion %}<tr><td class="td">{{ lectura.tiempo }}</td><td class="td">{{ lectura.temperatura|default_if_none:'—' }}</td><td class="td">{{ lectura.evento|default:'—' }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+          {% if registro.observaciones %}<p class="text-sm"><strong>Observaciones:</strong> {{ registro.observaciones|linebreaksbr }}</p>{% endif %}
+        </article>
+      {% empty %}<p class="text-sm text-gray-500">Este cliente no tiene muestras de laboratorio registradas.</p>{% endfor %}
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

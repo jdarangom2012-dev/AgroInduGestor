@@ -7,6 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import render
+from clientes.models import Cliente
+from calidad.models import Calidad
 
 from ordenes.models import Orden
 from inventario_cafe.models import InventarioCafe
@@ -14,7 +16,40 @@ from tueste.models import Tueste
 from django.db.models.functions import TruncDate
 
 from .pdf import render_facturacion_pdf
+from .calidad_pdf import render_calidad_pdf
 from .services.facturacion import get_available_orders, get_facturacion_report, get_facturacion_report_by_id
+
+
+def _calidad_cliente(request):
+    cliente_id = request.GET.get('cliente', '').strip()
+    if not cliente_id:
+        return None
+    return Cliente.objects.filter(pk=cliente_id).first() if cliente_id.isdigit() else None
+
+
+@login_required
+def calidad_view(request):
+    cliente = _calidad_cliente(request)
+    registros = Calidad.objects.none()
+    if cliente:
+        registros = Calidad.objects.filter(cliente=cliente).select_related('proceso').order_by('-fecha_ingreso', '-id')
+    return render(request, 'reportes/calidad.html', {
+        'clientes': Cliente.objects.order_by('nombre', 'apellidos'),
+        'cliente': cliente,
+        'selected_cliente': request.GET.get('cliente', ''),
+        'registros': registros,
+    })
+
+
+@login_required
+def calidad_pdf_view(request):
+    cliente = _calidad_cliente(request)
+    if cliente is None:
+        raise Http404('Seleccione un cliente válido')
+    registros = Calidad.objects.filter(cliente=cliente).select_related('proceso').order_by('-fecha_ingreso', '-id')
+    response = HttpResponse(render_calidad_pdf(cliente, registros), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="Reporte_Calidad_Cliente_{cliente.pk}.pdf"'
+    return response
 
 
 @login_required

@@ -4,6 +4,8 @@ from . import views
 urlpatterns = [
     path('reportes/facturacion/', views.facturacion_view, name='reportes_facturacion'),
     path('reportes/clientes/', views.clientes_view, name='reportes_clientes'),
+    path('reportes/calidad/', views.calidad_view, name='reportes_calidad'),
+    path('reportes/calidad/pdf/', views.calidad_pdf_view, name='reportes_calidad_pdf'),
     path('reportes/clientes/<int:orden_id>/pdf/', views.clientes_pdf_view, name='reportes_clientes_pdf'),
     path('reportes/facturacion/<int:orden_id>/pdf/', views.facturacion_pdf_view, name='reportes_facturacion_pdf'),
     path('reportes/ordenes-por-estado/', views.OrdenesPorEstadoView.as_view()),
