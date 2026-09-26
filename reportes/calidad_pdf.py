@@ -3,15 +3,35 @@
 from html import escape
 from io import BytesIO
 
+from django.contrib.staticfiles import finders
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
-from reportlab.platypus import HRFlowable, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import HRFlowable, Image, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 
 def _safe(value):
     return escape(str(value)) if value not in (None, '') else '-'
+
+
+def _encabezado(cliente, total, styles):
+    logo_path = finders.find('img/Logo_central_calidad.png')
+    logo = Image(logo_path, width=2.6*cm, height=2.6*cm) if logo_path else Spacer(2.6*cm, 2.6*cm)
+    informacion = [
+        Paragraph('REPORTE DE CALIDAD', styles['Title']),
+        Paragraph(f'<b>Cliente:</b> {_safe(cliente)}', styles['BodyQuality']),
+        Paragraph(f'<b>Total de muestras:</b> {total}', styles['BodyQuality']),
+    ]
+    tabla = Table([[logo, informacion]], colWidths=[3.2*cm, 12.9*cm], hAlign='LEFT')
+    tabla.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+    ]))
+    return tabla
 
 
 def render_calidad_pdf(cliente, registros):
@@ -22,9 +42,7 @@ def render_calidad_pdf(cliente, registros):
     styles.add(ParagraphStyle(name='SectionQuality', parent=styles['Heading2'], textColor=colors.HexColor('#172132'), spaceBefore=11, spaceAfter=6))
     styles.add(ParagraphStyle(name='BodyQuality', parent=styles['BodyText'], leading=14, spaceAfter=5))
     styles.add(ParagraphStyle(name='SmallQuality', parent=styles['BodyText'], fontSize=8, leading=11))
-    story = [Paragraph('REPORTE DE CALIDAD', styles['Title']),
-             Paragraph(f'<b>Cliente:</b> {_safe(cliente)}', styles['BodyQuality']),
-             Paragraph(f'<b>Total de muestras:</b> {len(registros)}', styles['BodyQuality']),
+    story = [_encabezado(cliente, len(registros), styles),
              HRFlowable(width='100%', thickness=1, color=colors.HexColor('#e8bc2d')), Spacer(1, 0.3*cm)]
 
     for index, registro in enumerate(registros):
