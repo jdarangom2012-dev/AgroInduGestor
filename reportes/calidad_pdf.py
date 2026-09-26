@@ -54,9 +54,11 @@ def render_calidad_pdf(cliente, registros):
         lecturas = registro.lecturas_tostion
         if lecturas:
             story.append(Paragraph('Tostión', styles['SectionQuality']))
-            rows = [[Paragraph(f'<font color="white"><b>{x}</b></font>', styles['SmallQuality']) for x in ('Tiempo', 'Temperatura', 'Evento')]]
-            rows.extend([[Paragraph(_safe(row.get(key)), styles['SmallQuality']) for key in ('tiempo', 'temperatura', 'evento')] for row in lecturas])
-            readings = Table(rows, colWidths=[3*cm, 4*cm, 9.1*cm], repeatRows=1, hAlign='LEFT')
+            encabezados = ('Tiempo', 'Temperatura', 'Evento', 'Potencia Gas', 'Potencia Aire')
+            campos = ('tiempo', 'temperatura', 'evento', 'potencia_gas', 'potencia_aire')
+            rows = [[Paragraph(f'<font color="white"><b>{x}</b></font>', styles['SmallQuality']) for x in encabezados]]
+            rows.extend([[Paragraph(_safe(row.get(key)), styles['SmallQuality']) for key in campos] for row in lecturas])
+            readings = Table(rows, colWidths=[2*cm, 2.7*cm, 5.4*cm, 3*cm, 3*cm], repeatRows=1, hAlign='LEFT')
             readings.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#172132')),
                                           ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                                           ('GRID', (0, 0), (-1, -1), 0.35, colors.HexColor('#d7dce4')),

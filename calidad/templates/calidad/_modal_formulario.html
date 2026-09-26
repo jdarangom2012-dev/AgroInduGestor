@@ -54,6 +54,7 @@
 
       <div class="flex justify-end gap-2 pt-2">
         {% if is_fragment %}<a href="{% url 'calidad_listar' %}?fragment=1" class="btn-base" data-modal-navigate>Cancelar</a>{% else %}<a href="{% url 'calidad_listar' %}" class="btn-base">Cancelar</a>{% endif %}
+        <button type="submit" name="accion" value="exportar_pdf" formtarget="_blank" formaction="{% if registro %}{% url 'calidad_editar' registro.pk %}{% else %}{% url 'calidad_nuevo' %}{% endif %}" class="btn-base" data-native-pdf>Exportar a PDF</button>
         <button type="submit" class="btn-base btn-primary">Guardar</button>
       </div>
     </form>

@@ -2,11 +2,13 @@ from urllib.parse import urlencode
 
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from seguridad.decorators import permiso_accion_requerido
+from reportes.calidad_pdf import render_calidad_pdf
 
 from .forms import CalidadForm
 from .models import Calidad
@@ -22,6 +24,13 @@ def _volver_listado(request):
         parametros['fragment'] = '1'
     url = reverse('calidad_listar')
     return redirect(f'{url}?{urlencode(parametros)}' if parametros else url)
+
+
+def _respuesta_pdf(registro):
+    pdf = render_calidad_pdf(registro.cliente, [registro])
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="Calidad_Muestra_{registro.pk}.pdf"'
+    return response
 
 
 @permiso_accion_requerido('calidad.view_calidad', 'ver_curvas_tueste')
@@ -47,7 +56,9 @@ def listar_calidad(request):
 def agregar_calidad(request):
     form = CalidadForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        registro = form.save()
+        if request.POST.get('accion') == 'exportar_pdf':
+            return _respuesta_pdf(registro)
         return _volver_listado(request)
     return render(request, 'calidad/_modal_formulario.html' if _es_fragmento(request) else 'calidad/formulario.html', {
         'form': form, 'titulo': 'Nueva muestra de laboratorio',
@@ -62,10 +73,18 @@ def editar_calidad(request, pk):
     registro = get_object_or_404(Calidad, pk=pk)
     form = CalidadForm(request.POST or None, instance=registro)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        registro = form.save()
+        if request.POST.get('accion') == 'exportar_pdf':
+            return _respuesta_pdf(registro)
         return _volver_listado(request)
     return render(request, 'calidad/_modal_formulario.html' if _es_fragmento(request) else 'calidad/formulario.html', {
         'form': form, 'registro': registro, 'titulo': f'Editar muestra #{registro.pk}',
         'search': request.GET.get('q', ''), 'page': request.GET.get('page', ''),
         'is_fragment': _es_fragmento(request),
     })
+
+
+@permiso_accion_requerido('calidad.view_calidad', 'ver_curvas_tueste')
+def exportar_calidad_pdf(request, pk):
+    registro = get_object_or_404(Calidad.objects.select_related('cliente', 'proceso'), pk=pk)
+    return _respuesta_pdf(registro)

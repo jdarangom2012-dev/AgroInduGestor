@@ -1,11 +1,13 @@
-<table class="mes-table w-full">
-  <thead><tr><th>Tiempo</th><th>Temperatura (°C)</th><th>Evento</th></tr></thead>
+<table class="mes-table w-full min-w-[650px]">
+  <thead><tr><th>Tiempo</th><th>Temperatura (°C)</th><th>Evento</th><th>Potencia Gas</th><th>Potencia Aire</th></tr></thead>
   <tbody>
-    {% for tiempo, temperatura, evento in filas %}
+    {% for tiempo, temperatura, evento, potencia_gas, potencia_aire in filas %}
     <tr>
       <td class="td whitespace-nowrap">{{ tiempo }}</td>
       <td class="td">{{ temperatura }}{{ temperatura.errors }}</td>
       <td class="td">{{ evento }}{{ evento.errors }}</td>
+      <td class="td">{{ potencia_gas }}{{ potencia_gas.errors }}</td>
+      <td class="td">{{ potencia_aire }}{{ potencia_aire.errors }}</td>
     </tr>
     {% endfor %}
   </tbody>

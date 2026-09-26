@@ -23,7 +23,10 @@ class ReporteCalidadTests(SimpleTestCase):
             altura=1800, peso_pergamino=10, peso_verde=8, peso_excelsio=7,
             humedad=11, densidad=700, factor=90, peso_tostado=6,
             notas='Nota de prueba', observaciones='Observación final',
-            lecturas_tostion=[{'tiempo': '0:00', 'temperatura': 180, 'evento': 'Inicio'}],
+            lecturas_tostion=[{
+                'tiempo': '0:00', 'temperatura': 180, 'evento': 'Inicio',
+                'potencia_gas': 75, 'potencia_aire': 40,
+            }],
         )
         pdf = render_calidad_pdf(cliente, [registro])
         self.assertTrue(pdf.startswith(b'%PDF'))

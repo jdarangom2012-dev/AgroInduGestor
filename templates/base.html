@@ -79,6 +79,7 @@
                             // intercept submit
                                         root.querySelectorAll('form[data-modal-form]').forEach(form=>{
                                 form.addEventListener('submit', async e=>{
+                                    if (e.submitter && e.submitter.matches('[data-native-pdf]')) return;
                                     const pendingCompletionLabels = getPendingCompletionLabels(form);
                                     if (pendingCompletionLabels.length) {
                                         e.preventDefault();
