@@ -1,5 +1,5 @@
 <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/45 p-6 overflow-y-auto" data-modal-root>
-  <div class="palette-surface w-full max-w-6xl rounded-xl shadow-xl border border-brand-dark/30 fade-in">
+  <div class="palette-surface w-full max-w-[96rem] rounded-xl shadow-xl border border-brand-dark/30 fade-in">
     <div class="modal-head flex items-center justify-between px-6 py-4 rounded-t-xl">
       <h2 class="text-lg font-semibold">🧪 {{ titulo }}</h2>
       <button type="button" class="close" data-close-modal aria-label="Cerrar">✕</button>
@@ -42,9 +42,9 @@
       <section class="space-y-4">
         <h3 class="font-semibold border-b pb-2">Tostión</h3>
         <p class="text-sm opacity-70">Registra temperatura y evento en cada tiempo. Las filas sin datos se dejan vacías.</p>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-x-auto">
-          <div class="min-w-[340px]">{% include 'calidad/_lecturas.html' with filas=form.tostion_filas|slice:':10' %}</div>
-          <div class="min-w-[340px]">{% include 'calidad/_lecturas.html' with filas=form.tostion_filas|slice:'10:' %}</div>
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div class="min-w-0 overflow-x-auto">{% include 'calidad/_lecturas.html' with filas=form.tostion_filas|slice:':10' %}</div>
+          <div class="min-w-0 overflow-x-auto">{% include 'calidad/_lecturas.html' with filas=form.tostion_filas|slice:'10:' %}</div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div><label class="label">Peso Tostado (kg)</label>{{ form.peso_tostado }}{{ form.peso_tostado.errors }}</div>

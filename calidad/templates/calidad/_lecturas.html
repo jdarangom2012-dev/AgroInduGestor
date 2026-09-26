@@ -1,4 +1,11 @@
-<table class="mes-table w-full min-w-[650px]">
+<table class="mes-table w-full table-fixed">
+  <colgroup>
+    <col class="w-[10%]">
+    <col class="w-[22%]">
+    <col class="w-[28%]">
+    <col class="w-[20%]">
+    <col class="w-[20%]">
+  </colgroup>
   <thead><tr><th>Tiempo</th><th>Temperatura (°C)</th><th>Evento</th><th>Potencia Gas</th><th>Potencia Aire</th></tr></thead>
   <tbody>
     {% for tiempo, temperatura, evento, potencia_gas, potencia_aire in filas %}
