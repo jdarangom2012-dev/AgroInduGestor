@@ -38,7 +38,8 @@ def render_calidad_pdf(cliente, registros):
             ('Tipo', tipo), ('Variedad', registro.variedad), ('Proceso', registro.proceso),
             ('Origen', registro.origen), ('Altura', registro.altura),
             ('Peso pergamino', registro.peso_pergamino), ('Peso verde', registro.peso_verde),
-            ('Peso excelsio', registro.peso_excelsio), ('Humedad', registro.humedad),
+            ('Peso excelsio', registro.peso_excelsio), ('Peso defecto', registro.peso_defecto),
+            ('Humedad', registro.humedad),
             ('Densidad', registro.densidad), ('Factor', registro.factor),
             ('Peso tostado', registro.peso_tostado),
         ]

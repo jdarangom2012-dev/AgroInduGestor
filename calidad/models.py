@@ -21,6 +21,7 @@ class Calidad(models.Model):
     densidad = models.FloatField(db_column='Densidad', blank=True, null=True)
     peso_verde = models.FloatField(db_column='PesoVerde', blank=True, null=True)
     peso_excelsio = models.FloatField(db_column='PesoExcelsio', blank=True, null=True)
+    peso_defecto = models.FloatField(db_column='PesoDefecto', blank=True, null=True)
     factor = models.FloatField(db_column='Factor', blank=True, null=True)
     notas = models.TextField(db_column='Notas', blank=True)
     tostion_json = models.TextField(db_column='Tostion', default='[]')

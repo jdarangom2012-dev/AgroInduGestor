@@ -20,7 +20,7 @@ class ReporteCalidadTests(SimpleTestCase):
             pk=1, muestra_numero='M-1', orden='ORD-1',
             fecha_ingreso=datetime(2026, 9, 19, 10, 30), fecha_recibido=date(2026, 9, 18),
             sencilla=True, q_grader=False, variedad='Bourbon', proceso='Lavado', origen='Antioquia',
-            altura=1800, peso_pergamino=10, peso_verde=8, peso_excelsio=7,
+            altura=1800, peso_pergamino=10, peso_verde=8, peso_excelsio=7, peso_defecto=1.5,
             humedad=11, densidad=700, factor=90, peso_tostado=6,
             notas='Nota de prueba', observaciones='Observación final',
             lecturas_tostion=[{

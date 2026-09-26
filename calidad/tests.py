@@ -25,6 +25,7 @@ class CalidadFormTests(TestCase):
             'fecha_recibido': '2026-09-19',
             'muestra_numero': 'M-1',
             'peso_verde': '10.5',
+            'peso_defecto': '2.75',
             'temperatura_0': '180',
             'evento_0': 'Carga',
             'potencia_gas_0': '75',
@@ -38,6 +39,7 @@ class CalidadFormTests(TestCase):
         self.assertEqual(registro.orden, 'ORDEN ESCRITA A MANO')
         self.assertIsNotNone(registro.fecha_ingreso)
         self.assertEqual(registro.lecturas_tostion[0]['tiempo'], '0:00')
+        self.assertEqual(registro.peso_defecto, 2.75)
         self.assertEqual(registro.lecturas_tostion[0]['potencia_gas'], 75)
         self.assertEqual(registro.lecturas_tostion[0]['potencia_aire'], 40)
         self.assertEqual(registro.lecturas_tostion[-1]['tiempo'], '9:30')
@@ -89,6 +91,17 @@ class CalidadFormTests(TestCase):
         self.assertIn('potencia_gas_0', decimal.errors)
         self.assertFalse(negativo.is_valid())
         self.assertIn('potencia_aire_0', negativo.errors)
+
+    def test_peso_defecto_no_admite_valores_negativos(self):
+        form = CalidadForm(data={
+            'cliente': self.cliente.pk,
+            'proceso': self.proceso.pk,
+            'orden': 'CAL-DEFECTO',
+            'peso_defecto': '-0.5',
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('peso_defecto', form.errors)
 
     def test_variedad_y_origen_son_listas_cargadas_desde_maestros(self):
         form = CalidadForm()

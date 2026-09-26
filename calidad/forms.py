@@ -39,7 +39,7 @@ class CalidadForm(forms.ModelForm):
         fields = [
             'cliente', 'fecha_recibido', 'sencilla', 'q_grader', 'muestra_numero',
             'orden', 'variedad', 'proceso', 'origen', 'altura', 'peso_pergamino',
-            'humedad', 'densidad', 'peso_verde', 'peso_excelsio', 'factor',
+            'humedad', 'densidad', 'peso_verde', 'peso_excelsio', 'peso_defecto', 'factor',
             'notas', 'peso_tostado', 'observaciones',
         ]
         widgets = {
@@ -66,7 +66,7 @@ class CalidadForm(forms.ModelForm):
         )
         for name in ('orden', 'muestra_numero'):
             self.fields[name].widget.attrs.update({'class': 'w-full input'})
-        for name in ('altura', 'peso_pergamino', 'humedad', 'densidad', 'peso_verde', 'peso_excelsio', 'factor', 'peso_tostado'):
+        for name in ('altura', 'peso_pergamino', 'humedad', 'densidad', 'peso_verde', 'peso_excelsio', 'peso_defecto', 'factor', 'peso_tostado'):
             self.fields[name].widget.attrs.update({'class': 'w-full input', 'step': 'any', 'min': '0'})
             self.fields[name].validators.append(MinValueValidator(0))
 
