@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 
 from django import forms
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -245,19 +246,26 @@ class AnalisisSensorialForm(forms.ModelForm):
                 'max': '15',
                 'step': '0.5',
                 'data-sensory-heatmap': 'true',
+                'data-sensory-score': 'true',
             })
             self.fields[nombre].initial = 0 if valor_inicial in (None, '') else valor_inicial
             self.fields[nombre].validators.extend([MinValueValidator(0), MaxValueValidator(15)])
         for nombre in campos_calidad:
             self.fields[nombre].widget = forms.Select(
                 choices=[('', 'Seleccione...'), *((valor, str(valor)) for valor in range(1, 10))],
-                attrs={'class': 'w-full select'},
+                attrs={'class': 'w-full select', 'data-sensory-score': 'true'},
             )
             self.fields[nombre].validators.extend([MinValueValidator(1), MaxValueValidator(9)])
         for nombre in campos_notas:
             self.fields[nombre].widget.attrs.update({'class': 'w-full textarea', 'rows': 3})
-        self.fields['puntaje_total'].widget.attrs.update({'class': 'w-full input', 'min': '0', 'step': '0.01'})
-        self.fields['puntaje_total'].validators.append(MinValueValidator(0))
+        self.fields['puntaje_total'].required = False
+        self.fields['puntaje_total'].disabled = True
+        self.fields['puntaje_total'].widget.attrs.update({
+            'class': 'w-full input sensory-total-score',
+            'readonly': True,
+            'data-sensory-total': 'true',
+            'aria-readonly': 'true',
+        })
         for nombre in ('tazas_no_uniformes', 'tazas_defectuosas'):
             self.fields[nombre].widget.attrs.update({'class': 'w-full input', 'min': '0', 'max': '5', 'step': '1'})
             self.fields[nombre].validators.extend([MinValueValidator(0), MaxValueValidator(5)])
@@ -276,6 +284,21 @@ class AnalisisSensorialForm(forms.ModelForm):
         if len(valores) > 2:
             raise forms.ValidationError('Selecciona máximo dos gustos predominantes.')
         return valores
+
+    def clean(self):
+        cleaned_data = super().clean()
+        campos_puntaje = (
+            'intensidad_fragancia', 'intensidad_aroma', 'intensidad_sabor',
+            'intensidad_sabor_residual', 'intensidad_acidez', 'intensidad_dulzor',
+            'intensidad_sensacion_boca', 'calidad_fragancia', 'calidad_aroma',
+            'calidad_sabor', 'calidad_sabor_residual', 'calidad_acidez',
+            'calidad_dulzor', 'calidad_sensacion_boca', 'impresion_global',
+        )
+        cleaned_data['puntaje_total'] = sum(
+            (Decimal(str(cleaned_data.get(nombre) or 0)) for nombre in campos_puntaje),
+            Decimal('0'),
+        )
+        return cleaned_data
 
     def save(self, commit=True):
         instancia = super().save(commit=False)

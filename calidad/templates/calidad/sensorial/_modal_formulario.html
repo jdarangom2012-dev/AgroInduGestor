@@ -58,15 +58,14 @@
           <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><div><label class="label">Acidez</label>{{ form.calidad_acidez }}{{ form.calidad_acidez.errors }}</div><div><label class="label">Notas</label>{{ form.notas_afectiva_acidez }}{{ form.notas_afectiva_acidez.errors }}</div></div>
           <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><div><label class="label">Dulzor</label>{{ form.calidad_dulzor }}{{ form.calidad_dulzor.errors }}</div><div><label class="label">Notas</label>{{ form.notas_afectiva_dulzor }}{{ form.notas_afectiva_dulzor.errors }}</div></div>
           <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><div><label class="label">Sensación en boca</label>{{ form.calidad_sensacion_boca }}{{ form.calidad_sensacion_boca.errors }}</div><div><label class="label">Notas</label>{{ form.notas_afectiva_sensacion_boca }}{{ form.notas_afectiva_sensacion_boca.errors }}</div></div>
-          <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><div><label class="label">Impresión global</label>{{ form.impresion_global }}{{ form.impresion_global.errors }}</div><div><label class="label">Notas</label>{{ form.notas_impresion_global }}{{ form.notas_impresion_global.errors }}</div></div>
+          <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><div><label class="label">Impresión global</label>{{ form.impresion_global }}{{ form.impresion_global.errors }}</div><div><label class="label">Notas</label>{{ form.notas_impresion_global }}{{ form.notas_impresion_global.errors }}</div><div><label class="label">Puntaje</label>{{ form.puntaje_total }}{{ form.puntaje_total.errors }}<p class="mt-1 text-xs opacity-65">Se calcula automáticamente con las intensidades y evaluaciones seleccionadas.</p></div></div>
         </div>
       </section>
 
       <section class="space-y-4">
         <h3 class="font-semibold border-b pb-2">Parte 3: Evaluación extrínseca y resultado</h3>
         <div><label class="label">Notas de evaluación extrínseca</label>{{ form.notas_extrinseca }}{{ form.notas_extrinseca.errors }}</div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div><label class="label">Puntaje total</label>{{ form.puntaje_total }}{{ form.puntaje_total.errors }}</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div><label class="label">Tazas no uniformes (0–5)</label>{{ form.tazas_no_uniformes }}{{ form.tazas_no_uniformes.errors }}</div>
           <div><label class="label">Tazas defectuosas (0–5)</label>{{ form.tazas_defectuosas }}{{ form.tazas_defectuosas.errors }}</div>
         </div>

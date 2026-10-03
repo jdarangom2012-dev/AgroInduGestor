@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django import forms
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
@@ -194,6 +196,7 @@ class AnalisisSensorialFormTests(TestCase):
         self.assertEqual(registro.lista_descriptores_fragancia_aroma, ['afrutado', 'citricos'])
         self.assertEqual(registro.lista_gustos_predominantes, ['acido', 'dulce'])
         self.assertEqual(registro.lista_defectos_haberlo, ['fenolico'])
+        self.assertEqual(registro.puntaje_total, Decimal('89'))
         edicion = AnalisisSensorialForm(instance=registro)
         self.assertEqual(edicion['gustos_predominantes'].value(), ['acido', 'dulce'])
         self.assertEqual(AnalisisSensorial._meta.db_table, 'tblAnalisisSensorial')
@@ -211,6 +214,13 @@ class AnalisisSensorialFormTests(TestCase):
             self.assertEqual(widget.attrs['max'], '15')
             self.assertEqual(widget.attrs['step'], '0.5')
             self.assertEqual(widget.attrs['data-sensory-heatmap'], 'true')
+
+    def test_puntaje_total_no_se_puede_modificar_manualmente(self):
+        form = AnalisisSensorialForm(data=self.datos_validos(puntaje_total='999'))
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['puntaje_total'], Decimal('89'))
+        self.assertTrue(form.fields['puntaje_total'].disabled)
 
     def test_limita_gustos_predominantes_a_dos(self):
         form = AnalisisSensorialForm(data=self.datos_validos(

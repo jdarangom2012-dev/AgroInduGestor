@@ -8,6 +8,13 @@
       : numericValue.toFixed(1).replace('.', ',');
   }
 
+  function intensityLevel(value) {
+    const numericValue = Number(value);
+    if (numericValue <= 5) return 'Baja';
+    if (numericValue <= 10) return 'Media';
+    return 'Alta';
+  }
+
   function updateHeatmap(input, output) {
     const min = Number(input.min || 0);
     const max = Number(input.max || 15);
@@ -18,15 +25,53 @@
 
     input.style.setProperty('--sensory-color', color);
     input.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${percentage}%, #d1d5db ${percentage}%, #d1d5db 100%)`;
-    input.setAttribute('aria-valuetext', `${formatValue(value)} de 15`);
-    output.textContent = formatValue(value);
+    const level = intensityLevel(value);
+    input.setAttribute('aria-valuetext', `${formatValue(value)} de 15, intensidad ${level}`);
+    output.textContent = `${formatValue(value)} · ${level}`;
     output.style.backgroundColor = color;
+  }
+
+  function updateTotal(form) {
+    const totalInput = form.querySelector('[data-sensory-total]');
+    if (!totalInput) return;
+
+    const total = Array.from(form.querySelectorAll('[data-sensory-score]')).reduce(
+      function (sum, field) { return sum + (Number(field.value) || 0); },
+      0
+    );
+    totalInput.value = Number.isInteger(total)
+      ? total.toFixed(0)
+      : total.toFixed(1).replace('.', ',');
+  }
+
+  function initializeScore(form) {
+    if (form.dataset.sensoryScoreReady === 'true') {
+      updateTotal(form);
+      return;
+    }
+
+    form.querySelectorAll('[data-sensory-score]').forEach(function (field) {
+      field.addEventListener('input', function () { updateTotal(form); });
+      field.addEventListener('change', function () { updateTotal(form); });
+    });
+    form.dataset.sensoryScoreReady = 'true';
+    updateTotal(form);
   }
 
   function enhance(input) {
     if (input.dataset.heatmapReady === 'true') return;
 
     if (!input.hasAttribute('value')) input.value = input.min || '0';
+
+    const legend = document.createElement('div');
+    legend.className = 'sensory-heatmap-legend';
+    legend.setAttribute('aria-hidden', 'true');
+    legend.innerHTML = [
+      '<span><strong>Baja</strong><small>1–5</small></span>',
+      '<span><strong>Media</strong><small>5–10</small></span>',
+      '<span><strong>Alta</strong><small>10–15</small></span>',
+    ].join('');
+    input.insertAdjacentElement('beforebegin', legend);
 
     const output = document.createElement('output');
     output.className = 'sensory-heatmap-value';
@@ -45,6 +90,14 @@
     if (root.matches && root.matches('input[data-sensory-heatmap]')) enhance(root);
     if (root.querySelectorAll) {
       root.querySelectorAll('input[data-sensory-heatmap]').forEach(enhance);
+    }
+    if (root.matches && root.matches('form') && root.querySelector('[data-sensory-total]')) {
+      initializeScore(root);
+    }
+    if (root.querySelectorAll) {
+      root.querySelectorAll('form').forEach(function (form) {
+        if (form.querySelector('[data-sensory-total]')) initializeScore(form);
+      });
     }
   }
 
