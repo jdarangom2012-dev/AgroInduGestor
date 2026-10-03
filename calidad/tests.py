@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import date
 
 from django import forms
 from django.test import SimpleTestCase, TestCase
@@ -11,6 +12,7 @@ from variedad_cafe.models import VariedadCafe
 
 from .forms import AnalisisSensorialForm, CalidadForm, TIEMPOS_TOSTION
 from .models import AnalisisSensorial, Calidad
+from reportes.sensorial_pdf import render_analisis_sensorial_pdf
 
 
 class CalidadFormTests(TestCase):
@@ -254,4 +256,20 @@ class AnalisisSensorialRutasTests(SimpleTestCase):
         self.assertEqual(reverse('analisis_sensorial_listar'), '/calidad/analisis-sensorial/')
         self.assertEqual(reverse('analisis_sensorial_nuevo'), '/calidad/analisis-sensorial/nuevo/')
         self.assertEqual(reverse('analisis_sensorial_editar', args=[7]), '/calidad/analisis-sensorial/7/editar/')
+        self.assertEqual(reverse('analisis_sensorial_pdf', args=[7]), '/calidad/analisis-sensorial/7/pdf/')
         self.assertEqual(reverse('analisis_sensorial_eliminar', args=[7]), '/calidad/analisis-sensorial/7/eliminar/')
+
+
+class AnalisisSensorialPdfTests(SimpleTestCase):
+    def test_pdf_incluye_datos_y_puntaje(self):
+        registro = AnalisisSensorial(
+            nombre='Hafid Vélez', fecha=date(2026, 9, 8), objetivo='Perfilar muestra',
+            muestra_numero='Indómito', intensidad_fragancia='5.5', intensidad_aroma='8',
+            descriptores_fragancia_aroma='["afrutado", "citricos"]',
+            calidad_fragancia=7, impresion_global=8, puntaje_total='89.5',
+        )
+
+        pdf = render_analisis_sensorial_pdf(registro)
+
+        self.assertTrue(pdf.startswith(b'%PDF'))
+        self.assertGreater(len(pdf), 3000)

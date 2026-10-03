@@ -9,6 +9,7 @@ from django.views.decorators.http import require_http_methods
 
 from seguridad.decorators import permiso_accion_requerido
 from reportes.calidad_pdf import render_calidad_pdf
+from reportes.sensorial_pdf import render_analisis_sensorial_pdf
 
 from .forms import AnalisisSensorialForm, CalidadForm
 from .models import AnalisisSensorial, Calidad
@@ -98,6 +99,13 @@ def _volver_sensorial(request):
     return redirect(f'{url}?{urlencode(parametros)}' if parametros else url)
 
 
+def _respuesta_sensorial_pdf(registro):
+    pdf = render_analisis_sensorial_pdf(registro)
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="Analisis_Sensorial_{registro.pk}.pdf"'
+    return response
+
+
 @permiso_accion_requerido('calidad.view_analisissensorial', 'ver_curvas_tueste')
 def listar_analisis_sensorial(request):
     consulta = request.GET.get('q', '').strip()
@@ -119,7 +127,9 @@ def listar_analisis_sensorial(request):
 def agregar_analisis_sensorial(request):
     form = AnalisisSensorialForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        registro = form.save()
+        if request.POST.get('accion') == 'exportar_pdf':
+            return _respuesta_sensorial_pdf(registro)
         return _volver_sensorial(request)
     return render(
         request,
@@ -138,7 +148,9 @@ def editar_analisis_sensorial(request, pk):
     registro = get_object_or_404(AnalisisSensorial, pk=pk)
     form = AnalisisSensorialForm(request.POST or None, instance=registro)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        registro = form.save()
+        if request.POST.get('accion') == 'exportar_pdf':
+            return _respuesta_sensorial_pdf(registro)
         return _volver_sensorial(request)
     return render(
         request,
@@ -149,6 +161,12 @@ def editar_analisis_sensorial(request, pk):
             'is_fragment': _es_fragmento(request),
         },
     )
+
+
+@permiso_accion_requerido('calidad.view_analisissensorial', 'ver_curvas_tueste')
+def exportar_analisis_sensorial_pdf(request, pk):
+    registro = get_object_or_404(AnalisisSensorial, pk=pk)
+    return _respuesta_sensorial_pdf(registro)
 
 
 @require_http_methods(['GET', 'POST'])
