@@ -1,0 +1,82 @@
+<div class="fixed inset-0 z-50 flex items-start justify-center bg-black/45 p-6 overflow-y-auto" data-modal-root>
+  <div class="palette-surface w-full max-w-[96rem] rounded-xl shadow-xl border border-brand-dark/30 fade-in">
+    <div class="modal-head flex items-center justify-between px-6 py-4 rounded-t-xl">
+      <h2 class="text-lg font-semibold">☕ {{ titulo }}</h2>
+      <button type="button" class="close" data-close-modal aria-label="Cerrar">✕</button>
+    </div>
+    <form method="post" action="{% if registro %}{% url 'analisis_sensorial_editar' registro.pk %}{% else %}{% url 'analisis_sensorial_nuevo' %}{% endif %}{% if is_fragment %}?fragment=1{% endif %}" class="p-6 space-y-6" data-modal-form>
+      {% csrf_token %}<input type="hidden" name="q" value="{{ search }}"><input type="hidden" name="page" value="{{ page }}">
+      {{ form.non_field_errors }}
+
+      <section class="space-y-4">
+        <h3 class="font-semibold border-b pb-2">Datos generales</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+          <div><label class="label">Nombre</label>{{ form.nombre }}{{ form.nombre.errors }}</div>
+          <div><label class="label">Fecha</label>{{ form.fecha }}{{ form.fecha.errors }}</div>
+          <div><label class="label">Objetivo</label>{{ form.objetivo }}{{ form.objetivo.errors }}</div>
+          <div><label class="label">N.º de muestra</label>{{ form.muestra_numero }}{{ form.muestra_numero.errors }}</div>
+          <div><label class="label">Nivel de tueste (0–15)</label>{{ form.nivel_tueste }}{{ form.nivel_tueste.errors }}</div>
+        </div>
+      </section>
+
+      <section class="space-y-4">
+        <h3 class="font-semibold border-b pb-2">Parte 1: Evaluación descriptiva</h3>
+        <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-4">
+          <h4 class="font-semibold">Fragancia y aroma</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label class="label">Intensidad de fragancia (0–15)</label>{{ form.intensidad_fragancia }}{{ form.intensidad_fragancia.errors }}</div>
+            <div><label class="label">Intensidad de aroma (0–15)</label>{{ form.intensidad_aroma }}{{ form.intensidad_aroma.errors }}</div>
+          </div>
+          <div><label class="label">Descriptores</label>{% include 'calidad/sensorial/_checkboxes.html' with field=form.descriptores_fragancia_aroma %}</div>
+          <div><label class="label">Notas</label>{{ form.notas_fragancia_aroma }}{{ form.notas_fragancia_aroma.errors }}</div>
+        </div>
+
+        <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-4">
+          <h4 class="font-semibold">Sabor y sabor residual</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label class="label">Intensidad de sabor (0–15)</label>{{ form.intensidad_sabor }}{{ form.intensidad_sabor.errors }}</div>
+            <div><label class="label">Intensidad de sabor residual (0–15)</label>{{ form.intensidad_sabor_residual }}{{ form.intensidad_sabor_residual.errors }}</div>
+          </div>
+          <div><label class="label">Descriptores</label>{% include 'calidad/sensorial/_checkboxes.html' with field=form.descriptores_sabor %}</div>
+          <div><label class="label">Gustos predominantes (máximo 2)</label>{% include 'calidad/sensorial/_checkboxes.html' with field=form.gustos_predominantes %}</div>
+          <div><label class="label">Notas</label>{{ form.notas_sabor }}{{ form.notas_sabor.errors }}</div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><h4 class="font-semibold">Acidez</h4><div><label class="label">Intensidad (0–15)</label>{{ form.intensidad_acidez }}{{ form.intensidad_acidez.errors }}</div><div><label class="label">Notas</label>{{ form.notas_acidez }}{{ form.notas_acidez.errors }}</div></div>
+          <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><h4 class="font-semibold">Dulzor</h4><div><label class="label">Intensidad (0–15)</label>{{ form.intensidad_dulzor }}{{ form.intensidad_dulzor.errors }}</div><div><label class="label">Notas</label>{{ form.notas_dulzor }}{{ form.notas_dulzor.errors }}</div></div>
+          <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><h4 class="font-semibold">Sensación en boca</h4><div><label class="label">Intensidad (0–15)</label>{{ form.intensidad_sensacion_boca }}{{ form.intensidad_sensacion_boca.errors }}</div><div><label class="label">Sensaciones</label>{% include 'calidad/sensorial/_checkboxes.html' with field=form.sensaciones_boca %}</div><div><label class="label">Notas</label>{{ form.notas_sensacion_boca }}{{ form.notas_sensacion_boca.errors }}</div></div>
+        </div>
+      </section>
+
+      <section class="space-y-4">
+        <h3 class="font-semibold border-b pb-2">Parte 2: Evaluación afectiva</h3>
+        <p class="text-sm opacity-70">Califica cada atributo de 1 a 9.</p>
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><div class="grid grid-cols-2 gap-3"><div><label class="label">Fragancia</label>{{ form.calidad_fragancia }}{{ form.calidad_fragancia.errors }}</div><div><label class="label">Aroma</label>{{ form.calidad_aroma }}{{ form.calidad_aroma.errors }}</div></div><div><label class="label">Notas</label>{{ form.notas_afectiva_fragancia_aroma }}{{ form.notas_afectiva_fragancia_aroma.errors }}</div></div>
+          <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><div class="grid grid-cols-2 gap-3"><div><label class="label">Sabor</label>{{ form.calidad_sabor }}{{ form.calidad_sabor.errors }}</div><div><label class="label">Sabor residual</label>{{ form.calidad_sabor_residual }}{{ form.calidad_sabor_residual.errors }}</div></div><div><label class="label">Notas</label>{{ form.notas_afectiva_sabor }}{{ form.notas_afectiva_sabor.errors }}</div></div>
+          <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><div><label class="label">Acidez</label>{{ form.calidad_acidez }}{{ form.calidad_acidez.errors }}</div><div><label class="label">Notas</label>{{ form.notas_afectiva_acidez }}{{ form.notas_afectiva_acidez.errors }}</div></div>
+          <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><div><label class="label">Dulzor</label>{{ form.calidad_dulzor }}{{ form.calidad_dulzor.errors }}</div><div><label class="label">Notas</label>{{ form.notas_afectiva_dulzor }}{{ form.notas_afectiva_dulzor.errors }}</div></div>
+          <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><div><label class="label">Sensación en boca</label>{{ form.calidad_sensacion_boca }}{{ form.calidad_sensacion_boca.errors }}</div><div><label class="label">Notas</label>{{ form.notas_afectiva_sensacion_boca }}{{ form.notas_afectiva_sensacion_boca.errors }}</div></div>
+          <div class="rounded-lg border border-black/10 dark:border-gray-700 p-4 space-y-3"><div><label class="label">Impresión global</label>{{ form.impresion_global }}{{ form.impresion_global.errors }}</div><div><label class="label">Notas</label>{{ form.notas_impresion_global }}{{ form.notas_impresion_global.errors }}</div></div>
+        </div>
+      </section>
+
+      <section class="space-y-4">
+        <h3 class="font-semibold border-b pb-2">Parte 3: Evaluación extrínseca y resultado</h3>
+        <div><label class="label">Notas de evaluación extrínseca</label>{{ form.notas_extrinseca }}{{ form.notas_extrinseca.errors }}</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div><label class="label">Puntaje total</label>{{ form.puntaje_total }}{{ form.puntaje_total.errors }}</div>
+          <div><label class="label">Tazas no uniformes (0–5)</label>{{ form.tazas_no_uniformes }}{{ form.tazas_no_uniformes.errors }}</div>
+          <div><label class="label">Tazas defectuosas (0–5)</label>{{ form.tazas_defectuosas }}{{ form.tazas_defectuosas.errors }}</div>
+        </div>
+        <div><label class="label">Defecto (de haberlo)</label>{% include 'calidad/sensorial/_checkboxes.html' with field=form.defectos_haberlo %}</div>
+      </section>
+
+      <div class="flex justify-end gap-2 pt-2">
+        {% if is_fragment %}<a href="{% url 'analisis_sensorial_listar' %}?fragment=1" class="btn-base" data-modal-navigate>Cancelar</a>{% else %}<a href="{% url 'analisis_sensorial_listar' %}" class="btn-base">Cancelar</a>{% endif %}
+        <button type="submit" class="btn-base btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>

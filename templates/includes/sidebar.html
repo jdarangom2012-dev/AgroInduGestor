@@ -28,6 +28,7 @@
 {% tiene_permiso request.user "ver_tamano_empaque" as CAN_VER_TAMANO_EMPAQUE %}
 
 {% tiene_permiso request.user "ver_reportes" as CAN_VER_REPORTES %}
+{% tiene_permiso request.user "ver_asistente_ia" as CAN_VER_ASISTENTE_IA %}
 {% tiene_permiso request.user "configurar_sistema" as CAN_CONFIGURAR_SISTEMA %}
 {% tiene_permiso request.user "gestionar_permisos" as CAN_GESTIONAR_PERMISOS %}
 {% tiene_permiso request.user "ver_permisos" as CAN_VER_PERMISOS %}
@@ -81,6 +82,7 @@
       </button>
   <ul class="mt-1 space-y-1 children hidden">
   <li><a href="{% url 'calidad_listar' %}" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🧪</span><span class="flex-1">Análisis Físico y Tueste</span></a></li>
+  <li><a href="{% url 'analisis_sensorial_listar' %}" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">☕</span><span class="flex-1">Análisis Sensorial</span></a></li>
       </ul>
     </div>
   {% endif %}
@@ -141,7 +143,7 @@
     </div>
     {% endif %}
 
-    {% if user.is_authenticated %}
+    {% if CAN_VER_ASISTENTE_IA %}
     <a href="{% url 'rag_chat' %}" class="flex items-center gap-2 rounded px-2 py-1.5 transition hover:bg-brand-primary/10 dark:hover:bg-gray-700">
       <span class="w-4 text-[11px]">🤖</span>
       <span class="flex-1">Asistente IA</span>

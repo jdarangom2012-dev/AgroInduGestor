@@ -10,8 +10,8 @@ from django.views.decorators.http import require_http_methods
 from seguridad.decorators import permiso_accion_requerido
 from reportes.calidad_pdf import render_calidad_pdf
 
-from .forms import CalidadForm
-from .models import Calidad
+from .forms import AnalisisSensorialForm, CalidadForm
+from .models import AnalisisSensorial, Calidad
 
 
 def _es_fragmento(request):
@@ -88,3 +88,81 @@ def editar_calidad(request, pk):
 def exportar_calidad_pdf(request, pk):
     registro = get_object_or_404(Calidad.objects.select_related('cliente', 'proceso'), pk=pk)
     return _respuesta_pdf(registro)
+
+
+def _volver_sensorial(request):
+    parametros = {campo: request.POST.get(campo) for campo in ('q', 'page') if request.POST.get(campo)}
+    if _es_fragmento(request):
+        parametros['fragment'] = '1'
+    url = reverse('analisis_sensorial_listar')
+    return redirect(f'{url}?{urlencode(parametros)}' if parametros else url)
+
+
+@permiso_accion_requerido('calidad.view_analisissensorial', 'ver_curvas_tueste')
+def listar_analisis_sensorial(request):
+    consulta = request.GET.get('q', '').strip()
+    registros = AnalisisSensorial.objects.all()
+    if consulta:
+        registros = registros.filter(
+            Q(nombre__icontains=consulta)
+            | Q(objetivo__icontains=consulta)
+            | Q(muestra_numero__icontains=consulta)
+        )
+    pagina = Paginator(registros, 10).get_page(request.GET.get('page'))
+    contexto = {'items': pagina, 'page_obj': pagina, 'search': consulta}
+    plantilla = 'calidad/sensorial/_modal_listar.html' if _es_fragmento(request) else 'calidad/sensorial/listar.html'
+    return render(request, plantilla, contexto)
+
+
+@require_http_methods(['GET', 'POST'])
+@permiso_accion_requerido('calidad.add_analisissensorial', 'crear_curvas_tueste')
+def agregar_analisis_sensorial(request):
+    form = AnalisisSensorialForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return _volver_sensorial(request)
+    return render(
+        request,
+        'calidad/sensorial/_modal_formulario.html' if _es_fragmento(request) else 'calidad/sensorial/formulario.html',
+        {
+            'form': form, 'titulo': 'Nuevo análisis sensorial',
+            'search': request.GET.get('q', ''), 'page': request.GET.get('page', ''),
+            'is_fragment': _es_fragmento(request),
+        },
+    )
+
+
+@require_http_methods(['GET', 'POST'])
+@permiso_accion_requerido('calidad.change_analisissensorial', 'editar_curvas_tueste')
+def editar_analisis_sensorial(request, pk):
+    registro = get_object_or_404(AnalisisSensorial, pk=pk)
+    form = AnalisisSensorialForm(request.POST or None, instance=registro)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return _volver_sensorial(request)
+    return render(
+        request,
+        'calidad/sensorial/_modal_formulario.html' if _es_fragmento(request) else 'calidad/sensorial/formulario.html',
+        {
+            'form': form, 'registro': registro, 'titulo': f'Editar análisis sensorial #{registro.pk}',
+            'search': request.GET.get('q', ''), 'page': request.GET.get('page', ''),
+            'is_fragment': _es_fragmento(request),
+        },
+    )
+
+
+@require_http_methods(['GET', 'POST'])
+@permiso_accion_requerido('calidad.delete_analisissensorial', 'editar_curvas_tueste')
+def eliminar_analisis_sensorial(request, pk):
+    registro = get_object_or_404(AnalisisSensorial, pk=pk)
+    if request.method == 'POST':
+        registro.delete()
+        return _volver_sensorial(request)
+    return render(
+        request,
+        'calidad/sensorial/_modal_eliminar.html' if _es_fragmento(request) else 'calidad/sensorial/eliminar.html',
+        {
+            'registro': registro, 'search': request.GET.get('q', ''),
+            'page': request.GET.get('page', ''), 'is_fragment': _es_fragmento(request),
+        },
+    )

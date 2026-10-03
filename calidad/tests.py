@@ -1,13 +1,14 @@
 from django import forms
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
+from django.urls import reverse
 
 from clientes.models import Cliente
 from origen_cafe.models import OrigenCafe
 from proceso_inven_cafe.models import ProcesoInvenCafe
 from variedad_cafe.models import VariedadCafe
 
-from .forms import CalidadForm, TIEMPOS_TOSTION
-from .models import Calidad
+from .forms import AnalisisSensorialForm, CalidadForm, TIEMPOS_TOSTION
+from .models import AnalisisSensorial, Calidad
 
 
 class CalidadFormTests(TestCase):
@@ -162,3 +163,75 @@ class CalidadFormTests(TestCase):
             ('Origen antiguo', 'Origen antiguo (valor histórico)'),
             list(form.fields['origen'].choices),
         )
+
+
+class AnalisisSensorialFormTests(TestCase):
+    def datos_validos(self, **cambios):
+        datos = {
+            'nombre': 'Hafid Vélez', 'fecha': '2026-09-08',
+            'objetivo': 'Perfilar muestra', 'muestra_numero': 'Indómito',
+            'nivel_tueste': '6', 'intensidad_fragancia': '5', 'intensidad_aroma': '5',
+            'descriptores_fragancia_aroma': ['afrutado', 'citricos'],
+            'intensidad_sabor': '6', 'intensidad_sabor_residual': '6',
+            'descriptores_sabor': ['dulce', 'cacao'],
+            'gustos_predominantes': ['acido', 'dulce'],
+            'intensidad_acidez': '7', 'intensidad_dulzor': '6',
+            'intensidad_sensacion_boca': '6', 'sensaciones_boca': ['suave'],
+            'calidad_fragancia': '6', 'calidad_aroma': '6', 'calidad_sabor': '6',
+            'calidad_sabor_residual': '6', 'calidad_acidez': '6', 'calidad_dulzor': '6',
+            'calidad_sensacion_boca': '6', 'impresion_global': '6',
+            'puntaje_total': '84.25', 'tazas_no_uniformes': '0',
+            'tazas_defectuosas': '0', 'defectos_haberlo': ['fenolico'],
+        }
+        datos.update(cambios)
+        return datos
+
+    def test_guarda_listas_y_recupera_selecciones_en_edicion(self):
+        form = AnalisisSensorialForm(data=self.datos_validos())
+        self.assertTrue(form.is_valid(), form.errors)
+        registro = form.save()
+
+        self.assertEqual(registro.lista_descriptores_fragancia_aroma, ['afrutado', 'citricos'])
+        self.assertEqual(registro.lista_gustos_predominantes, ['acido', 'dulce'])
+        self.assertEqual(registro.lista_defectos_haberlo, ['fenolico'])
+        edicion = AnalisisSensorialForm(instance=registro)
+        self.assertEqual(edicion['gustos_predominantes'].value(), ['acido', 'dulce'])
+        self.assertEqual(AnalisisSensorial._meta.db_table, 'tblAnalisisSensorial')
+
+    def test_intensidades_se_muestran_como_barras_de_calor(self):
+        form = AnalisisSensorialForm()
+        for nombre in (
+            'intensidad_fragancia', 'intensidad_aroma', 'intensidad_sabor',
+            'intensidad_sabor_residual', 'intensidad_acidez', 'intensidad_dulzor',
+            'intensidad_sensacion_boca',
+        ):
+            widget = form.fields[nombre].widget
+            self.assertEqual(widget.input_type, 'range')
+            self.assertEqual(widget.attrs['min'], '0')
+            self.assertEqual(widget.attrs['max'], '15')
+            self.assertEqual(widget.attrs['step'], '0.5')
+            self.assertEqual(widget.attrs['data-sensory-heatmap'], 'true')
+
+    def test_limita_gustos_predominantes_a_dos(self):
+        form = AnalisisSensorialForm(data=self.datos_validos(
+            gustos_predominantes=['acido', 'dulce', 'amargo'],
+        ))
+        self.assertFalse(form.is_valid())
+        self.assertIn('gustos_predominantes', form.errors)
+
+    def test_valida_rangos_del_formato(self):
+        form = AnalisisSensorialForm(data=self.datos_validos(
+            intensidad_acidez='16', calidad_acidez='10', tazas_defectuosas='6',
+        ))
+        self.assertFalse(form.is_valid())
+        self.assertIn('intensidad_acidez', form.errors)
+        self.assertIn('calidad_acidez', form.errors)
+        self.assertIn('tazas_defectuosas', form.errors)
+
+
+class AnalisisSensorialRutasTests(SimpleTestCase):
+    def test_rutas_crud(self):
+        self.assertEqual(reverse('analisis_sensorial_listar'), '/calidad/analisis-sensorial/')
+        self.assertEqual(reverse('analisis_sensorial_nuevo'), '/calidad/analisis-sensorial/nuevo/')
+        self.assertEqual(reverse('analisis_sensorial_editar', args=[7]), '/calidad/analisis-sensorial/7/editar/')
+        self.assertEqual(reverse('analisis_sensorial_eliminar', args=[7]), '/calidad/analisis-sensorial/7/eliminar/')

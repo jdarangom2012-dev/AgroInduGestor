@@ -1,0 +1,13 @@
+<div class="fixed inset-0 z-[60] flex items-start justify-center bg-black/45 p-6 overflow-y-auto" data-modal-root>
+  <div class="palette-surface w-full max-w-md rounded-xl shadow-xl border border-brand-dark/30 fade-in">
+    <div class="modal-head flex items-center justify-between px-6 py-4 rounded-t-xl">
+      <h3 class="text-base font-semibold">Eliminar análisis sensorial #{{ registro.pk }}</h3>
+      <button type="button" class="close" data-close-modal aria-label="Cerrar">✕</button>
+    </div>
+    <form method="post" action="{% url 'analisis_sensorial_eliminar' registro.pk %}{% if is_fragment %}?fragment=1{% endif %}" class="p-6 space-y-4" data-modal-form>
+      {% csrf_token %}<input type="hidden" name="q" value="{{ search }}"><input type="hidden" name="page" value="{{ page }}">
+      <p class="text-sm">Se eliminará definitivamente el análisis de la muestra <strong>{{ registro.muestra_numero }}</strong>. ¿Deseas continuar?</p>
+      <div class="flex justify-end gap-2"><a href="{% url 'analisis_sensorial_listar' %}{% if is_fragment %}?fragment=1{% endif %}" class="btn-base" {% if is_fragment %}data-modal-navigate{% endif %}>Cancelar</a><button type="submit" class="btn-base btn-danger">Eliminar</button></div>
+    </form>
+  </div>
+</div>

@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 
 from django.test import SimpleTestCase, override_settings
 from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory
 from django.urls import reverse
 
@@ -150,6 +151,19 @@ class RagChatViewTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertIn('/login/', response.url)
+
+    @patch('seguridad.decorators.tiene_permiso_accion', return_value=False)
+    def test_chat_bloquea_usuario_sin_permiso(self, tiene_permiso):
+        self.user.is_superuser = False
+
+        with self.assertRaises(PermissionDenied):
+            chat_view(self.build_request())
+
+        tiene_permiso.assert_called_once_with(
+            self.user,
+            django_perm=None,
+            codigo='ver_asistente_ia',
+        )
 
     def test_chat_muestra_formulario(self):
         response = chat_view(self.build_request())

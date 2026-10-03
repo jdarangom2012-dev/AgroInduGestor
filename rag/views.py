@@ -3,6 +3,8 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 from openai import OpenAIError
 
+from seguridad.decorators import permiso_accion_requerido
+
 from .quota import (
     RagQuotaExceeded,
     complete_query,
@@ -19,6 +21,7 @@ MAX_QUESTION_LENGTH = 1000
 
 
 @login_required
+@permiso_accion_requerido(codigo='ver_asistente_ia')
 @require_http_methods(['GET', 'POST'])
 def chat_view(request):
     history = request.session.get(SESSION_KEY, [])

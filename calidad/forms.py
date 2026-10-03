@@ -1,17 +1,44 @@
 import json
 
 from django import forms
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.utils import timezone
 
 from clientes.models import Cliente
 from origen_cafe.models import OrigenCafe
 from proceso_inven_cafe.models import ProcesoInvenCafe
 from variedad_cafe.models import VariedadCafe
 
-from .models import Calidad
+from .models import AnalisisSensorial, Calidad
+
+
+class RangeInput(forms.NumberInput):
+    input_type = 'range'
 
 
 TIEMPOS_TOSTION = tuple(f'{minutos}:{segundos:02d}' for minutos in range(10) for segundos in (0, 30))
+
+DESCRIPTORES_SENSORIALES = (
+    ('floral', 'Floral'), ('afrutado', 'Afrutado'), ('bayas', 'Bayas'),
+    ('frutas_deshidratadas', 'Frutas deshidratadas'), ('citricos', 'Cítricos'),
+    ('acido_fermentado', 'Ácido/Fermentado'), ('acido', 'Ácido'), ('fermentado', 'Fermentado'),
+    ('verde_vegetal', 'Verde/Vegetal'), ('otra', 'Otra'), ('quimico', 'Químico'),
+    ('humedad_tierra', 'Humedad/Tierra'), ('madera', 'Madera'), ('tostado', 'Tostado'),
+    ('cereal', 'Cereal'), ('quemado', 'Quemado'), ('tabaco', 'Tabaco'),
+    ('nueces_cacao', 'Nueces/Cacao'), ('nueces', 'Nueces'), ('cacao', 'Cacao'),
+    ('especias', 'Especias'), ('dulce', 'Dulce'), ('vainilla', 'Vainilla'),
+    ('azucar_morena', 'Azúcar morena'),
+)
+GUSTOS_PREDOMINANTES = (
+    ('salado', 'Salado'), ('acido', 'Ácido'), ('dulce', 'Dulce'),
+    ('amargo', 'Amargo'), ('umami', 'Umami'),
+)
+SENSACIONES_BOCA = (
+    ('aspero', 'Áspero (Arenoso, Rugoso, Rasposo)'), ('aceitoso', 'Aceitoso'),
+    ('suave', 'Suave (Aterciopelado, Sedoso, Almibarado)'),
+    ('astringente', 'Deja seca la boca (astringente)'), ('metalico', 'Metálico'),
+)
+DEFECTOS_HABERLO = (('mohoso', 'Mohoso'), ('fenolico', 'Fenólico'), ('papa', 'Papa'))
 
 
 class CalidadForm(forms.ModelForm):
@@ -143,6 +170,120 @@ class CalidadForm(forms.ModelForm):
                     'potencia_aire': potencia_aire,
                 })
         instancia.tostion_json = json.dumps(lecturas, ensure_ascii=False)
+        if commit:
+            instancia.save()
+        return instancia
+
+
+class AnalisisSensorialForm(forms.ModelForm):
+    descriptores_fragancia_aroma = forms.MultipleChoiceField(
+        required=False, choices=DESCRIPTORES_SENSORIALES,
+        widget=forms.CheckboxSelectMultiple,
+    )
+    descriptores_sabor = forms.MultipleChoiceField(
+        required=False, choices=DESCRIPTORES_SENSORIALES,
+        widget=forms.CheckboxSelectMultiple,
+    )
+    gustos_predominantes = forms.MultipleChoiceField(
+        required=False, choices=GUSTOS_PREDOMINANTES,
+        widget=forms.CheckboxSelectMultiple,
+    )
+    sensaciones_boca = forms.MultipleChoiceField(
+        required=False, choices=SENSACIONES_BOCA,
+        widget=forms.CheckboxSelectMultiple,
+    )
+    defectos_haberlo = forms.MultipleChoiceField(
+        required=False, choices=DEFECTOS_HABERLO,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = AnalisisSensorial
+        fields = [
+            'nombre', 'fecha', 'objetivo', 'muestra_numero', 'nivel_tueste',
+            'intensidad_fragancia', 'intensidad_aroma', 'descriptores_fragancia_aroma',
+            'notas_fragancia_aroma', 'intensidad_sabor', 'intensidad_sabor_residual',
+            'descriptores_sabor', 'gustos_predominantes', 'notas_sabor',
+            'intensidad_acidez', 'notas_acidez', 'intensidad_dulzor', 'notas_dulzor',
+            'intensidad_sensacion_boca', 'sensaciones_boca', 'notas_sensacion_boca',
+            'notas_extrinseca', 'calidad_fragancia', 'calidad_aroma',
+            'notas_afectiva_fragancia_aroma', 'calidad_sabor', 'calidad_sabor_residual',
+            'notas_afectiva_sabor', 'calidad_acidez', 'notas_afectiva_acidez',
+            'calidad_dulzor', 'notas_afectiva_dulzor', 'calidad_sensacion_boca',
+            'notas_afectiva_sensacion_boca', 'impresion_global', 'notas_impresion_global',
+            'puntaje_total', 'tazas_no_uniformes', 'tazas_defectuosas', 'defectos_haberlo',
+        ]
+        widgets = {
+            'fecha': forms.DateInput(attrs={'class': 'w-full input', 'type': 'date'}, format='%Y-%m-%d'),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        campos_texto = ('nombre', 'objetivo', 'muestra_numero')
+        campos_intensidad = (
+            'intensidad_fragancia', 'intensidad_aroma', 'intensidad_sabor',
+            'intensidad_sabor_residual', 'intensidad_acidez', 'intensidad_dulzor',
+            'intensidad_sensacion_boca',
+        )
+        campos_calidad = (
+            'calidad_fragancia', 'calidad_aroma', 'calidad_sabor', 'calidad_sabor_residual',
+            'calidad_acidez', 'calidad_dulzor', 'calidad_sensacion_boca', 'impresion_global',
+        )
+        campos_notas = tuple(nombre for nombre in self.fields if nombre.startswith('notas_'))
+
+        for nombre in campos_texto:
+            self.fields[nombre].widget.attrs.update({'class': 'w-full input'})
+        if not self.is_bound and not getattr(self.instance, 'pk', None):
+            self.fields['fecha'].initial = timezone.localdate
+        self.fields['nivel_tueste'].widget.attrs.update({'class': 'w-full input', 'min': '0', 'max': '15', 'step': '1'})
+        self.fields['nivel_tueste'].validators.extend([MinValueValidator(0), MaxValueValidator(15)])
+        for nombre in campos_intensidad:
+            valor_inicial = self.fields[nombre].initial
+            self.fields[nombre].widget = RangeInput(attrs={
+                'class': 'sensory-heatmap w-full',
+                'min': '0',
+                'max': '15',
+                'step': '0.5',
+                'data-sensory-heatmap': 'true',
+            })
+            self.fields[nombre].initial = 0 if valor_inicial in (None, '') else valor_inicial
+            self.fields[nombre].validators.extend([MinValueValidator(0), MaxValueValidator(15)])
+        for nombre in campos_calidad:
+            self.fields[nombre].widget = forms.Select(
+                choices=[('', 'Seleccione...'), *((valor, str(valor)) for valor in range(1, 10))],
+                attrs={'class': 'w-full select'},
+            )
+            self.fields[nombre].validators.extend([MinValueValidator(1), MaxValueValidator(9)])
+        for nombre in campos_notas:
+            self.fields[nombre].widget.attrs.update({'class': 'w-full textarea', 'rows': 3})
+        self.fields['puntaje_total'].widget.attrs.update({'class': 'w-full input', 'min': '0', 'step': '0.01'})
+        self.fields['puntaje_total'].validators.append(MinValueValidator(0))
+        for nombre in ('tazas_no_uniformes', 'tazas_defectuosas'):
+            self.fields[nombre].widget.attrs.update({'class': 'w-full input', 'min': '0', 'max': '5', 'step': '1'})
+            self.fields[nombre].validators.extend([MinValueValidator(0), MaxValueValidator(5)])
+
+        if self.instance and self.instance.pk:
+            self.initial.update({
+                'descriptores_fragancia_aroma': self.instance.lista_descriptores_fragancia_aroma,
+                'descriptores_sabor': self.instance.lista_descriptores_sabor,
+                'gustos_predominantes': self.instance.lista_gustos_predominantes,
+                'sensaciones_boca': self.instance.lista_sensaciones_boca,
+                'defectos_haberlo': self.instance.lista_defectos_haberlo,
+            })
+
+    def clean_gustos_predominantes(self):
+        valores = self.cleaned_data.get('gustos_predominantes', [])
+        if len(valores) > 2:
+            raise forms.ValidationError('Selecciona máximo dos gustos predominantes.')
+        return valores
+
+    def save(self, commit=True):
+        instancia = super().save(commit=False)
+        for nombre in (
+            'descriptores_fragancia_aroma', 'descriptores_sabor', 'gustos_predominantes',
+            'sensaciones_boca', 'defectos_haberlo',
+        ):
+            setattr(instancia, nombre, json.dumps(self.cleaned_data.get(nombre, []), ensure_ascii=False))
         if commit:
             instancia.save()
         return instancia

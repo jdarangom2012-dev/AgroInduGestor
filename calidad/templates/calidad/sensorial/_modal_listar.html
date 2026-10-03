@@ -1,0 +1,42 @@
+{% load seguridad_permisos %}
+{% tiene_permiso_accion request.user 'calidad.add_analisissensorial' 'crear_curvas_tueste' as puede_crear %}
+{% tiene_permiso_accion request.user 'calidad.change_analisissensorial' 'editar_curvas_tueste' as puede_editar %}
+<div class="fixed inset-0 z-50 flex items-start justify-center bg-black/45 p-6 overflow-y-auto" data-modal-root data-list-url="{% url 'analisis_sensorial_listar' %}">
+  <div class="palette-surface w-full max-w-6xl rounded-xl shadow-xl border border-brand-dark/30 fade-in">
+    <div class="modal-head flex items-center justify-between px-6 py-4 rounded-t-xl">
+      <h2 class="text-lg font-semibold">☕ Análisis Sensorial</h2>
+      <button type="button" class="close" data-close-modal aria-label="Cerrar">✕</button>
+    </div>
+    <div class="p-6 space-y-4">
+      <form method="get" action="{% url 'analisis_sensorial_listar' %}" class="flex gap-2" data-search-form>
+        <input type="hidden" name="fragment" value="1">
+        <input name="q" value="{{ search }}" placeholder="Buscar por nombre, muestra u objetivo" class="w-full input" data-autosearch>
+        {% if puede_crear %}<a href="{% url 'analisis_sensorial_nuevo' %}?fragment=1" class="btn-base btn-primary" data-modal-navigate>Nuevo</a>{% endif %}
+      </form>
+      <div class="overflow-x-auto rounded-lg border border-brand-dark/30">
+        <table class="mes-table w-full">
+          <thead><tr><th>ID</th><th>Fecha</th><th>Nombre</th><th>Muestra #</th><th>Objetivo</th><th>Puntaje</th><th>Editar</th><th>Eliminar</th></tr></thead>
+          <tbody>
+            {% for registro in items %}
+            <tr>
+              <td class="td">{{ registro.pk }}</td><td class="td">{{ registro.fecha|date:'d/m/Y' }}</td>
+              <td class="td">{{ registro.nombre }}</td><td class="td">{{ registro.muestra_numero }}</td>
+              <td class="td">{{ registro.objetivo|default:'—' }}</td><td class="td">{{ registro.puntaje_total|default_if_none:'—' }}</td>
+              <td class="td">{% if puede_editar %}<a href="{% url 'analisis_sensorial_editar' registro.pk %}?fragment=1{% if search %}&q={{ search|urlencode }}{% endif %}&page={{ page_obj.number }}" class="link link-edit" data-modal-navigate>Editar</a>{% else %}—{% endif %}</td>
+              <td class="td">{% if puede_editar %}<a href="{% url 'analisis_sensorial_eliminar' registro.pk %}?fragment=1{% if search %}&q={{ search|urlencode }}{% endif %}&page={{ page_obj.number }}" class="link text-red-600" data-modal-navigate>Eliminar</a>{% else %}—{% endif %}</td>
+            </tr>
+            {% empty %}<tr><td colspan="8" class="td text-center">No hay análisis sensoriales registrados.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="flex items-center justify-between text-sm">
+        <span>Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }}</span>
+        <div class="flex gap-2">
+          {% if page_obj.has_previous %}<a class="pager" href="{% url 'analisis_sensorial_listar' %}?fragment=1&page={{ page_obj.previous_page_number }}{% if search %}&q={{ search|urlencode }}{% endif %}" data-modal-navigate>Anterior</a>{% endif %}
+          {% for numero in page_obj.paginator.page_range %}{% if numero == page_obj.number %}<span class="pager active">{{ numero }}</span>{% else %}<a class="pager" href="{% url 'analisis_sensorial_listar' %}?fragment=1&page={{ numero }}{% if search %}&q={{ search|urlencode }}{% endif %}" data-modal-navigate>{{ numero }}</a>{% endif %}{% endfor %}
+          {% if page_obj.has_next %}<a class="pager" href="{% url 'analisis_sensorial_listar' %}?fragment=1&page={{ page_obj.next_page_number }}{% if search %}&q={{ search|urlencode }}{% endif %}" data-modal-navigate>Siguiente</a>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

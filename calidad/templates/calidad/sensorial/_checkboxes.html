@@ -1,0 +1,8 @@
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+  {% for opcion in field %}
+    <label class="flex items-start gap-2 rounded border border-black/10 dark:border-gray-700 p-2">
+      {{ opcion.tag }}<span>{{ opcion.choice_label }}</span>
+    </label>
+  {% endfor %}
+</div>
+{{ field.errors }}
