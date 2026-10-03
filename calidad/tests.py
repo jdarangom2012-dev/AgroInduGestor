@@ -221,6 +221,16 @@ class AnalisisSensorialFormTests(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data['puntaje_total'], Decimal('89'))
         self.assertTrue(form.fields['puntaje_total'].disabled)
+        self.assertEqual(form.fields['puntaje_total'].widget.input_type, 'text')
+
+    def test_puntaje_total_conserva_sumas_decimales(self):
+        form = AnalisisSensorialForm(data=self.datos_validos(
+            intensidad_fragancia='5.5',
+            puntaje_total='',
+        ))
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['puntaje_total'], Decimal('89.5'))
 
     def test_limita_gustos_predominantes_a_dos(self):
         form = AnalisisSensorialForm(data=self.datos_validos(

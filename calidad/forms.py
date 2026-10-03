@@ -260,11 +260,12 @@ class AnalisisSensorialForm(forms.ModelForm):
             self.fields[nombre].widget.attrs.update({'class': 'w-full textarea', 'rows': 3})
         self.fields['puntaje_total'].required = False
         self.fields['puntaje_total'].disabled = True
-        self.fields['puntaje_total'].widget.attrs.update({
+        self.fields['puntaje_total'].widget = forms.TextInput(attrs={
             'class': 'w-full input sensory-total-score',
             'readonly': True,
             'data-sensory-total': 'true',
             'aria-readonly': 'true',
+            'inputmode': 'none',
         })
         for nombre in ('tazas_no_uniformes', 'tazas_defectuosas'):
             self.fields[nombre].widget.attrs.update({'class': 'w-full input', 'min': '0', 'max': '5', 'step': '1'})
