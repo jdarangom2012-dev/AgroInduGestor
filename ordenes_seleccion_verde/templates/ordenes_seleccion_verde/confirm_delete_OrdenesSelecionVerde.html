@@ -1,5 +1,5 @@
 {% load seguridad_permisos %}
-{% tiene_permiso request.user "eliminar_orden_seleccion_verde" as puede_eliminar %}
+{% tiene_permiso_accion request.user 'ordenes_seleccion_verde.delete_ordenseleccionverde' 'eliminar_orden_seleccion_verde' as puede_eliminar %}
 
 <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-6 overflow-y-auto" data-modal-root>
   <div class="palette-surface w-full max-w-lg rounded-xl shadow-xl border border-brand-dark/30 fade-in">

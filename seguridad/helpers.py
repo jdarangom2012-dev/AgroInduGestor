@@ -66,10 +66,6 @@ def tiene_permiso_accion(user, django_perm: str | None = None, codigo: str | Non
     if not _usuario_autenticado(user):
         return False
 
-    # Programador se gobierna exclusivamente por RolPermiso para crear/editar/eliminar/ver.
-    if es_programador(user):
-        return bool(codigo) and tiene_permiso(user, codigo)
-
     if django_perm and user.has_perm(django_perm):
         return True
 
