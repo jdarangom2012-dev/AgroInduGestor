@@ -10,7 +10,7 @@ from .forms import EmpleadoForm
 from .models import Empleado
 
 @require_http_methods(["GET"])
-@permiso_accion_requerido(codigo='ver_empleados')
+@permiso_accion_requerido('empleados.view_empleado', 'ver_empleados')
 def listar_empleados(request):
     search = request.GET.get('q', '').strip()
     empleados_list = Empleado.objects.select_related('estado').all().order_by('-fecha_ingreso')
@@ -29,7 +29,7 @@ def listar_empleados(request):
     return render(request, 'empleados/_modal_listar_Empleados.html', ctx)
 
 @require_http_methods(["GET", "POST"])
-@permiso_accion_requerido(codigo='crear_empleados')
+@permiso_accion_requerido('empleados.add_empleado', 'crear_empleados')
 def add_empleado(request):
     if request.method == 'POST':
         form = EmpleadoForm(request.POST)
@@ -52,7 +52,7 @@ def add_empleado(request):
     return render(request, 'empleados/add_Empleados.html', {'form': form})
 
 @require_http_methods(["GET", "POST"])
-@permiso_accion_requerido(codigo='editar_empleados')
+@permiso_accion_requerido('empleados.change_empleado', 'editar_empleados')
 def detail_empleado(request, id):
     empleado = get_object_or_404(Empleado, pk=id)
     if request.method == 'POST':
@@ -77,7 +77,7 @@ def detail_empleado(request, id):
     return render(request, 'empleados/detail_Empleados.html', {'empleado': empleado, 'form': form})
 
 @require_http_methods(["GET", "POST"])
-@permiso_accion_requerido(codigo='eliminar_empleados')
+@permiso_accion_requerido('empleados.delete_empleado', 'eliminar_empleados')
 def delete_empleado(request, id):
     empleado = get_object_or_404(Empleado, pk=id)
     if request.method == 'POST':

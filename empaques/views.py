@@ -151,7 +151,7 @@ def obtener_empaque_recibido_rows(orden):
     return []
 
 
-@permiso_accion_requerido(codigo='ver_empaque')
+@permiso_accion_requerido('empaques.view_empaque', 'ver_empaque')
 def listar_empaque(request):
     qs = Empaque.objects.select_related('orden', 'orden__cliente', 'nivel_molienda', 'estado_inven_cafe', 'estado_tareas')
     search = request.GET.get('q', '').strip()

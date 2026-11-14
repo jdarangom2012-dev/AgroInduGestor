@@ -1,34 +1,29 @@
 {% load seguridad_permisos %}
-{% tiene_permiso request.user "ver_orden_produccion" as CAN_VER_ORDEN_PRODUCCION %}
-{% tiene_permiso request.user "ver_orden_trilla" as CAN_VER_ORDEN_TRILLA %}
-{% tiene_permiso request.user "ver_orden_tueste" as CAN_VER_ORDEN_TUESTE %}
-{% tiene_modulo request.user "Órdenes Tueste" as CAN_MOD_ORDEN_TUESTE %}
-{% tiene_permiso request.user "ver_orden_seleccion_tueste" as CAN_VER_SEL_TUESTE %}
-{% tiene_permiso request.user "ver_orden_seleccion_verde" as CAN_VER_SEL_VERDE %}
-{% tiene_permiso request.user "ver_ordenes_seleccion_verde" as CAN_VER_ORDENES_SEL_VERDE %}
-{% tiene_modulo request.user "Órdenes Selección Tueste" as CAN_MOD_SEL_TUESTE %}
+{% tiene_permiso_grupo request.user 'ordenes.view_orden' as CAN_VER_ORDEN_PRODUCCION %}
+{% tiene_permiso_grupo request.user 'ordenes_trilla.view_ordentrilla' as CAN_VER_ORDEN_TRILLA %}
+{% tiene_permiso_grupo request.user 'tueste.view_tueste' as CAN_VER_ORDEN_TUESTE %}
+{% tiene_permiso_grupo request.user 'seleccion_tueste.view_selecciontueste' as CAN_VER_SEL_TUESTE %}
+{% tiene_permiso_grupo request.user 'ordenes_seleccion_verde.view_ordenseleccionverde' as CAN_VER_SEL_VERDE %}
+{% tiene_permiso_grupo request.user 'empaques.view_empaque' as CAN_VER_EMPAQUE %}
 
-{% tiene_permiso request.user "ver_empaque" as CAN_VER_EMPAQUE %}
+{% tiene_permiso_grupo request.user 'calidad.view_calidad' as CAN_VER_CALIDAD %}
+{% tiene_permiso_grupo request.user 'inventario_cafe.view_inventariocafe' as CAN_VER_INVENTARIO %}
 
-{% tiene_permiso_accion request.user 'calidad.view_calidad' 'ver_curvas_tueste' as CAN_VER_CALIDAD %}
+{% tiene_permiso_grupo request.user 'clientes.view_cliente' as CAN_VER_CLIENTES %}
+{% tiene_permiso_grupo request.user 'empleados.view_empleado' as CAN_VER_EMPLEADOS %}
+{% tiene_permiso_grupo request.user 'materiales.view_material' as CAN_VER_MATERIALES %}
+{% tiene_permiso_grupo request.user 'estado_cafe.view_estadocafe' as CAN_VER_ESTADOS %}
+{% tiene_permiso_grupo request.user 'origen_cafe.view_origencafe' as CAN_VER_ORIGENES %}
+{% tiene_permiso_grupo request.user 'proceso_inven_cafe.view_procesoinvencafe' as CAN_VER_PROCESO_INV_CAFE %}
+{% tiene_permiso_grupo request.user 'cafe_empaque.view_cafeempaque' as CAN_VER_EMPAQUE_CAFE %}
+{% tiene_permiso_grupo request.user 'estado_ordenes.view_estadoorden' as CAN_VER_ESTADO_ORDEN %}
+{% tiene_permiso_grupo request.user 'estado_tareas.view_estadotarea' as CAN_VER_ESTADO_TAREAS %}
+{% tiene_permiso_grupo request.user 'zaranda_grupo.view_zarandagrupo' as CAN_VER_ZARANDA_GRUPO %}
+{% tiene_permiso_grupo request.user 'nivel_molienda.view_nivelmolienda' as CAN_VER_NIVEL_MOLIENDA %}
+{% tiene_permiso_grupo request.user 'tamano_empaque.view_tamanoempaque' as CAN_VER_TAMANO_EMPAQUE %}
 
-{% tiene_permiso request.user "ver_inventario" as CAN_VER_INVENTARIO %}
-
-{% tiene_permiso request.user "ver_clientes" as CAN_VER_CLIENTES %}
-{% tiene_permiso request.user "ver_empleados" as CAN_VER_EMPLEADOS %}
-{% tiene_permiso request.user "ver_materiales" as CAN_VER_MATERIALES %}
-{% tiene_permiso request.user "ver_estados" as CAN_VER_ESTADOS %}
-{% tiene_permiso request.user "ver_origenes" as CAN_VER_ORIGENES %}
-{% tiene_permiso request.user "ver_proceso_inventario_cafe" as CAN_VER_PROCESO_INV_CAFE %}
-{% tiene_permiso request.user "ver_empaque_cafe" as CAN_VER_EMPAQUE_CAFE %}
-{% tiene_permiso request.user "ver_estado_orden" as CAN_VER_ESTADO_ORDEN %}
-{% tiene_permiso request.user "ver_estado_tareas" as CAN_VER_ESTADO_TAREAS %}
-{% tiene_permiso request.user "ver_zaranda_grupo" as CAN_VER_ZARANDA_GRUPO %}
-{% tiene_permiso request.user "ver_nivel_molienda" as CAN_VER_NIVEL_MOLIENDA %}
-{% tiene_permiso request.user "ver_tamano_empaque" as CAN_VER_TAMANO_EMPAQUE %}
-
-{% tiene_permiso request.user "ver_reportes" as CAN_VER_REPORTES %}
-{% tiene_permiso request.user "ver_asistente_ia" as CAN_VER_ASISTENTE_IA %}
+{% tiene_permiso_grupo request.user 'reportes.view_reportes' as CAN_VER_REPORTES %}
+{% tiene_permiso_grupo request.user 'rag.view_ragquerylog' as CAN_VER_ASISTENTE_IA %}
 {% tiene_permiso request.user "configurar_sistema" as CAN_CONFIGURAR_SISTEMA %}
 {% tiene_permiso request.user "gestionar_permisos" as CAN_GESTIONAR_PERMISOS %}
 {% tiene_permiso request.user "ver_permisos" as CAN_VER_PERMISOS %}
@@ -52,7 +47,7 @@
   <!-- Enlace Dashboard eliminado -->
 
     <!-- Grupo: Producción (abierto por defecto) -->
-    {% if CAN_VER_ORDEN_PRODUCCION or CAN_VER_ORDEN_TRILLA or CAN_MOD_ORDEN_TUESTE or CAN_MOD_SEL_TUESTE or CAN_VER_SEL_VERDE or CAN_VER_EMPAQUE %}
+    {% if CAN_VER_ORDEN_PRODUCCION or CAN_VER_ORDEN_TRILLA or CAN_VER_ORDEN_TUESTE or CAN_VER_SEL_TUESTE or CAN_VER_SEL_VERDE or CAN_VER_EMPAQUE %}
     <div class="sidebar-group" data-open="true">
       <button type="button" class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700 transition group parent-btn" aria-expanded="true">
         <span class="w-4 text-[11px]">📦</span>
@@ -62,8 +57,8 @@
   <ul class="mt-1 space-y-1 children">
   {% if CAN_VER_ORDEN_PRODUCCION %}<li><a href="/ordenes-produccion/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🧾</span><span class="flex-1">Órdenes de Producción</span></a></li>{% endif %}
   {% if CAN_VER_ORDEN_TRILLA %}<li><a href="/ordenes-trilla/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🌾</span><span class="flex-1">Órdenes de Trilla</span></a></li>{% endif %}
-  {% if CAN_MOD_ORDEN_TUESTE %}<li><a href="/ordenes-tueste/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🔥</span><span class="flex-1">Órdenes de Tueste</span></a></li>{% endif %}
-  {% if CAN_MOD_SEL_TUESTE %}<li><a href="{% url 'ordenes_seleccion_tueste_listar' %}" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🔍</span><span class="flex-1">Órdenes Selección Tueste</span></a></li>{% endif %}
+  {% if CAN_VER_ORDEN_TUESTE %}<li><a href="/ordenes-tueste/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🔥</span><span class="flex-1">Órdenes de Tueste</span></a></li>{% endif %}
+  {% if CAN_VER_SEL_TUESTE %}<li><a href="{% url 'ordenes_seleccion_tueste_listar' %}" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🔍</span><span class="flex-1">Órdenes Selección Tueste</span></a></li>{% endif %}
   {% if CAN_VER_SEL_VERDE %}<li><a href="{% url 'ordenes_seleccion_verde_listar' %}" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🍃</span><span class="flex-1">Órdenes Selección Verde</span></a></li>{% endif %}
   {% if CAN_VER_EMPAQUE %}<li><a href="/empaque/listar/" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">🏷️</span><span class="flex-1">Órdenes de Empaque</span></a></li>{% endif %}
       </ul>
@@ -71,8 +66,6 @@
     {% endif %}
 
   <!-- Grupo: Calidad -->
-  {% if user.is_authenticated %}
-    {% if user.is_staff or HAS_GROUP_CALIDAD %}
   {% if CAN_VER_CALIDAD %}
   <div class="sidebar-group" data-open="false">
       <button type="button" class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700 transition group parent-btn" aria-expanded="false">
@@ -85,8 +78,6 @@
   <li><a href="{% url 'analisis_sensorial_listar' %}" data-modal-navigate class="flex items-center gap-2 px-2 py-1 rounded hover:bg-brand-primary/10 dark:hover:bg-gray-700"><span class="w-4 text-[11px]">☕</span><span class="flex-1">Análisis Sensorial</span></a></li>
       </ul>
     </div>
-  {% endif %}
-    {% endif %}
   {% endif %}
 
     <!-- Grupo: Inventario -->

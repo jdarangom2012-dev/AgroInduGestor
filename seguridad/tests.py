@@ -22,7 +22,7 @@ class PermisoAccionTests(SimpleTestCase):
         )
 
     @patch('seguridad.helpers.tiene_permiso', return_value=True)
-    def test_conserva_compatibilidad_con_permiso_personalizado(self, permiso_personalizado):
+    def test_permiso_django_es_la_fuente_para_acciones_crud(self, permiso_personalizado):
         user = Mock(is_authenticated=True, is_superuser=False)
         user.has_perm.return_value = False
 
@@ -32,8 +32,17 @@ class PermisoAccionTests(SimpleTestCase):
             codigo='editar_orden_seleccion_verde',
         )
 
+        self.assertFalse(permitido)
+        permiso_personalizado.assert_not_called()
+
+    @patch('seguridad.helpers.tiene_permiso', return_value=True)
+    def test_funcion_sin_permiso_django_conserva_permiso_especial(self, permiso_personalizado):
+        user = Mock(is_authenticated=True, is_superuser=False)
+
+        permitido = tiene_permiso_accion(user, codigo='ver_asistente_ia')
+
         self.assertTrue(permitido)
-        permiso_personalizado.assert_called_once_with(user, 'editar_orden_seleccion_verde')
+        permiso_personalizado.assert_called_once_with(user, 'ver_asistente_ia')
 
 
 class PermisoGrupoTests(SimpleTestCase):

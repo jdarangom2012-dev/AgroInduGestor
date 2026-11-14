@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manual de usuario | AgroInduGestor{% endblock %}
+
+{% block content %}
+<article class="max-w-6xl mx-auto space-y-8" data-user-manual>
+  <header class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 p-6 shadow-sm">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <p class="text-sm text-brand-secondary font-semibold">AgroInduGestor</p>
+        <h1 class="text-3xl font-bold mt-1">Manual de usuario</h1>
+        <p class="mt-3 text-gray-600 dark:text-gray-300 max-w-3xl">Guía práctica para consultar información, registrar operaciones y utilizar las funciones disponibles según los permisos asignados a cada perfil.</p>
+      </div>
+      <button type="button" onclick="window.print()" class="px-4 py-2 rounded-lg bg-brand-primary text-black font-semibold hover:opacity-90" data-tooltip="Imprime el manual o permite guardarlo como PDF desde el navegador.">🖨️ Imprimir o guardar PDF</button>
+    </div>
+  </header>
+
+  <nav class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 p-5" aria-label="Contenido del manual">
+    <h2 class="text-lg font-semibold mb-3">Contenido</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+      <a class="text-brand-secondary hover:underline" href="#navegacion">1. Navegación general</a>
+      <a class="text-brand-secondary hover:underline" href="#produccion">2. Producción</a>
+      <a class="text-brand-secondary hover:underline" href="#inventario">3. Inventario</a>
+      <a class="text-brand-secondary hover:underline" href="#calidad">4. Calidad</a>
+      <a class="text-brand-secondary hover:underline" href="#maestros">5. Maestros</a>
+      <a class="text-brand-secondary hover:underline" href="#reportes">6. Reportes e IA</a>
+      <a class="text-brand-secondary hover:underline" href="#permisos">7. Usuarios y permisos</a>
+      <a class="text-brand-secondary hover:underline" href="#acciones">8. Acciones frecuentes</a>
+      <a class="text-brand-secondary hover:underline" href="#ayuda">9. Ayuda contextual</a>
+    </div>
+  </nav>
+
+  <section id="navegacion" class="manual-section">
+    <h2>1. Navegación general</h2>
+    <p>El menú lateral agrupa las funciones en Producción, Calidad, Inventario, Maestros, Reportes, Asistente IA y Administración. Solo aparecen las opciones autorizadas para el usuario. La barra superior muestra el acceso a este manual, el modo claro u oscuro, la fecha, el usuario y el botón Salir.</p>
+    <ul>
+      <li>Seleccione un grupo del menú para desplegar sus opciones.</li>
+      <li>Use la X de cada ventana para cerrarla sin guardar cambios.</li>
+      <li>Pase el mouse sobre campos y botones para consultar su ayuda.</li>
+    </ul>
+  </section>
+
+  <section id="produccion" class="manual-section">
+    <h2>2. Producción</h2>
+    <p>Desde Producción se administran las órdenes de producción y sus etapas: trilla, tueste, selección verde, selección tostado y empaque. Los botones Nuevo, Editar y Eliminar se habilitan de acuerdo con los permisos del grupo.</p>
+    <figure><img src="{% static 'img/manual/ordenes-seleccion-verde.png' %}" alt="Listado de órdenes de selección verde"><figcaption>Ejemplo de listado con buscador, acciones y paginación.</figcaption></figure>
+    <h3>Registrar o editar una orden</h3>
+    <ol>
+      <li>Abra el módulo correspondiente y seleccione Nuevo o Editar.</li>
+      <li>Complete los campos habilitados. Los campos grises son de consulta y no pueden modificarse.</li>
+      <li>Revise pesos, estado y procesos antes de guardar.</li>
+      <li>Seleccione Guardar. Si falta información obligatoria, el sistema mostrará el detalle.</li>
+    </ol>
+    <figure><img src="{% static 'img/manual/editar-orden-produccion.png' %}" alt="Formulario para editar una orden de producción"><figcaption>Formulario de Orden de Producción. Los permisos por campo determinan cuáles datos se pueden modificar.</figcaption></figure>
+    <figure><img src="{% static 'img/manual/ordenes-empaque.png' %}" alt="Listado de órdenes de empaque"><figcaption>Órdenes de Empaque con controles de creación, edición y eliminación.</figcaption></figure>
+  </section>
+
+  <section id="inventario" class="manual-section">
+    <h2>3. Inventario</h2>
+    <p>Inventario Café permite consultar existencias por cliente, registrar entradas y salidas, y conservar notas del movimiento. Al editar, la cantidad existente se calcula sumando Kilos Ingresar y restando Kilos Sacar. Cuando una orden pasa a Completada, el sistema descuenta del inventario el peso neto correspondiente.</p>
+    <p>Verifique siempre el cliente, el código del café y la cantidad existente antes de guardar un movimiento.</p>
+  </section>
+
+  <section id="calidad" class="manual-section">
+    <h2>4. Calidad</h2>
+    <p>Análisis Físico y Tueste registra los datos de la muestra, evaluación en verde, perfil de tostión y observaciones. Análisis Sensorial captura las intensidades, selecciones y puntajes; el puntaje se calcula automáticamente. Ambos formularios permiten exportar la información a PDF cuando el usuario tiene acceso.</p>
+  </section>
+
+  <section id="maestros" class="manual-section">
+    <h2>5. Maestros</h2>
+    <p>Los maestros contienen la información reutilizada por los formularios: clientes, empleados, materiales, estados, orígenes, procesos, empaques, zarandas, niveles de molienda y tamaños de empaque. Modifique estos registros solamente cuando sea necesario, porque sus valores alimentan las listas de selección de toda la aplicación.</p>
+    <figure><img src="{% static 'img/manual/menu-maestros.png' %}" alt="Opciones del menú Maestros"><figcaption>Ejemplo de opciones disponibles dentro del grupo Maestros.</figcaption></figure>
+  </section>
+
+  <section id="reportes" class="manual-section">
+    <h2>6. Reportes y Asistente IA</h2>
+    <p>Reportes permite consultar facturación, clientes y calidad, aplicar los filtros disponibles y exportar resultados. El Asistente IA responde preguntas sobre documentación y datos autorizados, y puede generar reportes admitidos por la aplicación. Las consultas mensuales disponibles se muestran en la parte superior del asistente.</p>
+  </section>
+
+  <section id="permisos" class="manual-section">
+    <h2>7. Usuarios y permisos</h2>
+    <p>Los permisos de cada perfil se configuran en Jazzmin desde Autenticación y autorización, Grupos. Para cada módulo se pueden asignar cuatro acciones:</p>
+    <ul>
+      <li><strong>Can view</strong>: permite consultar el módulo.</li>
+      <li><strong>Can add</strong>: habilita Nuevo.</li>
+      <li><strong>Can change</strong>: habilita Editar.</li>
+      <li><strong>Can delete</strong>: habilita Eliminar.</li>
+    </ul>
+    <p>Los permisos individuales de los campos se administran en Seguridad, Permisos por Campo. Allí se define si cada campo puede verse o editarse para un rol.</p>
+    <figure><img src="{% static 'img/manual/permisos-grupo.png' %}" alt="Configuración de permisos de un grupo en Jazzmin"><figcaption>Asignación de permisos a un grupo desde Jazzmin.</figcaption></figure>
+  </section>
+
+  <section id="acciones" class="manual-section">
+    <h2>8. Acciones frecuentes</h2>
+    <dl class="grid md:grid-cols-2 gap-4">
+      <div><dt>Nuevo</dt><dd>Abre un formulario vacío para registrar información.</dd></div>
+      <div><dt>Editar</dt><dd>Abre un registro existente y habilita los campos autorizados.</dd></div>
+      <div><dt>Eliminar</dt><dd>Solicita confirmación antes de retirar un registro.</dd></div>
+      <div><dt>Guardar</dt><dd>Valida la información y registra los cambios.</dd></div>
+      <div><dt>Cancelar o cerrar</dt><dd>Sale del formulario sin guardar cambios pendientes.</dd></div>
+      <div><dt>Exportar a PDF</dt><dd>Genera un documento con los datos del registro o reporte.</dd></div>
+    </dl>
+  </section>
+
+  <section id="ayuda" class="manual-section">
+    <h2>9. Ayuda contextual</h2>
+    <p>Al mantener el puntero sobre un campo, botón u opción aparecerá una explicación breve de su función. La misma ayuda también se muestra al navegar con el teclado y enfocar un control.</p>
+  </section>
+</article>
+
+<style>
+  .manual-section { scroll-margin-top: 1rem; border: 1px solid rgb(229 231 235); border-radius: .75rem; background: rgba(255,255,255,.92); padding: 1.5rem; }
+  .dark .manual-section { border-color: rgb(55 65 81); background: rgba(31,41,55,.82); }
+  .manual-section h2 { font-size: 1.35rem; font-weight: 700; margin-bottom: .8rem; }
+  .manual-section h3 { font-size: 1.05rem; font-weight: 700; margin: 1.25rem 0 .5rem; }
+  .manual-section p { margin: .55rem 0; line-height: 1.65; }
+  .manual-section ul, .manual-section ol { padding-left: 1.4rem; margin: .65rem 0; line-height: 1.65; }
+  .manual-section ul { list-style: disc; } .manual-section ol { list-style: decimal; }
+  .manual-section figure { margin: 1.25rem 0; }
+  .manual-section figure img { width: 100%; border: 1px solid rgb(209 213 219); border-radius: .6rem; }
+  .manual-section figcaption { color: rgb(107 114 128); font-size: .8rem; margin-top: .45rem; }
+  .manual-section dt { font-weight: 700; } .manual-section dd { color: rgb(75 85 99); }
+  .dark .manual-section dd, .dark .manual-section figcaption { color: rgb(209 213 219); }
+  @media print { body > header, aside, body > footer, article > nav { display: none !important; } main { padding: 0 !important; } .manual-section { break-inside: avoid; box-shadow: none; } }
+</style>
+{% endblock %}

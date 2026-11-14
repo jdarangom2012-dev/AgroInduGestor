@@ -21,7 +21,7 @@ MAX_QUESTION_LENGTH = 1000
 
 
 @login_required
-@permiso_accion_requerido(codigo='ver_asistente_ia')
+@permiso_accion_requerido('rag.view_ragquerylog', 'ver_asistente_ia')
 @require_http_methods(['GET', 'POST'])
 def chat_view(request):
     history = request.session.get(SESSION_KEY, [])

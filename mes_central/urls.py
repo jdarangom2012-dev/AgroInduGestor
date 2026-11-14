@@ -50,9 +50,10 @@ for app in api_apps:
     urlpatterns.append(path('api/v1/', include(f'{app}.urls')))
 
 from django.contrib.auth.views import LogoutView  # noqa: E402
-from core.views import dashboard_view, login_view, signup_view  # noqa: E402
+from core.views import dashboard_view, login_view, manual_usuario_view, signup_view  # noqa: E402
 
 urlpatterns.append(path('dashboard/', dashboard_view, name='dashboard'))
+urlpatterns.append(path('manual-usuario/', manual_usuario_view, name='manual_usuario'))
 urlpatterns.append(path('login/', login_view, name='login'))
 urlpatterns.append(path('signup/', signup_view, name='signup'))
 urlpatterns.append(path('logout/', LogoutView.as_view(), name='logout'))

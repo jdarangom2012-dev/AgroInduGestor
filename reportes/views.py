@@ -1,5 +1,5 @@
 from datetime import timedelta
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.utils import timezone
 from django.db.models import Count, Sum, Avg, Q
 from django.http import Http404, HttpResponse
@@ -28,6 +28,7 @@ def _calidad_cliente(request):
 
 
 @login_required
+@permission_required('reportes.view_reportes', raise_exception=True)
 def calidad_view(request):
     cliente = _calidad_cliente(request)
     registros = Calidad.objects.none()
@@ -42,6 +43,7 @@ def calidad_view(request):
 
 
 @login_required
+@permission_required('reportes.view_reportes', raise_exception=True)
 def calidad_pdf_view(request):
     cliente = _calidad_cliente(request)
     if cliente is None:
@@ -53,6 +55,7 @@ def calidad_pdf_view(request):
 
 
 @login_required
+@permission_required('reportes.view_reportes', raise_exception=True)
 def facturacion_view(request):
     selected_order = request.GET.get("orden", "")
     report = get_facturacion_report(selected_order)
@@ -68,6 +71,7 @@ def facturacion_view(request):
 
 
 @login_required
+@permission_required('reportes.view_reportes', raise_exception=True)
 def clientes_view(request):
     selected_order = request.GET.get("orden", "")
     report = get_facturacion_report(selected_order)
@@ -84,6 +88,7 @@ def clientes_view(request):
 
 
 @login_required
+@permission_required('reportes.view_reportes', raise_exception=True)
 def clientes_pdf_view(request, orden_id):
     report = get_facturacion_report_by_id(orden_id)
     if report["not_found"] or not report["orden"]:
@@ -97,6 +102,7 @@ def clientes_pdf_view(request, orden_id):
 
 
 @login_required
+@permission_required('reportes.view_reportes', raise_exception=True)
 def facturacion_pdf_view(request, orden_id):
     report = get_facturacion_report_by_id(orden_id)
     if report["not_found"] or not report["orden"]:

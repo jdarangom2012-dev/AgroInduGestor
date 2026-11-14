@@ -1,7 +1,7 @@
 {% load seguridad_permisos %}
-{% tiene_permiso_accion request.user None 'crear_empleados' as puede_crear %}
-{% tiene_permiso_accion request.user None 'editar_empleados' as puede_editar %}
-{% tiene_permiso_accion request.user None 'eliminar_empleados' as puede_eliminar %}
+{% tiene_permiso_grupo request.user 'empleados.add_empleado' as puede_crear %}
+{% tiene_permiso_grupo request.user 'empleados.change_empleado' as puede_editar %}
+{% tiene_permiso_grupo request.user 'empleados.delete_empleado' as puede_eliminar %}
 <div id="modalEmpleados" class="fixed inset-0 z-50 flex items-start justify-center bg-black/45 p-6 overflow-y-auto" data-modal-root data-role="empleados-list" data-list-url="/empleados/listar/">
   <div class="palette-surface w-full max-w-5xl rounded-xl shadow-xl border border-brand-dark/30 fade-in relative">
     <div class="modal-head flex items-center justify-between px-6 py-4 rounded-t-xl">

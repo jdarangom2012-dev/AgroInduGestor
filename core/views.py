@@ -109,3 +109,9 @@ def signup_view(request):
 @login_required
 def dashboard_view(request):
     return render(request, 'dashboard/index.html')
+
+
+@login_required
+def manual_usuario_view(request):
+    """Manual funcional disponible para cualquier usuario autenticado."""
+    return render(request, 'core/manual_usuario.html')

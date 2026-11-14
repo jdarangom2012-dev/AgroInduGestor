@@ -60,14 +60,19 @@ def es_programador(user) -> bool:
 
 
 def tiene_permiso_accion(user, django_perm: str | None = None, codigo: str | None = None) -> bool:
+    """Valida acciones CRUD desde los permisos estándar configurados en Jazzmin.
+
+    El permiso personalizado se conserva solamente para funciones que todavía
+    no tienen un permiso Django asociado (por ejemplo, el Asistente IA).
+    """
     if getattr(user, 'is_superuser', False):
         return True
 
     if not _usuario_autenticado(user):
         return False
 
-    if django_perm and user.has_perm(django_perm):
-        return True
+    if django_perm:
+        return user.has_perm(django_perm)
 
     if codigo:
         return tiene_permiso(user, codigo)

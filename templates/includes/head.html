@@ -8,6 +8,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 	tailwind.config = {
+		darkMode: 'class',
 		theme: {
 			extend: {
 				colors: {
@@ -27,3 +28,4 @@
 <script src="{% static 'js/modal_drag.js' %}?v=1"></script>
 <script src="{% static 'js/inventario_cafe.js' %}?v=1"></script>
 <script src="{% static 'js/analisis_sensorial.js' %}?v={{ STATIC_VERSION|default:'1' }}"></script>
+<script src="{% static 'js/app_tooltips.js' %}?v={{ STATIC_VERSION|default:'1' }}" defer></script>
