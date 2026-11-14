@@ -32,9 +32,9 @@
               <th>Fecha</th>
               <th>Orden</th>
               <th>Cliente</th>
-              <th>Peso Café En Bruto</th>
-              <th>Peso Verde</th>
-              <th>Rendimiento</th>
+              <th style="text-align: center">Peso Café En Bruto</th>
+              <th style="text-align: center">Peso Verde</th>
+              <th style="text-align: center">Rendimiento</th>
               <th>Estado</th>
               <th>Editar</th>
               <th>Eliminar</th>
@@ -47,9 +47,9 @@
               <td class="td">{% if t.fecha_ingreso %}{{ t.fecha_ingreso|date:'d/m/Y' }}{% endif %}</td>
               <td class="td">{% if t.orden %}{{ t.orden.orden|default:t.orden }}{% else %}—{% endif %}</td>
               <td class="td">{{ t.cliente_display|default:"—" }}</td>
-              <td class="td text-right">{{ t.peso_cafe_bruto|default_if_none:"0" }}</td>
-              <td class="td text-right">{{ t.peso_cafe_verde|default_if_none:"0" }}</td>
-              <td class="td text-right">{{ t.rendimiento|default_if_none:"0" }}</td>
+              <td class="td" style="text-align: center">{{ t.peso_cafe_bruto|default_if_none:"0" }}</td>
+              <td class="td" style="text-align: center">{{ t.peso_cafe_verde|default_if_none:"0" }}</td>
+              <td class="td" style="text-align: center">{{ t.rendimiento|default_if_none:"0" }}</td>
               <td class="td">{{ t.estado_tareas }}</td>
               <td class="td action">
                 {% if puede_editar %}
