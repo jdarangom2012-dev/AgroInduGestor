@@ -14,9 +14,14 @@
 
   function alignCell(cell) {
     if (!cell) return;
-    cell.style.textAlign = 'right';
+    // Las columnas permanecen al extremo derecho de la tabla, pero su
+    // contenido se centra para que encabezado y acción formen una línea visual.
+    cell.style.textAlign = 'center';
     cell.style.whiteSpace = 'nowrap';
-    cell.style.paddingRight = '1rem';
+    cell.style.width = '6.5rem';
+    cell.style.minWidth = '6.5rem';
+    cell.style.paddingLeft = '0.75rem';
+    cell.style.paddingRight = '0.75rem';
     cell.dataset.actionColumn = '1';
   }
 
