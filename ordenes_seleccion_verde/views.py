@@ -8,7 +8,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.utils import timezone
 
-from seguridad.helpers import tiene_permiso_accion
+from seguridad.helpers import tiene_permiso_grupo
 
 from .models import OrdenSeleccionVerde
 from .forms import OrdenSeleccionVerdeForm, cliente_tiene_mediciones_seleccion_verde
@@ -17,16 +17,13 @@ from ordenes.models import Orden
 
 
 def permiso_o_codigo_required(django_perm: str, codigo: str):
-    """Permite acceso si el usuario tiene el permiso Django o el permiso por rol (RolPermiso).
-
-    Mantiene compatibilidad con `permission_required(..., raise_exception=True)` sin cambiar rutas ni lógica.
-    """
+    """Protege la acción con el permiso asignado a los grupos Django del usuario."""
 
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped(request, *args, **kwargs):
             user = getattr(request, 'user', None)
-            if tiene_permiso_accion(user, django_perm=django_perm, codigo=codigo):
+            if tiene_permiso_grupo(user, django_perm):
                 return view_func(request, *args, **kwargs)
             raise PermissionDenied
 

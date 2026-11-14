@@ -1,5 +1,5 @@
 {% load seguridad_permisos %}
-{% tiene_permiso_accion request.user 'ordenes_seleccion_verde.change_ordenseleccionverde' 'editar_orden_seleccion_verde' as puede_guardar %}
+{% tiene_permiso_grupo request.user 'ordenes_seleccion_verde.change_ordenseleccionverde' as puede_guardar %}
 
 <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-6 overflow-y-auto" data-modal-root data-orden-seleccion-verde-defaults-url="{% url 'orden_seleccion_verde_defaults' %}" data-seleccion-verde-id="{{ obj.pk }}">
   <div class="palette-surface w-full max-w-4xl rounded-xl shadow-xl border border-brand-dark/30 fade-in">

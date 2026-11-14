@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase
 
-from .helpers import tiene_permiso_accion
+from .helpers import tiene_permiso_accion, tiene_permiso_grupo
 
 
 class PermisoAccionTests(SimpleTestCase):
@@ -34,3 +34,29 @@ class PermisoAccionTests(SimpleTestCase):
 
         self.assertTrue(permitido)
         permiso_personalizado.assert_called_once_with(user, 'editar_orden_seleccion_verde')
+
+
+class PermisoGrupoTests(SimpleTestCase):
+    def test_acepta_permiso_asignado_al_grupo(self):
+        user = Mock(is_authenticated=True, is_superuser=False)
+        user.groups.filter.return_value.exists.return_value = True
+
+        self.assertTrue(tiene_permiso_grupo(
+            user,
+            'ordenes_seleccion_verde.change_ordenseleccionverde',
+        ))
+        user.groups.filter.assert_called_once_with(
+            permissions__content_type__app_label='ordenes_seleccion_verde',
+            permissions__codename='change_ordenseleccionverde',
+        )
+
+    def test_ignora_permiso_directo_si_el_grupo_no_lo_tiene(self):
+        user = Mock(is_authenticated=True, is_superuser=False)
+        user.has_perm.return_value = True
+        user.groups.filter.return_value.exists.return_value = False
+
+        self.assertFalse(tiene_permiso_grupo(
+            user,
+            'ordenes_seleccion_verde.delete_ordenseleccionverde',
+        ))
+        user.has_perm.assert_not_called()

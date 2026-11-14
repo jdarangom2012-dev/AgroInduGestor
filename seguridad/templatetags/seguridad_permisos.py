@@ -8,6 +8,7 @@ from seguridad.helpers import (
     puede_editar_campo,
     puede_ver_campo,
     tiene_permiso_accion as _tiene_permiso_accion,
+    tiene_permiso_grupo as _tiene_permiso_grupo,
     tiene_permiso as _tiene_permiso,
 )
 
@@ -27,6 +28,11 @@ def tiene_modulo(user, nombre_modulo: str) -> bool:
 @register.simple_tag
 def tiene_permiso_accion(user, django_perm: str | None = None, codigo: str | None = None) -> bool:
     return _tiene_permiso_accion(user, django_perm=django_perm, codigo=codigo)
+
+
+@register.simple_tag
+def tiene_permiso_grupo(user, django_perm: str) -> bool:
+    return _tiene_permiso_grupo(user, django_perm)
 
 
 @register.simple_tag

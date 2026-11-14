@@ -75,6 +75,21 @@ def tiene_permiso_accion(user, django_perm: str | None = None, codigo: str | Non
     return False
 
 
+def tiene_permiso_grupo(user, django_perm: str) -> bool:
+    """Valida exclusivamente los permisos asignados a los grupos Django del usuario."""
+    if getattr(user, 'is_superuser', False):
+        return True
+
+    if not _usuario_autenticado(user) or not django_perm or '.' not in django_perm:
+        return False
+
+    app_label, codename = django_perm.split('.', 1)
+    return user.groups.filter(
+        permissions__content_type__app_label=app_label,
+        permissions__codename=codename,
+    ).exists()
+
+
 def tiene_modulo(user, nombre_modulo: str) -> bool:
     if getattr(user, 'is_superuser', False):
         return True

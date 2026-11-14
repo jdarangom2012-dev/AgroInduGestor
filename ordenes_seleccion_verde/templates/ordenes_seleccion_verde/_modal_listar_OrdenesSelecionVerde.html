@@ -1,8 +1,8 @@
 {% load seguridad_permisos %}
 {% url 'ordenes_seleccion_verde_listar' as base_list_url %}
-{% tiene_permiso_accion request.user 'ordenes_seleccion_verde.add_ordenseleccionverde' 'crear_orden_seleccion_verde' as puede_crear %}
-{% tiene_permiso_accion request.user 'ordenes_seleccion_verde.change_ordenseleccionverde' 'editar_orden_seleccion_verde' as puede_editar %}
-{% tiene_permiso_accion request.user 'ordenes_seleccion_verde.delete_ordenseleccionverde' 'eliminar_orden_seleccion_verde' as puede_eliminar %}
+{% tiene_permiso_grupo request.user 'ordenes_seleccion_verde.add_ordenseleccionverde' as puede_crear %}
+{% tiene_permiso_grupo request.user 'ordenes_seleccion_verde.change_ordenseleccionverde' as puede_editar %}
+{% tiene_permiso_grupo request.user 'ordenes_seleccion_verde.delete_ordenseleccionverde' as puede_eliminar %}
 <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/45 p-6 overflow-y-auto" data-modal-root data-role="ordenes-seleccion-verde-list" data-list-url="{{ base_list_url }}">
   <div class="palette-surface w-full max-w-5xl rounded-xl shadow-xl border border-brand-dark/30 fade-in relative">
     <div class="modal-head flex items-center justify-between px-6 py-4 rounded-t-xl">
