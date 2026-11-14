@@ -12,7 +12,10 @@
         <h1 class="text-3xl font-bold mt-1">Manual de usuario</h1>
         <p class="mt-3 text-gray-600 dark:text-gray-300 max-w-3xl">Guía práctica para consultar información, registrar operaciones y utilizar las funciones disponibles según los permisos asignados a cada perfil.</p>
       </div>
-      <button type="button" onclick="window.print()" class="px-4 py-2 rounded-lg bg-brand-primary text-black font-semibold hover:opacity-90" data-tooltip="Imprime el manual o permite guardarlo como PDF desde el navegador.">🖨️ Imprimir o guardar PDF</button>
+      <div class="flex flex-wrap items-center gap-3">
+        <button type="button" onclick="window.print()" class="px-4 py-2 rounded-lg bg-brand-primary text-black font-semibold hover:opacity-90" data-tooltip="Imprime el manual o permite guardarlo como PDF desde el navegador.">🖨️ Imprimir o guardar PDF</button>
+        <a href="{% url 'dashboard' %}" class="px-4 py-2 rounded-lg border border-gray-400 dark:border-gray-500 bg-white/80 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 font-semibold" data-tooltip="Cierra el manual y regresa al tablero principal.">✕ Cerrar manual</a>
+      </div>
     </div>
   </header>
 
