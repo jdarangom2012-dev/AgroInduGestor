@@ -320,6 +320,7 @@ class OrdenForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         from clientes.models import Cliente
         from empleados.models import Empleado
@@ -443,6 +444,30 @@ class OrdenForm(forms.ModelForm):
         for field_name in numeric_fields:
             if field_name in self.fields:
                 _append_widget_classes(self.fields[field_name], numeric_field_classes)
+
+        # Debe ejecutarse al final porque la configuración visual anterior
+        # normaliza los widgets. ``field.disabled`` también impide alterar el
+        # valor mediante un POST manipulado desde el navegador.
+        if user is not None and getattr(self.instance, "pk", None) and not getattr(user, "is_superuser", False):
+            from seguridad.models import PermisoCampo
+
+            rol_id = getattr(getattr(user, "profile", None), "rol_id", None)
+            if rol_id:
+                permisos = PermisoCampo.objects.filter(rol_id=rol_id, modelo="Orden")
+                for permiso in permisos:
+                    field = self.fields.get(permiso.campo)
+                    if field is None or permiso.puede_editar:
+                        continue
+                    field.disabled = True
+                    field.widget.attrs.update({
+                        "disabled": "disabled",
+                        "aria-readonly": "true",
+                    })
+                    clases = field.widget.attrs.get("class", "").split()
+                    for clase in ("bg-gray-100", "text-gray-500", "cursor-not-allowed", "opacity-90"):
+                        if clase not in clases:
+                            clases.append(clase)
+                    field.widget.attrs["class"] = " ".join(clases)
 
     def clean_orden(self):
         raw = self.cleaned_data.get("orden") or ""

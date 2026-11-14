@@ -376,7 +376,7 @@ def edit_orden(request, pk):
         or request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     )
     if request.method == 'POST':
-        form = OrdenForm(request.POST, instance=obj)
+        form = OrdenForm(request.POST, instance=obj, user=request.user)
         detalle_formset = build_detalle_empaque_formset(data=request.POST, instance=obj)
         detalle_formset_valid = (not detalle_formset.is_bound) or detalle_formset.is_valid()
         if form.is_valid() and detalle_formset_valid:
@@ -400,7 +400,7 @@ def edit_orden(request, pk):
                     return listar_ordenes(request)
                 return redirect('ordenes_produccion_listar')
     else:
-        form = OrdenForm(instance=obj)
+        form = OrdenForm(instance=obj, user=request.user)
         detalle_formset = build_detalle_empaque_formset(instance=obj)
     return render(request, 'ordenes/detail_OrdenesProduccion.html', {'form': form, 'obj': obj, 'detalle_formset': detalle_formset})
 
